@@ -1,0 +1,4 @@
+- Correct collors on the outside faces and 1 fixed color on the inside faces
+- Rotatable faces
+- Scrambling
+- Solving
