@@ -2,7 +2,7 @@ use std::f32::consts::TAU;
 
 use bevy::prelude::*;
 
-const BLOCKS_SPREAD: f32 = 0.25;
+const BLOCKS_SPREAD: f32 = 0.05;
 const BLOCKS_SIZE: f32 = 1.0;
 const CUBE_SIZE: u32 = 3; // 3 for 3x3, 6 for 6x6 etc
 
@@ -41,11 +41,11 @@ fn spawn_light(mut commands: Commands) {
         point_light: PointLight {
             shadows_enabled: true,
             intensity: 10_000_000.,
-            range: 100.0,
-            shadow_depth_bias: 0.2,
+            range: 300.0,
+            shadow_depth_bias: 0.8,
             ..default()
         },
-        transform: Transform::from_xyz(8.0, 16.0, 8.0),
+        transform: Transform::from_xyz(0.0, 15.0, 15.0),
         ..default()
     });
 }
@@ -91,13 +91,15 @@ fn spawn_rubiks_cube(
                     Transform::from_translation(middle_point - Vec3::new(face_offset, 0.0, 0.0));
                 transform.rotate_local_y(-TAU / 4.0);
 
+                let color = if x == -1 { Color::RED } else { color_inside };
+
                 let face_left = commands
                     .spawn((
                         PbrBundle {
                             mesh: cube_face_mesh.clone(),
                             transform: transform,
                             material: materials.add(StandardMaterial {
-                                base_color: Color::rgb(1.0, 0.0, 0.0),
+                                base_color: color,
                                 ..default()
                             }),
                             ..default()
@@ -105,9 +107,13 @@ fn spawn_rubiks_cube(
                         CubeFace,
                     ))
                     .id();
+
                 // right
                 let mut transform =
                     Transform::from_translation(middle_point + Vec3::new(face_offset, 0.0, 0.0));
+
+                let color = if x == 1 { Color::GREEN } else { color_inside };
+
                 transform.rotate_local_y(TAU / 4.0);
                 let face_right = commands
                     .spawn((
@@ -115,7 +121,7 @@ fn spawn_rubiks_cube(
                             mesh: cube_face_mesh.clone(),
                             transform: transform,
                             material: materials.add(StandardMaterial {
-                                base_color: Color::rgb(0.0, 1.0, 0.0),
+                                base_color: color,
                                 ..default()
                             }),
                             ..default()
@@ -123,17 +129,21 @@ fn spawn_rubiks_cube(
                         CubeFace,
                     ))
                     .id();
+
                 // top
                 let mut transform =
                     Transform::from_translation(middle_point + Vec3::new(0.0, face_offset, 0.0));
                 transform.rotate_x(-TAU / 4.0);
+
+                let color = if y == 1 { Color::BLUE } else { color_inside };
+
                 let face_top = commands
                     .spawn((
                         PbrBundle {
                             mesh: cube_face_mesh.clone(),
                             transform: transform,
                             material: materials.add(StandardMaterial {
-                                base_color: Color::rgb(0.0, 0.0, 1.0),
+                                base_color: color,
                                 ..default()
                             }),
                             ..default()
@@ -141,17 +151,21 @@ fn spawn_rubiks_cube(
                         CubeFace,
                     ))
                     .id();
+
                 // bottom
                 let mut transform =
                     Transform::from_translation(middle_point - Vec3::new(0.0, face_offset, 0.0));
                 transform.rotate_x(-TAU / 4.0);
+
+                let color = if y == -1 { Color::PINK } else { color_inside };
+
                 let face_bottom = commands
                     .spawn((
                         PbrBundle {
                             mesh: cube_face_mesh.clone(),
                             transform: transform,
                             material: materials.add(StandardMaterial {
-                                base_color: Color::rgb(1.0, 1.0, 0.0),
+                                base_color: color,
                                 ..default()
                             }),
                             ..default()
@@ -159,7 +173,10 @@ fn spawn_rubiks_cube(
                         CubeFace,
                     ))
                     .id();
+
                 // front
+                let color = if z == 1 { Color::YELLOW } else { color_inside };
+
                 let face_front = commands
                     .spawn((
                         PbrBundle {
@@ -168,7 +185,7 @@ fn spawn_rubiks_cube(
                                 middle_point + Vec3::new(0.0, 0.0, face_offset),
                             ),
                             material: materials.add(StandardMaterial {
-                                base_color: Color::rgb(0.0, 1.0, 1.0),
+                                base_color: color,
                                 ..default()
                             }),
                             ..default()
@@ -176,17 +193,21 @@ fn spawn_rubiks_cube(
                         CubeFace,
                     ))
                     .id();
+
                 // back
                 let mut transform =
                     Transform::from_translation(middle_point - Vec3::new(0.0, 0.0, face_offset));
                 transform.rotate_local_y(-TAU / 2.0);
+
+                let color = if z == -1 { Color::ORANGE } else { color_inside };
+
                 let face_back = commands
                     .spawn((
                         PbrBundle {
                             mesh: cube_face_mesh.clone(),
                             transform: transform,
                             material: materials.add(StandardMaterial {
-                                base_color: Color::rgb(1.0, 1.0, 0.0),
+                                base_color: color,
                                 ..default()
                             }),
                             ..default()
