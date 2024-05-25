@@ -1,3 +1,6 @@
 - Rotatable faces
-- Scrambling
-- Solving
+- Animated rotations
+- Handle other sizes than 3x3
+- Move cube configs to a struct instead of having them as const values
+- Implement scrambling algorithm
+- Implement solving algorithms
