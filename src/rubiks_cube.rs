@@ -91,7 +91,11 @@ fn spawn_rubiks_cube(
                     Transform::from_translation(middle_point - Vec3::new(face_offset, 0.0, 0.0));
                 transform.rotate_local_y(-TAU / 4.0);
 
-                let color = if x == -1 { Color::RED } else { color_inside };
+                let color = if x == -1 {
+                    Color::rgb(0.99, 0.49, 0.05) // orange
+                } else {
+                    color_inside
+                };
 
                 let face_left = commands
                     .spawn((
@@ -112,7 +116,11 @@ fn spawn_rubiks_cube(
                 let mut transform =
                     Transform::from_translation(middle_point + Vec3::new(face_offset, 0.0, 0.0));
 
-                let color = if x == 1 { Color::GREEN } else { color_inside };
+                let color = if x == 1 {
+                    Color::rgb(0.99, 0.0, 0.0) // red
+                } else {
+                    color_inside
+                };
 
                 transform.rotate_local_y(TAU / 4.0);
                 let face_right = commands
@@ -135,7 +143,11 @@ fn spawn_rubiks_cube(
                     Transform::from_translation(middle_point + Vec3::new(0.0, face_offset, 0.0));
                 transform.rotate_x(-TAU / 4.0);
 
-                let color = if y == 1 { Color::BLUE } else { color_inside };
+                let color = if y == 1 {
+                    Color::rgb(0.99, 0.99, 0.99) // white
+                } else {
+                    color_inside
+                };
 
                 let face_top = commands
                     .spawn((
@@ -155,9 +167,13 @@ fn spawn_rubiks_cube(
                 // bottom
                 let mut transform =
                     Transform::from_translation(middle_point - Vec3::new(0.0, face_offset, 0.0));
-                transform.rotate_x(-TAU / 4.0);
+                transform.rotate_x(TAU / 4.0);
 
-                let color = if y == -1 { Color::PINK } else { color_inside };
+                let color = if y == -1 {
+                    Color::rgb(0.99, 0.99, 0.0) // yellow
+                } else {
+                    color_inside
+                };
 
                 let face_bottom = commands
                     .spawn((
@@ -175,7 +191,11 @@ fn spawn_rubiks_cube(
                     .id();
 
                 // front
-                let color = if z == 1 { Color::YELLOW } else { color_inside };
+                let color = if z == 1 {
+                    Color::rgb(7.0 / 255.0, 227.0 / 255.0, 55.0 / 255.0) // green
+                } else {
+                    color_inside
+                };
 
                 let face_front = commands
                     .spawn((
@@ -199,7 +219,11 @@ fn spawn_rubiks_cube(
                     Transform::from_translation(middle_point - Vec3::new(0.0, 0.0, face_offset));
                 transform.rotate_local_y(-TAU / 2.0);
 
-                let color = if z == -1 { Color::ORANGE } else { color_inside };
+                let color = if z == -1 {
+                    Color::rgb(0.0, 0.0, 0.99) // blue
+                } else {
+                    color_inside
+                };
 
                 let face_back = commands
                     .spawn((
@@ -216,16 +240,16 @@ fn spawn_rubiks_cube(
                     ))
                     .id();
 
-                // commands.spawn(CubeBlock {
-                //     faces: [
-                //         face_left,
-                //         face_right,
-                //         face_top,
-                //         face_bottom,
-                //         face_front,
-                //         face_back,
-                //     ],
-                // });
+                commands.spawn(CubeBlock {
+                    faces: [
+                        face_left,
+                        face_right,
+                        face_top,
+                        face_bottom,
+                        face_front,
+                        face_back,
+                    ],
+                });
             }
         }
     }
