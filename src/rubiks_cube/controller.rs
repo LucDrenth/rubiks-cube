@@ -16,4 +16,10 @@ fn do_test_rotation(mut event_writer: EventWriter<CubeRotationEvent>) {
         counter_clockwise: true,
         twice: false,
     });
+
+    event_writer.send(CubeRotationEvent {
+        rotation: CubeRotation3x3::Top,
+        counter_clockwise: false,
+        twice: false,
+    });
 }

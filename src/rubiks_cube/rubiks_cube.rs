@@ -29,9 +29,9 @@ impl Plugin for RubiksCubePlugin {
 #[derive(Component, Debug)]
 struct CubeBlock {
     pub faces: [Entity; 6],
-    x: i32,
-    y: i32,
-    z: i32,
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 #[derive(Component, Debug)]
@@ -95,7 +95,7 @@ pub struct CubeRotationEvent {
 
 /// Cube rotations in true cubing notation. Tailored for 3x3 cubes.
 pub enum CubeRotation3x3 {
-    /// Left side. Clockwise is towards the camera
+    /// When holding the cube in front of you, the front row ends up at the bottom.
     Left,
     /// Left and middle (SliceM)
     WideLeft,
@@ -177,6 +177,7 @@ fn spawn_rubiks_cube(
     for x in range.clone() {
         for y in range.clone() {
             for z in range.clone() {
+                // The middle of the cube piece
                 let middle_point = Vec3::new(
                     x as f32 * BLOCKS_SIZE - offset,
                     y as f32 * BLOCKS_SIZE - offset,
@@ -386,6 +387,8 @@ fn rotation_events_handler(
     let highest_cube_coord = 1; // TODO only holds for 3x3
     let mut rotation_amount = TAU / 4.0;
 
+    // TODO abstractiate to rotation for X(int32 coord), Y(int32 coord), or Z(int32 coord) and then map the CubeRotation3x3 to those.
+    // Lets have this x, y and z be the same direction and have the 'counter clockwise' variable be specific to CubeRotation3x3 notation.
     for cube_rotation in event_reader.read() {
         if cube_rotation.twice {
             rotation_amount *= 2.;
@@ -401,8 +404,9 @@ fn rotation_events_handler(
                 let cubes_indices_to_rotate =
                     rubiks_cube.get_cube_indices_with_coords(Some(lowest_cube_coord), None, None);
 
-                for cube_index_to_rotate in cubes_indices_to_rotate {
-                    for face in rubiks_cube.blocks[cube_index_to_rotate].faces {
+                // rotate
+                for cube_index_to_rotate in &cubes_indices_to_rotate {
+                    for face in rubiks_cube.blocks[*cube_index_to_rotate].faces {
                         match faces_query.get_mut(face) {
                             Ok(mut transform) => {
                                 transform.rotate_around(
@@ -417,12 +421,66 @@ fn rotation_events_handler(
                     }
                 }
 
-                // TODO update cube indices
+                // TODO this does not hold for double or clockwise rotations
+                //
+                // update cube indices
+                let mut new_pieces_coordinates: Vec<(i32, i32, i32)> =
+                    Vec::with_capacity(cubes_indices_to_rotate.len());
+
+                for cube_index_to_rotate in &cubes_indices_to_rotate {
+                    if cube_rotation.twice {
+                        todo!()
+                    } else if cube_rotation.counter_clockwise {
+                        new_pieces_coordinates.push((
+                            rubiks_cube.blocks[*cube_index_to_rotate].x,
+                            rubiks_cube.blocks[*cube_index_to_rotate].z,
+                            rubiks_cube.blocks[*cube_index_to_rotate].y * -1,
+                        ));
+                    } else {
+                        new_pieces_coordinates.push((
+                            rubiks_cube.blocks[*cube_index_to_rotate].x,
+                            rubiks_cube.blocks[*cube_index_to_rotate].z * -1,
+                            rubiks_cube.blocks[*cube_index_to_rotate].y,
+                        ));
+                    }
+                }
+
+                for (i, cube_index) in cubes_indices_to_rotate.iter().enumerate() {
+                    rubiks_cube.blocks[*cube_index].x = new_pieces_coordinates[i].0;
+                    rubiks_cube.blocks[*cube_index].y = new_pieces_coordinates[i].1;
+                    rubiks_cube.blocks[*cube_index].z = new_pieces_coordinates[i].2;
+                }
             }
             CubeRotation3x3::WideLeft => todo!(),
             CubeRotation3x3::Right => todo!(),
             CubeRotation3x3::WideRight => todo!(),
-            CubeRotation3x3::Top => todo!(),
+            CubeRotation3x3::Top => {
+                if cube_rotation.counter_clockwise {
+                    rotation_amount *= -1.;
+                }
+
+                let pivot_point = Vec3::new(0.0, CUBE_SIZE as f32 + BLOCKS_SPREAD, 0.0); // TODO this only holds for 3x3
+                let cubes_indices_to_rotate =
+                    rubiks_cube.get_cube_indices_with_coords(None, Some(highest_cube_coord), None);
+
+                for cube_index_to_rotate in cubes_indices_to_rotate {
+                    for face in rubiks_cube.blocks[cube_index_to_rotate].faces {
+                        match faces_query.get_mut(face) {
+                            Ok(mut transform) => {
+                                transform.rotate_around(
+                                    pivot_point,
+                                    Quat::from_rotation_y(rotation_amount),
+                                );
+                            }
+                            Err(err) => {
+                                error!("failed to get cube face: {}", err);
+                            }
+                        }
+                    }
+                }
+
+                // TODO update cube indices
+            }
             CubeRotation3x3::WideTop => todo!(),
             CubeRotation3x3::Bottom => todo!(),
             CubeRotation3x3::WideBottom => todo!(),
