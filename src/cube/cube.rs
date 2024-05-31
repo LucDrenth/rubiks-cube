@@ -27,14 +27,20 @@ impl Cube {
         self.size
     }
 
-    fn lowest_piece_index(&self) -> i32 {
-        // TODO this only holds for 3x3
-        -1
+    pub fn lowest_piece_index(&self) -> i32 {
+        if self.size % 2 == 1 {
+            -(self.size as i32 - 1) / 2
+        } else {
+            -(self.size as i32 / 2) + 1
+        }
     }
 
-    fn highest_piece_index(&self) -> i32 {
-        // TODO this only holds for 3x3
-        1
+    pub fn highest_piece_index(&self) -> i32 {
+        if self.size % 2 == 1 {
+            (self.size as i32 - 1) / 2
+        } else {
+            self.size as i32 / 2
+        }
     }
 }
 
@@ -99,7 +105,7 @@ fn spawn_cube(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let cube = Cube {
-        size: 3,
+        size: 5,
         piece_spread: 0.05,
         block_size: 1.0,
         inner_material: materials.add(Color::rgb(0.1, 0.1, 0.1)),
@@ -113,14 +119,13 @@ fn spawn_cube(
         panic!("Invalid cube size {}", cube.size)
     }
 
-    let mut offset = 0.0;
-
-    let range = if cube.size % 2 == 1 {
-        -(cube.size as i32 - 1) / 2..=(cube.size as i32 - 1) / 2
+    let offset = if cube.size % 2 == 0 {
+        cube.block_size / 2.0
     } else {
-        offset = cube.block_size / 2.0;
-        -(cube.size as i32 / 2) + 1..=cube.size as i32 / 2
+        0.0
     };
+
+    let range = cube.lowest_piece_index()..=cube.highest_piece_index();
 
     let spread_factor = 1.0 + cube.piece_spread;
     let face_offset = cube.block_size / 2.0;
@@ -162,7 +167,6 @@ fn spawn_cube(
                 let mut transform =
                     Transform::from_translation(middle_point + Vec3::new(face_offset, 0.0, 0.0));
 
-                // TODO this will only hold for 3x3
                 let material = if x == cube.highest_piece_index() {
                     materials.add(Color::rgb(0.99, 0.0, 0.0)) // red
                 } else {
@@ -187,7 +191,6 @@ fn spawn_cube(
                     Transform::from_translation(middle_point + Vec3::new(0.0, face_offset, 0.0));
                 transform.rotate_x(-TAU / 4.0);
 
-                // TODO this will only hold for 3x3
                 let material = if y == cube.highest_piece_index() {
                     materials.add(Color::rgb(0.99, 0.99, 0.99)) // white
                 } else {
@@ -211,7 +214,6 @@ fn spawn_cube(
                     Transform::from_translation(middle_point - Vec3::new(0.0, face_offset, 0.0));
                 transform.rotate_x(TAU / 4.0);
 
-                // TODO this will only hold for 3x3
                 let material = if y == cube.lowest_piece_index() {
                     materials.add(Color::rgb(0.99, 0.99, 0.0)) // yellow
                 } else {
@@ -231,10 +233,8 @@ fn spawn_cube(
                     .id();
 
                 // front
-                // TODO this will only hold for 3x3
                 let material = if z == cube.highest_piece_index() {
-                    materials.add(Color::rgb(7.0 / 255.0, 227.0 / 255.0, 55.0 / 255.0))
-                // green
+                    materials.add(Color::rgb(0.027, 0.89, 0.215)) // green
                 } else {
                     cube.inner_material.clone()
                 };
@@ -258,7 +258,6 @@ fn spawn_cube(
                     Transform::from_translation(middle_point - Vec3::new(0.0, 0.0, face_offset));
                 transform.rotate_local_y(-TAU / 2.0);
 
-                // TODO this will only hold for 3x3
                 let material = if z == cube.lowest_piece_index() {
                     materials.add(Color::rgb(0.0, 0.0, 0.99)) // blue
                 } else {
