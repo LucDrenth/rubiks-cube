@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::schedules::CubeScheduleSet;
 
-use super::cube::{Cube, PieceFace, BLOCKS_SPREAD, CUBE_SIZE};
+use super::cube::{Cube, Piece, PieceFace, BLOCKS_SPREAD, CUBE_SIZE};
 
 pub struct CubeRotationPlugin;
 
@@ -60,6 +60,7 @@ pub enum CubeRotation {
 
 fn rotation_events_handler(
     mut cube_query: Query<&mut Cube>,
+    mut cube_pieces_query: Query<&mut Piece>,
     cube_transform_query: Query<&Transform, (With<Cube>, Without<PieceFace>)>,
     mut faces_query: Query<&mut Transform, With<PieceFace>>,
     mut event_reader: EventReader<CubeRotationEvent>,
@@ -72,6 +73,8 @@ fn rotation_events_handler(
         error!("expected exactly 1 Cube Transform entity");
         return;
     };
+
+    let mut cube_pieces: Vec<Mut<Piece>> = cube_pieces_query.iter_mut().collect();
 
     let mut rotation_amount = TAU / 4.0;
 
@@ -104,12 +107,16 @@ fn rotation_events_handler(
                     FaceRotation::X(slices) => {
                         for slice in slices {
                             let pivot_point = Vec3::new(pivot_coordinate(slice), 0.0, 0.0);
-                            let cubes_indices_to_rotate =
-                                cube.get_piece_indices_with_coords(Some(*slice), None, None);
+                            let cubes_indices_to_rotate = Piece::get_piece_indices_with_coords(
+                                &cube_pieces,
+                                Some(*slice),
+                                None,
+                                None,
+                            );
 
                             // Rotate pieces
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
-                                for face in cube.pieces[*cube_index_to_rotate].faces {
+                                for face in cube_pieces[*cube_index_to_rotate].faces {
                                     rotate_face(
                                         face,
                                         pivot_point,
@@ -125,41 +132,45 @@ fn rotation_events_handler(
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
                                 if cube_rotation_event.twice {
                                     new_pieces_coordinates.push((
-                                        cube.pieces[*cube_index_to_rotate].x,
-                                        cube.pieces[*cube_index_to_rotate].y * -1,
-                                        cube.pieces[*cube_index_to_rotate].z * -1,
+                                        cube_pieces[*cube_index_to_rotate].x,
+                                        cube_pieces[*cube_index_to_rotate].y * -1,
+                                        cube_pieces[*cube_index_to_rotate].z * -1,
                                     ));
                                 } else if cube_rotation_event.negative_direction {
                                     new_pieces_coordinates.push((
-                                        cube.pieces[*cube_index_to_rotate].x,
-                                        cube.pieces[*cube_index_to_rotate].z,
-                                        cube.pieces[*cube_index_to_rotate].y * -1,
+                                        cube_pieces[*cube_index_to_rotate].x,
+                                        cube_pieces[*cube_index_to_rotate].z,
+                                        cube_pieces[*cube_index_to_rotate].y * -1,
                                     ));
                                 } else {
                                     new_pieces_coordinates.push((
-                                        cube.pieces[*cube_index_to_rotate].x,
-                                        cube.pieces[*cube_index_to_rotate].z * -1,
-                                        cube.pieces[*cube_index_to_rotate].y,
+                                        cube_pieces[*cube_index_to_rotate].x,
+                                        cube_pieces[*cube_index_to_rotate].z * -1,
+                                        cube_pieces[*cube_index_to_rotate].y,
                                     ));
                                 }
                             }
 
                             for (i, cube_index) in cubes_indices_to_rotate.iter().enumerate() {
-                                cube.pieces[*cube_index].x = new_pieces_coordinates[i].0;
-                                cube.pieces[*cube_index].y = new_pieces_coordinates[i].1;
-                                cube.pieces[*cube_index].z = new_pieces_coordinates[i].2;
+                                cube_pieces[*cube_index].x = new_pieces_coordinates[i].0;
+                                cube_pieces[*cube_index].y = new_pieces_coordinates[i].1;
+                                cube_pieces[*cube_index].z = new_pieces_coordinates[i].2;
                             }
                         }
                     }
                     FaceRotation::Y(slices) => {
                         for slice in slices {
                             let pivot_point = Vec3::new(0.0, pivot_coordinate(slice), 0.0);
-                            let cubes_indices_to_rotate =
-                                cube.get_piece_indices_with_coords(None, Some(*slice), None);
+                            let cubes_indices_to_rotate = Piece::get_piece_indices_with_coords(
+                                &cube_pieces,
+                                None,
+                                Some(*slice),
+                                None,
+                            );
 
                             // Rotate pieces
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
-                                for face in cube.pieces[*cube_index_to_rotate].faces {
+                                for face in cube_pieces[*cube_index_to_rotate].faces {
                                     rotate_face(
                                         face,
                                         pivot_point,
@@ -175,41 +186,45 @@ fn rotation_events_handler(
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
                                 if cube_rotation_event.twice {
                                     new_pieces_coordinates.push((
-                                        cube.pieces[*cube_index_to_rotate].x * -1,
-                                        cube.pieces[*cube_index_to_rotate].y,
-                                        cube.pieces[*cube_index_to_rotate].z * -1,
+                                        cube_pieces[*cube_index_to_rotate].x * -1,
+                                        cube_pieces[*cube_index_to_rotate].y,
+                                        cube_pieces[*cube_index_to_rotate].z * -1,
                                     ));
                                 } else if cube_rotation_event.negative_direction {
                                     new_pieces_coordinates.push((
-                                        cube.pieces[*cube_index_to_rotate].z * -1,
-                                        cube.pieces[*cube_index_to_rotate].y,
-                                        cube.pieces[*cube_index_to_rotate].x,
+                                        cube_pieces[*cube_index_to_rotate].z * -1,
+                                        cube_pieces[*cube_index_to_rotate].y,
+                                        cube_pieces[*cube_index_to_rotate].x,
                                     ));
                                 } else {
                                     new_pieces_coordinates.push((
-                                        cube.pieces[*cube_index_to_rotate].z,
-                                        cube.pieces[*cube_index_to_rotate].y,
-                                        cube.pieces[*cube_index_to_rotate].x * -1,
+                                        cube_pieces[*cube_index_to_rotate].z,
+                                        cube_pieces[*cube_index_to_rotate].y,
+                                        cube_pieces[*cube_index_to_rotate].x * -1,
                                     ));
                                 }
                             }
 
                             for (i, cube_index) in cubes_indices_to_rotate.iter().enumerate() {
-                                cube.pieces[*cube_index].x = new_pieces_coordinates[i].0;
-                                cube.pieces[*cube_index].y = new_pieces_coordinates[i].1;
-                                cube.pieces[*cube_index].z = new_pieces_coordinates[i].2;
+                                cube_pieces[*cube_index].x = new_pieces_coordinates[i].0;
+                                cube_pieces[*cube_index].y = new_pieces_coordinates[i].1;
+                                cube_pieces[*cube_index].z = new_pieces_coordinates[i].2;
                             }
                         }
                     }
                     FaceRotation::Z(slices) => {
                         for slice in slices {
                             let pivot_point = Vec3::new(0.0, 0.0, pivot_coordinate(slice));
-                            let cubes_indices_to_rotate =
-                                cube.get_piece_indices_with_coords(None, None, Some(*slice));
+                            let cubes_indices_to_rotate = Piece::get_piece_indices_with_coords(
+                                &cube_pieces,
+                                None,
+                                None,
+                                Some(*slice),
+                            );
 
                             // Rotate pieces
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
-                                for face in cube.pieces[*cube_index_to_rotate].faces {
+                                for face in cube_pieces[*cube_index_to_rotate].faces {
                                     rotate_face(
                                         face,
                                         pivot_point,
@@ -225,29 +240,29 @@ fn rotation_events_handler(
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
                                 if cube_rotation_event.twice {
                                     new_pieces_coordinates.push((
-                                        cube.pieces[*cube_index_to_rotate].x * -1,
-                                        cube.pieces[*cube_index_to_rotate].y * -1,
-                                        cube.pieces[*cube_index_to_rotate].z,
+                                        cube_pieces[*cube_index_to_rotate].x * -1,
+                                        cube_pieces[*cube_index_to_rotate].y * -1,
+                                        cube_pieces[*cube_index_to_rotate].z,
                                     ));
                                 } else if cube_rotation_event.negative_direction {
                                     new_pieces_coordinates.push((
-                                        cube.pieces[*cube_index_to_rotate].y,
-                                        cube.pieces[*cube_index_to_rotate].x * -1,
-                                        cube.pieces[*cube_index_to_rotate].z,
+                                        cube_pieces[*cube_index_to_rotate].y,
+                                        cube_pieces[*cube_index_to_rotate].x * -1,
+                                        cube_pieces[*cube_index_to_rotate].z,
                                     ));
                                 } else {
                                     new_pieces_coordinates.push((
-                                        cube.pieces[*cube_index_to_rotate].y * -1,
-                                        cube.pieces[*cube_index_to_rotate].x,
-                                        cube.pieces[*cube_index_to_rotate].z,
+                                        cube_pieces[*cube_index_to_rotate].y * -1,
+                                        cube_pieces[*cube_index_to_rotate].x,
+                                        cube_pieces[*cube_index_to_rotate].z,
                                     ));
                                 }
                             }
 
                             for (i, cube_index) in cubes_indices_to_rotate.iter().enumerate() {
-                                cube.pieces[*cube_index].x = new_pieces_coordinates[i].0;
-                                cube.pieces[*cube_index].y = new_pieces_coordinates[i].1;
-                                cube.pieces[*cube_index].z = new_pieces_coordinates[i].2;
+                                cube_pieces[*cube_index].x = new_pieces_coordinates[i].0;
+                                cube_pieces[*cube_index].y = new_pieces_coordinates[i].1;
+                                cube_pieces[*cube_index].z = new_pieces_coordinates[i].2;
                             }
                         }
                     }
@@ -255,7 +270,7 @@ fn rotation_events_handler(
             }
             Rotation::Cube(cube_rotation) => match cube_rotation {
                 CubeRotation::X => {
-                    for piece in &mut cube.pieces {
+                    for piece in &mut cube_pieces {
                         // Rotate faces
                         for face in piece.faces {
                             rotate_face(
@@ -285,7 +300,7 @@ fn rotation_events_handler(
                     }
                 }
                 CubeRotation::Y => {
-                    for piece in &mut cube.pieces {
+                    for piece in &mut cube_pieces {
                         // Rotate faces
                         for face in piece.faces {
                             rotate_face(
@@ -315,7 +330,7 @@ fn rotation_events_handler(
                     }
                 }
                 CubeRotation::Z => {
-                    for piece in &mut cube.pieces {
+                    for piece in &mut cube_pieces {
                         // Rotate faces
                         for face in piece.faces {
                             rotate_face(

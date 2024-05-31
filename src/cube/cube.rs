@@ -22,7 +22,7 @@ impl Plugin for CubePlugin {
     }
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Clone, Debug)]
 pub struct Piece {
     pub faces: [Entity; 6],
     pub x: i32,
@@ -30,21 +30,16 @@ pub struct Piece {
     pub z: i32,
 }
 
-#[derive(Component, Debug)]
-pub struct Cube {
-    pub pieces: Vec<Piece>,
-}
-
-impl Cube {
+impl Piece {
     pub fn get_piece_indices_with_coords(
-        &self,
+        pieces: &Vec<Mut<Piece>>,
         x: Option<i32>,
         y: Option<i32>,
         z: Option<i32>,
     ) -> Vec<usize> {
         let mut result = vec![];
 
-        for (i, piece) in self.pieces.iter().enumerate() {
+        for (i, piece) in pieces.iter().enumerate() {
             if let Some(x) = x {
                 if piece.x != x {
                     continue;
@@ -70,6 +65,9 @@ impl Cube {
     }
 }
 
+#[derive(Component, Debug)]
+pub struct Cube {}
+
 #[derive(Component)]
 pub struct PieceFace;
 
@@ -87,6 +85,8 @@ fn spawn_cube(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    let cube = Cube {};
+
     let piece_face_mesh = meshes.add(Rectangle {
         half_size: Vec2::ONE * BLOCKS_SIZE / 2.0,
     });
@@ -108,10 +108,6 @@ fn spawn_cube(
     let face_offset = BLOCKS_SIZE / 2.0;
 
     let color_inside = Color::rgb(COLOR_INSIDE_R, COLOR_INSIDE_G, COLOR_INSIDE_B);
-
-    let mut cube = Cube {
-        pieces: Vec::with_capacity((CUBE_SIZE * CUBE_SIZE * CUBE_SIZE) as usize),
-    };
 
     for x in range.clone() {
         for y in range.clone() {
@@ -283,7 +279,7 @@ fn spawn_cube(
                     ))
                     .id();
 
-                cube.pieces.push(Piece {
+                commands.spawn(Piece {
                     faces: [
                         face_left,
                         face_right,
