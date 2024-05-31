@@ -105,7 +105,7 @@ fn spawn_cube(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let cube = Cube {
-        size: 5,
+        size: 3,
         piece_spread: 0.05,
         block_size: 1.0,
         inner_material: materials.add(Color::rgb(0.1, 0.1, 0.1)),

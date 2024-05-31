@@ -2,19 +2,17 @@ use bevy::prelude::*;
 
 use crate::schedules::CubeScheduleSet;
 
-use super::{
-    rotation::{FaceRotation, Rotation},
-    CubeRotationEvent, Rotation3x3,
-};
+use super::{cube::Cube, CubeRotationEvent, Rotation3x3};
 
 pub struct ControllerPlugin;
 
 impl Plugin for ControllerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, init_stepper)
-            .add_systems(Update, spacebar_stepper_handler.in_set(CubeScheduleSet::HandleUserInput))
-            // app.add_systems(Startup, do_instant_rotations)
-        ;
+        app.add_systems(Startup, init_stepper).add_systems(
+            Update,
+            (spacebar_stepper_handler, random_face_rotation_on_tab)
+                .in_set(CubeScheduleSet::HandleUserInput),
+        );
     }
 }
 
@@ -52,6 +50,23 @@ fn init_stepper(mut commands: Commands) {
     });
 }
 
+fn random_face_rotation_on_tab(
+    cube_query: Query<&Cube>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut event_writer: EventWriter<CubeRotationEvent>,
+) {
+    if !keyboard_input.just_pressed(KeyCode::Tab) {
+        return;
+    }
+
+    let Ok(cube) = cube_query.get_single() else {
+        error!("expected exactly 1 Cube component");
+        return;
+    };
+
+    event_writer.send(CubeRotationEvent::random_face_rotation(cube));
+}
+
 fn spacebar_stepper_handler(
     mut query: Query<&mut RotationStepper>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -64,24 +79,4 @@ fn spacebar_stepper_handler(
     }
 
     event_writer.send(stepper.step());
-}
-
-fn do_instant_rotations(mut event_writer: EventWriter<CubeRotationEvent>) {
-    event_writer.send(CubeRotationEvent {
-        rotation: Rotation::Face(FaceRotation::X(vec![1])),
-        negative_direction: false,
-        twice: true,
-    });
-
-    event_writer.send(CubeRotationEvent {
-        rotation: Rotation::Face(FaceRotation::Y(vec![1])),
-        negative_direction: false,
-        twice: false,
-    });
-
-    // event_writer.send(CubeRotationEvent {
-    //     rotation: Rotation::X(vec![-1]),
-    //     counter_clockwise: false,
-    //     twice: false,
-    // });
 }

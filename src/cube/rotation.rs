@@ -1,6 +1,7 @@
 use std::f32::consts::TAU;
 
 use bevy::prelude::*;
+use rand::Rng;
 
 use crate::schedules::CubeScheduleSet;
 
@@ -25,6 +26,25 @@ pub struct CubeRotationEvent {
     pub twice: bool,
 }
 
+impl CubeRotationEvent {
+    pub fn random_face_rotation(cube: &Cube) -> Self {
+        let face_rotation = FaceRotation::random(cube);
+
+        let mut rng = rand::thread_rng();
+        let direction = if rng.gen_range(0..=1) == 0 {
+            true
+        } else {
+            false
+        };
+
+        CubeRotationEvent {
+            rotation: Rotation::Face(face_rotation),
+            negative_direction: direction,
+            twice: false,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum Rotation {
     Face(FaceRotation),
@@ -43,6 +63,23 @@ pub enum FaceRotation {
     /// Rotate the given slices of the z axis
     /// For a rotation in the default direction, when looking at the front of the cube, the top row ends up at the left side.
     Z(Vec<i32>),
+}
+
+impl FaceRotation {
+    pub fn random(cube: &Cube) -> Self {
+        let mut rng = rand::thread_rng();
+
+        let slice = rng.gen_range(cube.lowest_piece_index()..=cube.highest_piece_index());
+        let axis = rng.gen_range(0..=2);
+
+        if axis == 0 {
+            Self::X(vec![slice])
+        } else if axis == 1 {
+            Self::Y(vec![slice])
+        } else {
+            Self::Z(vec![slice])
+        }
+    }
 }
 
 /// Rotate the whole cube on a given axis. This also changes which faces gets rotated for FaceRotation events.

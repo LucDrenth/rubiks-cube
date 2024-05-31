@@ -1,4 +1,4 @@
-- Handle other sizes than 3x3
+- Handle even sizes (2x2, 4x4, 6x6 etc.)
 - Animated rotations
 - Implement scrambling algorithm
 - Implement solving algorithms
