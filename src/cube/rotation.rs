@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::schedules::CubeScheduleSet;
 
-use super::cube::{Cube, Piece, PieceFace, BLOCKS_SPREAD, CUBE_SIZE};
+use super::cube::{Cube, Piece, PieceFace};
 
 pub struct CubeRotationPlugin;
 
@@ -17,6 +17,7 @@ impl Plugin for CubeRotationPlugin {
     }
 }
 
+// TODO add Option<Animation> property
 #[derive(Event, Clone, Debug)]
 pub struct CubeRotationEvent {
     pub rotation: Rotation,
@@ -59,13 +60,13 @@ pub enum CubeRotation {
 }
 
 fn rotation_events_handler(
-    mut cube_query: Query<&mut Cube>,
+    cube_query: Query<&Cube>,
     mut cube_pieces_query: Query<&mut Piece>,
     cube_transform_query: Query<&Transform, (With<Cube>, Without<PieceFace>)>,
     mut faces_query: Query<&mut Transform, With<PieceFace>>,
     mut event_reader: EventReader<CubeRotationEvent>,
 ) {
-    let Ok(mut cube) = cube_query.get_single_mut() else {
+    let Ok(cube) = cube_query.get_single() else {
         error!("expected exactly 1 Cube entity");
         return;
     };
@@ -100,7 +101,7 @@ fn rotation_events_handler(
         match &cube_rotation_event.rotation {
             Rotation::Face(face_rotation) => {
                 let pivot_coordinate = |slice: &i32| {
-                    return *slice as f32 * (CUBE_SIZE as f32 + BLOCKS_SPREAD);
+                    return *slice as f32 * (cube.size() as f32 + cube.piece_spread);
                 };
 
                 match face_rotation {

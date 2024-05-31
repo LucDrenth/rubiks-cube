@@ -4,14 +4,6 @@ use bevy::prelude::*;
 
 use super::{controller::ControllerPlugin, rotation::CubeRotationPlugin};
 
-pub const BLOCKS_SPREAD: f32 = 0.05;
-pub const BLOCKS_SIZE: f32 = 1.0;
-pub const CUBE_SIZE: u32 = 3; // 3 for 3x3, 6 for 6x6 etc
-
-const COLOR_INSIDE_R: f32 = 0.1;
-const COLOR_INSIDE_G: f32 = 0.1;
-const COLOR_INSIDE_B: f32 = 0.1;
-
 pub struct CubePlugin;
 
 impl Plugin for CubePlugin {
@@ -19,6 +11,30 @@ impl Plugin for CubePlugin {
         app.add_plugins(ControllerPlugin)
             .add_plugins(CubeRotationPlugin)
             .add_systems(Startup, spawn_cube);
+    }
+}
+
+#[derive(Component, Debug)]
+pub struct Cube {
+    size: i32,             // For example 3 for 3x3
+    pub piece_spread: f32, // The size of the gap between the pieces
+    block_size: f32,
+    inner_material: Handle<StandardMaterial>,
+}
+
+impl Cube {
+    pub fn size(&self) -> i32 {
+        self.size
+    }
+
+    fn lowest_piece_index(&self) -> i32 {
+        // TODO this only holds for 3x3
+        -1
+    }
+
+    fn highest_piece_index(&self) -> i32 {
+        // TODO this only holds for 3x3
+        1
     }
 }
 
@@ -65,9 +81,6 @@ impl Piece {
     }
 }
 
-#[derive(Component, Debug)]
-pub struct Cube {}
-
 #[derive(Component)]
 pub struct PieceFace;
 
@@ -85,38 +98,41 @@ fn spawn_cube(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let cube = Cube {};
+    let cube = Cube {
+        size: 3,
+        piece_spread: 0.05,
+        block_size: 1.0,
+        inner_material: materials.add(Color::rgb(0.1, 0.1, 0.1)),
+    };
 
     let piece_face_mesh = meshes.add(Rectangle {
-        half_size: Vec2::ONE * BLOCKS_SIZE / 2.0,
+        half_size: Vec2::ONE * cube.block_size / 2.0,
     });
 
-    if CUBE_SIZE < 2 {
-        panic!("Invalid cube size {}", CUBE_SIZE)
+    if cube.size < 2 {
+        panic!("Invalid cube size {}", cube.size)
     }
 
     let mut offset = 0.0;
 
-    let range = if CUBE_SIZE % 2 == 1 {
-        -(CUBE_SIZE as i32 - 1) / 2..=(CUBE_SIZE as i32 - 1) / 2
+    let range = if cube.size % 2 == 1 {
+        -(cube.size as i32 - 1) / 2..=(cube.size as i32 - 1) / 2
     } else {
-        offset = BLOCKS_SIZE / 2.0;
-        -(CUBE_SIZE as i32 / 2) + 1..=CUBE_SIZE as i32 / 2
+        offset = cube.block_size / 2.0;
+        -(cube.size as i32 / 2) + 1..=cube.size as i32 / 2
     };
 
-    let spread_factor = 1.0 + BLOCKS_SPREAD;
-    let face_offset = BLOCKS_SIZE / 2.0;
-
-    let color_inside = Color::rgb(COLOR_INSIDE_R, COLOR_INSIDE_G, COLOR_INSIDE_B);
+    let spread_factor = 1.0 + cube.piece_spread;
+    let face_offset = cube.block_size / 2.0;
 
     for x in range.clone() {
         for y in range.clone() {
             for z in range.clone() {
                 // The middle point of the cube piece
                 let middle_point = Vec3::new(
-                    x as f32 * BLOCKS_SIZE - offset,
-                    y as f32 * BLOCKS_SIZE - offset,
-                    z as f32 * BLOCKS_SIZE - offset,
+                    x as f32 * cube.block_size - offset,
+                    y as f32 * cube.block_size - offset,
+                    z as f32 * cube.block_size - offset,
                 ) * spread_factor;
 
                 // left
@@ -124,11 +140,10 @@ fn spawn_cube(
                     Transform::from_translation(middle_point - Vec3::new(face_offset, 0.0, 0.0));
                 transform.rotate_local_y(-TAU / 4.0);
 
-                // TODO this will only hold for 3x3
-                let color = if x == -1 {
-                    Color::rgb(0.99, 0.49, 0.05) // orange
+                let material = if x == cube.lowest_piece_index() {
+                    materials.add(Color::rgb(0.99, 0.49, 0.05)) // orange
                 } else {
-                    color_inside
+                    cube.inner_material.clone()
                 };
 
                 let face_left = commands
@@ -136,10 +151,7 @@ fn spawn_cube(
                         PbrBundle {
                             mesh: piece_face_mesh.clone(),
                             transform: transform,
-                            material: materials.add(StandardMaterial {
-                                base_color: color,
-                                ..default()
-                            }),
+                            material: material,
                             ..default()
                         },
                         PieceFace,
@@ -151,10 +163,10 @@ fn spawn_cube(
                     Transform::from_translation(middle_point + Vec3::new(face_offset, 0.0, 0.0));
 
                 // TODO this will only hold for 3x3
-                let color = if x == 1 {
-                    Color::rgb(0.99, 0.0, 0.0) // red
+                let material = if x == cube.highest_piece_index() {
+                    materials.add(Color::rgb(0.99, 0.0, 0.0)) // red
                 } else {
-                    color_inside
+                    cube.inner_material.clone()
                 };
 
                 transform.rotate_local_y(TAU / 4.0);
@@ -163,10 +175,7 @@ fn spawn_cube(
                         PbrBundle {
                             mesh: piece_face_mesh.clone(),
                             transform: transform,
-                            material: materials.add(StandardMaterial {
-                                base_color: color,
-                                ..default()
-                            }),
+                            material: material,
                             ..default()
                         },
                         PieceFace,
@@ -179,10 +188,10 @@ fn spawn_cube(
                 transform.rotate_x(-TAU / 4.0);
 
                 // TODO this will only hold for 3x3
-                let color = if y == 1 {
-                    Color::rgb(0.99, 0.99, 0.99) // white
+                let material = if y == cube.highest_piece_index() {
+                    materials.add(Color::rgb(0.99, 0.99, 0.99)) // white
                 } else {
-                    color_inside
+                    cube.inner_material.clone()
                 };
 
                 let face_top = commands
@@ -190,10 +199,7 @@ fn spawn_cube(
                         PbrBundle {
                             mesh: piece_face_mesh.clone(),
                             transform: transform,
-                            material: materials.add(StandardMaterial {
-                                base_color: color,
-                                ..default()
-                            }),
+                            material: material,
                             ..default()
                         },
                         PieceFace,
@@ -206,10 +212,10 @@ fn spawn_cube(
                 transform.rotate_x(TAU / 4.0);
 
                 // TODO this will only hold for 3x3
-                let color = if y == -1 {
-                    Color::rgb(0.99, 0.99, 0.0) // yellow
+                let material = if y == cube.lowest_piece_index() {
+                    materials.add(Color::rgb(0.99, 0.99, 0.0)) // yellow
                 } else {
-                    color_inside
+                    cube.inner_material.clone()
                 };
 
                 let face_bottom = commands
@@ -217,10 +223,7 @@ fn spawn_cube(
                         PbrBundle {
                             mesh: piece_face_mesh.clone(),
                             transform: transform,
-                            material: materials.add(StandardMaterial {
-                                base_color: color,
-                                ..default()
-                            }),
+                            material: material,
                             ..default()
                         },
                         PieceFace,
@@ -229,10 +232,11 @@ fn spawn_cube(
 
                 // front
                 // TODO this will only hold for 3x3
-                let color = if z == 1 {
-                    Color::rgb(7.0 / 255.0, 227.0 / 255.0, 55.0 / 255.0) // green
+                let material = if z == cube.highest_piece_index() {
+                    materials.add(Color::rgb(7.0 / 255.0, 227.0 / 255.0, 55.0 / 255.0))
+                // green
                 } else {
-                    color_inside
+                    cube.inner_material.clone()
                 };
 
                 let face_front = commands
@@ -242,10 +246,7 @@ fn spawn_cube(
                             transform: Transform::from_translation(
                                 middle_point + Vec3::new(0.0, 0.0, face_offset),
                             ),
-                            material: materials.add(StandardMaterial {
-                                base_color: color,
-                                ..default()
-                            }),
+                            material: material,
                             ..default()
                         },
                         PieceFace,
@@ -258,10 +259,10 @@ fn spawn_cube(
                 transform.rotate_local_y(-TAU / 2.0);
 
                 // TODO this will only hold for 3x3
-                let color = if z == -1 {
-                    Color::rgb(0.0, 0.0, 0.99) // blue
+                let material = if z == cube.lowest_piece_index() {
+                    materials.add(Color::rgb(0.0, 0.0, 0.99)) // blue
                 } else {
-                    color_inside
+                    cube.inner_material.clone()
                 };
 
                 let face_back = commands
@@ -269,10 +270,7 @@ fn spawn_cube(
                         PbrBundle {
                             mesh: piece_face_mesh.clone(),
                             transform: transform,
-                            material: materials.add(StandardMaterial {
-                                base_color: color,
-                                ..default()
-                            }),
+                            material: material,
                             ..default()
                         },
                         PieceFace,
