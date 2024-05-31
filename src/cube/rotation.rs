@@ -10,9 +10,10 @@ pub struct CubeRotationPlugin;
 
 impl Plugin for CubeRotationPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<CubeRotationEvent>().add_systems(Update, rotation_events_handler.in_set(CubeScheduleSet::HandleEvents))
-        // .add_systems(Update, smoothly_rotate_whole_cube.in_set(CubeScheduleSet::UpdateAnimations))
-        ;
+        app.add_event::<CubeRotationEvent>().add_systems(
+            Update,
+            rotation_events_handler.in_set(CubeScheduleSet::HandleEvents),
+        );
     }
 }
 
@@ -55,19 +56,6 @@ pub enum CubeRotation {
     /// Move the whole cube on the z axis.
     /// For the default direction, when looking at the front of the cube, the top row ends up at the left side.
     Z,
-}
-
-/// TODO this does not work together with the rotation events
-fn smoothly_rotate_whole_cube(
-    mut query: Query<&mut Transform, Or<(With<PieceFace>, With<Cube>)>>,
-    time: Res<Time>,
-) {
-    for mut transform in &mut query {
-        transform.rotate_around(
-            Vec3::ZERO,
-            Quat::from_rotation_y(time.delta_seconds() / 1.5),
-        );
-    }
 }
 
 fn rotation_events_handler(

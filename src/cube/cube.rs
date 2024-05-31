@@ -22,7 +22,6 @@ impl Plugin for CubePlugin {
     }
 }
 
-/// TODO convert x, y, z to a Vec3
 #[derive(Component, Debug)]
 pub struct Piece {
     pub faces: [Entity; 6],
