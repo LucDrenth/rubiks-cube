@@ -1,4 +1,3 @@
-- Move cube configs to a struct instead of having them as const values
 - Handle other sizes than 3x3
 - Animated rotations
 - Implement scrambling algorithm
