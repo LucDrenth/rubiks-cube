@@ -69,7 +69,22 @@ impl FaceRotation {
     pub fn random(cube: &Cube) -> Self {
         let mut rng = rand::thread_rng();
 
-        let slice = rng.gen_range(cube.lowest_piece_index()..=cube.highest_piece_index());
+        let slice = if cube.size() % 2 == 1 {
+            rng.gen_range(cube.lowest_piece_index()..=cube.highest_piece_index())
+        } else {
+            let mut result = if cube.size() == 2 {
+                1
+            } else {
+                rng.gen_range(1..(cube.size() / 2))
+            };
+            let negative = rng.gen_range(0..=1);
+
+            if negative == 0 {
+                result *= -1
+            }
+
+            result
+        };
         let axis = rng.gen_range(0..=2);
 
         if axis == 0 {
@@ -144,6 +159,11 @@ fn rotation_events_handler(
                 match face_rotation {
                     FaceRotation::X(slices) => {
                         for slice in slices {
+                            if cube.size() % 2 == 0 && *slice == 0 {
+                                warn!("Cube can not rotate slice with index 0 for even cubes");
+                                continue;
+                            }
+
                             let pivot_point = Vec3::new(pivot_coordinate(slice), 0.0, 0.0);
                             let cubes_indices_to_rotate = Piece::get_piece_indices_with_coords(
                                 &cube_pieces,
@@ -198,6 +218,11 @@ fn rotation_events_handler(
                     }
                     FaceRotation::Y(slices) => {
                         for slice in slices {
+                            if cube.size() % 2 == 0 && *slice == 0 {
+                                warn!("Cube can not rotate slice with index 0 for even cubes");
+                                continue;
+                            }
+
                             let pivot_point = Vec3::new(0.0, pivot_coordinate(slice), 0.0);
                             let cubes_indices_to_rotate = Piece::get_piece_indices_with_coords(
                                 &cube_pieces,
@@ -252,6 +277,11 @@ fn rotation_events_handler(
                     }
                     FaceRotation::Z(slices) => {
                         for slice in slices {
+                            if cube.size() % 2 == 0 && *slice == 0 {
+                                warn!("Cube can not rotate slice with index 0 for even cubes");
+                                continue;
+                            }
+
                             let pivot_point = Vec3::new(0.0, 0.0, pivot_coordinate(slice));
                             let cubes_indices_to_rotate = Piece::get_piece_indices_with_coords(
                                 &cube_pieces,

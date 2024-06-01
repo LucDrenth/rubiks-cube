@@ -31,7 +31,7 @@ impl Cube {
         if self.size % 2 == 1 {
             -(self.size as i32 - 1) / 2
         } else {
-            -(self.size as i32 / 2) + 1
+            -self.size as i32 / 2
         }
     }
 
@@ -105,7 +105,7 @@ fn spawn_cube(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let cube = Cube {
-        size: 3,
+        size: 4,
         piece_spread: 0.05,
         block_size: 1.0,
         inner_material: materials.add(Color::rgb(0.1, 0.1, 0.1)),
@@ -119,12 +119,6 @@ fn spawn_cube(
         panic!("Invalid cube size {}", cube.size)
     }
 
-    let offset = if cube.size % 2 == 0 {
-        cube.block_size / 2.0
-    } else {
-        0.0
-    };
-
     let range = cube.lowest_piece_index()..=cube.highest_piece_index();
 
     let spread_factor = 1.0 + cube.piece_spread;
@@ -133,12 +127,45 @@ fn spawn_cube(
     for x in range.clone() {
         for y in range.clone() {
             for z in range.clone() {
+                if cube.size() % 2 == 0 && (x == 0 || y == 0 || z == 0) {
+                    continue;
+                }
+
                 // The middle point of the cube piece
-                let middle_point = Vec3::new(
-                    x as f32 * cube.block_size - offset,
-                    y as f32 * cube.block_size - offset,
-                    z as f32 * cube.block_size - offset,
-                ) * spread_factor;
+                let mut middle_point = if cube.size() % 2 == 0 {
+                    let mut result = Vec3::new(
+                        x as f32 * cube.block_size,
+                        y as f32 * cube.block_size,
+                        z as f32 * cube.block_size,
+                    );
+
+                    if x < 0 {
+                        result.x += cube.block_size / 2.0;
+                    } else {
+                        result.x -= cube.block_size / 2.0;
+                    }
+
+                    if y < 0 {
+                        result.y += cube.block_size / 2.0;
+                    } else {
+                        result.y -= cube.block_size / 2.0;
+                    }
+
+                    if z < 0 {
+                        result.z += cube.block_size / 2.0;
+                    } else {
+                        result.z -= cube.block_size / 2.0;
+                    }
+
+                    result
+                } else {
+                    Vec3::new(
+                        x as f32 * cube.block_size,
+                        y as f32 * cube.block_size,
+                        z as f32 * cube.block_size,
+                    )
+                };
+                middle_point *= spread_factor;
 
                 // left
                 let mut transform =
