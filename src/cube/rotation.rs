@@ -172,6 +172,10 @@ fn rotation_events_handler(
     let mut cube_pieces: Vec<Mut<Piece>> = cube_pieces_query.iter_mut().collect();
 
     for cube_rotation_event in event_reader.read() {
+        if cube.is_animating_rotation {
+            continue;
+        }
+
         let mut rotation_amount = TAU / 4.0;
 
         if cube_rotation_event.twice {
