@@ -2,9 +2,7 @@ use bevy::prelude::*;
 
 use crate::schedules::CubeScheduleSet;
 
-use super::{
-    cube::Cube, rotation::RotationAnimation, CubeRotation, CubeRotationEvent, Rotation3x3,
-};
+use super::{cube::Cube, rotation::RotationAnimation, CubeRotationEvent, Rotation3x3};
 
 pub struct ControllerPlugin;
 
