@@ -5,16 +5,55 @@ use rand::Rng;
 
 use crate::schedules::CubeScheduleSet;
 
-use super::cube::{Cube, Piece, PieceFace};
+use super::{
+    axis::Axis,
+    cube::{Cube, Piece, PieceFace},
+};
 
 pub struct CubeRotationPlugin;
 
 impl Plugin for CubeRotationPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<CubeRotationEvent>().add_systems(
-            Update,
-            rotation_events_handler.in_set(CubeScheduleSet::HandleEvents),
-        );
+        app.add_event::<CubeRotationEvent>()
+            .add_systems(
+                Update,
+                rotation_events_handler.in_set(CubeScheduleSet::HandleEvents),
+            )
+            .add_systems(
+                Update,
+                handle_rotation_animations.in_set(CubeScheduleSet::UpdateAnimations),
+            );
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct RotationAnimation {
+    pub duration_in_seconds: f32,
+}
+
+#[derive(Component)]
+struct RotationAnimator {
+    progress: f32,
+    duration_in_seconds: f32,
+    amount_to_rotate: f32, // in radians
+    axis: Axis,
+    pivot_point: Vec3,
+}
+
+impl RotationAnimator {
+    fn new(
+        animation: &RotationAnimation,
+        amount_to_rotate: f32,
+        axis: Axis,
+        pivot_point: Vec3,
+    ) -> Self {
+        Self {
+            progress: 0.0,
+            duration_in_seconds: animation.duration_in_seconds,
+            amount_to_rotate,
+            axis,
+            pivot_point,
+        }
     }
 }
 
@@ -24,6 +63,7 @@ pub struct CubeRotationEvent {
     pub rotation: Rotation,
     pub negative_direction: bool,
     pub twice: bool,
+    pub animation: Option<RotationAnimation>,
 }
 
 impl CubeRotationEvent {
@@ -41,6 +81,7 @@ impl CubeRotationEvent {
             rotation: Rotation::Face(face_rotation),
             negative_direction: direction,
             twice: false,
+            animation: None,
         }
     }
 }
@@ -112,13 +153,14 @@ pub enum CubeRotation {
 }
 
 fn rotation_events_handler(
-    cube_query: Query<&Cube>,
+    mut commands: Commands,
+    mut cube_query: Query<&mut Cube>,
     mut cube_pieces_query: Query<&mut Piece>,
     cube_transform_query: Query<&Transform, (With<Cube>, Without<PieceFace>)>,
     mut faces_query: Query<&mut Transform, With<PieceFace>>,
     mut event_reader: EventReader<CubeRotationEvent>,
 ) {
-    let Ok(cube) = cube_query.get_single() else {
+    let Ok(mut cube) = cube_query.get_single_mut() else {
         error!("expected exactly 1 Cube entity");
         return;
     };
@@ -129,19 +171,9 @@ fn rotation_events_handler(
 
     let mut cube_pieces: Vec<Mut<Piece>> = cube_pieces_query.iter_mut().collect();
 
-    let mut rotation_amount = TAU / 4.0;
-
-    let mut rotate_face =
-        |face: Entity, pivot_point: Vec3, rotation: Quat| match faces_query.get_mut(face) {
-            Ok(mut transform) => {
-                transform.rotate_around(pivot_point, rotation);
-            }
-            Err(err) => {
-                error!("failed to get cube face: {}", err);
-            }
-        };
-
     for cube_rotation_event in event_reader.read() {
+        let mut rotation_amount = TAU / 4.0;
+
         if cube_rotation_event.twice {
             rotation_amount *= 2.;
         }
@@ -152,8 +184,10 @@ fn rotation_events_handler(
 
         match &cube_rotation_event.rotation {
             Rotation::Face(face_rotation) => {
+                let cube_size = cube.size() as f32;
+                let cube_piece_spread = cube.piece_spread;
                 let pivot_coordinate = |slice: &i32| {
-                    return *slice as f32 * (cube.size() as f32 + cube.piece_spread);
+                    return *slice as f32 * (cube_size + cube_piece_spread);
                 };
 
                 match face_rotation {
@@ -176,9 +210,14 @@ fn rotation_events_handler(
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
                                 for face in cube_pieces[*cube_index_to_rotate].faces {
                                     rotate_face(
+                                        &mut commands,
+                                        &mut faces_query,
+                                        &mut cube,
                                         face,
                                         pivot_point,
-                                        Quat::from_rotation_x(rotation_amount),
+                                        &cube_rotation_event.animation,
+                                        Axis::X,
+                                        rotation_amount,
                                     );
                                 }
                             }
@@ -235,9 +274,14 @@ fn rotation_events_handler(
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
                                 for face in cube_pieces[*cube_index_to_rotate].faces {
                                     rotate_face(
+                                        &mut commands,
+                                        &mut faces_query,
+                                        &mut cube,
                                         face,
                                         pivot_point,
-                                        Quat::from_rotation_y(rotation_amount),
+                                        &cube_rotation_event.animation,
+                                        Axis::Y,
+                                        rotation_amount,
                                     );
                                 }
                             }
@@ -294,9 +338,14 @@ fn rotation_events_handler(
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
                                 for face in cube_pieces[*cube_index_to_rotate].faces {
                                     rotate_face(
+                                        &mut commands,
+                                        &mut faces_query,
+                                        &mut cube,
                                         face,
                                         pivot_point,
-                                        Quat::from_rotation_z(rotation_amount),
+                                        &cube_rotation_event.animation,
+                                        Axis::Z,
+                                        rotation_amount,
                                     );
                                 }
                             }
@@ -342,9 +391,14 @@ fn rotation_events_handler(
                         // Rotate faces
                         for face in piece.faces {
                             rotate_face(
+                                &mut commands,
+                                &mut faces_query,
+                                &mut cube,
                                 face,
                                 cube_transform.translation,
-                                Quat::from_rotation_x(rotation_amount),
+                                &cube_rotation_event.animation,
+                                Axis::X,
+                                rotation_amount,
                             );
                         }
 
@@ -372,9 +426,14 @@ fn rotation_events_handler(
                         // Rotate faces
                         for face in piece.faces {
                             rotate_face(
+                                &mut commands,
+                                &mut faces_query,
+                                &mut cube,
                                 face,
                                 cube_transform.translation,
-                                Quat::from_rotation_y(rotation_amount),
+                                &cube_rotation_event.animation,
+                                Axis::Y,
+                                rotation_amount,
                             );
                         }
 
@@ -402,9 +461,14 @@ fn rotation_events_handler(
                         // Rotate faces
                         for face in piece.faces {
                             rotate_face(
+                                &mut commands,
+                                &mut faces_query,
+                                &mut cube,
                                 face,
                                 cube_transform.translation,
-                                Quat::from_rotation_z(rotation_amount),
+                                &cube_rotation_event.animation,
+                                Axis::Z,
+                                rotation_amount,
                             );
                         }
 
@@ -428,6 +492,72 @@ fn rotation_events_handler(
                     }
                 }
             },
+        }
+    }
+}
+
+fn rotate_face(
+    commands: &mut Commands,
+    faces_query: &mut Query<&mut Transform, With<PieceFace>>,
+    cube: &mut Cube,
+    face: Entity,
+    pivot_point: Vec3,
+    animation: &Option<RotationAnimation>,
+    axis: Axis,
+    rotation_amount: f32,
+) {
+    let Ok(mut transform) = faces_query.get_mut(face) else {
+        error!("failed to get cube face transform for rotating");
+        return;
+    };
+
+    match animation {
+        Some(animation_properties) => {
+            let animator =
+                RotationAnimator::new(animation_properties, rotation_amount, axis, pivot_point);
+            commands.entity(face).insert(animator);
+
+            cube.is_animating_rotation = true;
+        }
+        None => {
+            let rotation = match axis {
+                Axis::X => Quat::from_rotation_x(rotation_amount),
+                Axis::Y => Quat::from_rotation_y(rotation_amount),
+                Axis::Z => Quat::from_rotation_z(rotation_amount),
+            };
+            transform.rotate_around(pivot_point, rotation);
+        }
+    };
+}
+
+fn handle_rotation_animations(
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Transform, &mut RotationAnimator)>,
+    mut cube_query: Query<&mut Cube>,
+    time: Res<Time>,
+) {
+    for (entity, mut transform, mut animation) in query.iter_mut() {
+        let mut progress = time.delta_seconds() / animation.duration_in_seconds;
+        animation.progress += progress;
+
+        // prevent overshooting the target
+        if animation.progress >= 1.0 {
+            progress -= animation.progress - 1.0;
+            animation.progress = 1.0;
+        }
+
+        let angle = animation.amount_to_rotate * progress;
+        let rotation = match animation.axis {
+            Axis::X => Quat::from_rotation_x(angle),
+            Axis::Y => Quat::from_rotation_y(angle),
+            Axis::Z => Quat::from_rotation_z(angle),
+        };
+
+        transform.rotate_around(animation.pivot_point, rotation);
+
+        if animation.progress >= 1.0 {
+            commands.entity(entity).remove::<RotationAnimator>();
+            cube_query.get_single_mut().unwrap().is_animating_rotation = false;
         }
     }
 }

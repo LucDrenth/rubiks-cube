@@ -8,3 +8,5 @@ pub use cubing_notation_rotations::*;
 
 mod rotation;
 pub use rotation::CubeRotationEvent;
+
+mod axis;

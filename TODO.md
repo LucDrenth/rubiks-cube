@@ -1,3 +1,2 @@
-- Animated rotations
-- Implement scrambling algorithm
+- Button or keypress to do a scrambling sequence (of x rotations). Scrambling sequence should not contain any rotation that negates the previous rotation (such as `[L, LPrime]`).
 - Implement solving algorithms

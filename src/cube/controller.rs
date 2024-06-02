@@ -2,7 +2,9 @@ use bevy::prelude::*;
 
 use crate::schedules::CubeScheduleSet;
 
-use super::{cube::Cube, CubeRotationEvent, Rotation3x3};
+use super::{
+    cube::Cube, rotation::RotationAnimation, CubeRotation, CubeRotationEvent, Rotation3x3,
+};
 
 pub struct ControllerPlugin;
 
@@ -36,18 +38,17 @@ impl RotationStepper {
 }
 
 fn init_stepper(mut commands: Commands) {
-    commands.spawn(RotationStepper {
-        steps: vec![
-            Rotation3x3::U,
-            Rotation3x3::R,
-            Rotation3x3::UPrime,
-            Rotation3x3::RPrime,
-        ]
-        .iter()
-        .map(|e| e.into())
-        .collect(),
-        current: 0,
-    });
+    let steps: Vec<CubeRotationEvent> = vec![
+        Rotation3x3::U,
+        Rotation3x3::R,
+        Rotation3x3::UPrime,
+        Rotation3x3::RPrime,
+    ]
+    .iter()
+    .map(|e| e.into())
+    .collect();
+
+    commands.spawn(RotationStepper { steps, current: 0 });
 }
 
 fn random_face_rotation_on_tab(
@@ -55,7 +56,7 @@ fn random_face_rotation_on_tab(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut event_writer: EventWriter<CubeRotationEvent>,
 ) {
-    if !keyboard_input.just_pressed(KeyCode::Tab) {
+    if !keyboard_input.pressed(KeyCode::Tab) {
         return;
     }
 
@@ -64,19 +65,42 @@ fn random_face_rotation_on_tab(
         return;
     };
 
-    event_writer.send(CubeRotationEvent::random_face_rotation(cube));
-}
-
-fn spacebar_stepper_handler(
-    mut query: Query<&mut RotationStepper>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut event_writer: EventWriter<CubeRotationEvent>,
-) {
-    let mut stepper = query.get_single_mut().unwrap();
-
-    if !keyboard_input.just_pressed(KeyCode::Space) {
+    if cube.is_animating_rotation {
         return;
     }
 
-    event_writer.send(stepper.step());
+    let mut rotation_event = CubeRotationEvent::random_face_rotation(cube);
+    rotation_event.animation = Some(RotationAnimation {
+        duration_in_seconds: 0.15,
+    });
+
+    event_writer.send(rotation_event);
+}
+
+fn spacebar_stepper_handler(
+    mut stepper_query: Query<&mut RotationStepper>,
+    cube_query: Query<&Cube>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut event_writer: EventWriter<CubeRotationEvent>,
+) {
+    if !keyboard_input.pressed(KeyCode::Space) {
+        return;
+    }
+
+    let Ok(cube) = cube_query.get_single() else {
+        error!("expected exactly 1 Cube component");
+        return;
+    };
+
+    if cube.is_animating_rotation {
+        return;
+    }
+
+    let mut stepper = stepper_query.get_single_mut().unwrap();
+
+    let mut rotation_event = stepper.step();
+    rotation_event.animation = Some(RotationAnimation {
+        duration_in_seconds: 0.25,
+    });
+    event_writer.send(rotation_event);
 }

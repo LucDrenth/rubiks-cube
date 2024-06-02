@@ -20,6 +20,7 @@ pub struct Cube {
     pub piece_spread: f32, // The size of the gap between the pieces
     block_size: f32,
     inner_material: Handle<StandardMaterial>,
+    pub is_animating_rotation: bool,
 }
 
 impl Cube {
@@ -105,10 +106,11 @@ fn spawn_cube(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let cube = Cube {
-        size: 4,
+        size: 3,
         piece_spread: 0.05,
         block_size: 1.0,
         inner_material: materials.add(Color::rgb(0.1, 0.1, 0.1)),
+        is_animating_rotation: false,
     };
 
     let piece_face_mesh = meshes.add(Rectangle {
