@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use camera::CameraPlugin;
 use cube::CubePlugin;
+use schedules::SchedulesPlugin;
 
 mod camera;
 mod cube;
@@ -11,6 +12,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(CameraPlugin)
         .add_plugins(CubePlugin)
+        .add_plugins(SchedulesPlugin)
         .add_systems(Startup, spawn_light)
         .run();
 }
