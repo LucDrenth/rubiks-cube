@@ -57,7 +57,6 @@ impl RotationAnimator {
     }
 }
 
-// TODO add Option<Animation> property
 #[derive(Event, Clone, Debug)]
 pub struct CubeRotationEvent {
     pub rotation: Rotation,
@@ -84,16 +83,33 @@ impl CubeRotationEvent {
             animation: None,
         }
     }
+
+    /// check wether the given event negates (undoes) self
+    pub fn negates(&self, event: &Self) -> bool {
+        if self.rotation != event.rotation {
+            return false;
+        }
+
+        if self.twice != event.twice {
+            return false;
+        }
+
+        if self.negative_direction != event.negative_direction {
+            return true;
+        }
+
+        return false;
+    }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Rotation {
     Face(FaceRotation),
     Cube(CubeRotation),
 }
 
 /// Rotate the given faces (e.g. slices) of the cube on a given axis. This is relative to the current cube rotation.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum FaceRotation {
     /// Rotate the given slices of the x axis.
     /// For a rotation in the default direction, when looking at the front of the cube, the front row ends up at the bottom.
@@ -139,7 +155,7 @@ impl FaceRotation {
 }
 
 /// Rotate the whole cube on a given axis. This also changes which faces gets rotated for FaceRotation events.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum CubeRotation {
     /// Move the whole cube on the x axis.
     /// For the default direction, when looking at the front of the cube, the front face ends up at the bottom.
@@ -563,5 +579,41 @@ fn handle_rotation_animations(
             commands.entity(entity).remove::<RotationAnimator>();
             cube_query.get_single_mut().unwrap().is_animating_rotation = false;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{CubeRotationEvent, FaceRotation, Rotation};
+
+    #[test]
+    fn cube_rotation_event_negates() {
+        let rotation_event = CubeRotationEvent {
+            rotation: Rotation::Face(FaceRotation::X(vec![-1])),
+            negative_direction: true,
+            twice: false,
+            animation: None,
+        };
+
+        assert_eq!(rotation_event.negates(&rotation_event), false);
+
+        let negating_event = CubeRotationEvent {
+            rotation: Rotation::Face(FaceRotation::X(vec![-1])),
+            negative_direction: false,
+            twice: false,
+            animation: None,
+        };
+
+        assert!(negating_event.negates(&rotation_event));
+
+        // it does not negate because its on a different axis
+        let non_negating_event = CubeRotationEvent {
+            rotation: Rotation::Face(FaceRotation::Y(vec![-1])),
+            negative_direction: false,
+            twice: false,
+            animation: None,
+        };
+
+        assert_eq!(non_negating_event.negates(&rotation_event), false);
     }
 }

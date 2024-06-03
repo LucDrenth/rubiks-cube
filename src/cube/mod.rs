@@ -10,3 +10,6 @@ mod rotation;
 pub use rotation::CubeRotationEvent;
 
 mod axis;
+
+mod scramble;
+pub use scramble::create_scramble_sequence;
