@@ -2,7 +2,11 @@ use bevy::prelude::*;
 
 use crate::schedules::CubeScheduleSet;
 
-use super::{cube::Cube, rotation::RotationAnimation, CubeRotationEvent, Rotation3x3};
+use super::{
+    cube::{Cube, Piece},
+    rotation::RotationAnimation,
+    CubeRotationEvent, Rotation3x3,
+};
 
 pub struct ControllerPlugin;
 
@@ -10,7 +14,11 @@ impl Plugin for ControllerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, init_stepper).add_systems(
             Update,
-            (spacebar_stepper_handler, random_face_rotation_on_tab)
+            (
+                spacebar_stepper_handler,
+                random_face_rotation_on_tab,
+                check_solved_on_enter,
+            )
                 .in_set(CubeScheduleSet::HandleUserInput),
         );
     }
@@ -37,12 +45,29 @@ impl RotationStepper {
 
 fn init_stepper(mut commands: Commands) {
     let steps: Vec<CubeRotationEvent> = vec![
-        Rotation3x3::U,
-        Rotation3x3::R,
+        // Rotation3x3::U,
+        // Rotation3x3::R,
+        // Rotation3x3::UPrime,
+        // Rotation3x3::RPrime,
+        Rotation3x3::B2,
+        Rotation3x3::R2,
         Rotation3x3::UPrime,
+        Rotation3x3::B2,
+        Rotation3x3::L2,
+        Rotation3x3::F2,
+        Rotation3x3::D2,
+        Rotation3x3::R2,
+        Rotation3x3::DPrime,
+        Rotation3x3::L,
         Rotation3x3::RPrime,
+        Rotation3x3::F,
+        Rotation3x3::R2,
+        Rotation3x3::F,
+        Rotation3x3::L,
+        Rotation3x3::R,
     ]
     .iter()
+    .rev()
     .map(|e| e.into())
     .collect();
 
@@ -94,6 +119,18 @@ fn random_face_rotation_on_tab(
         duration_in_seconds: 0.15,
     });
     event_writer.send(rotation_event);
+}
+
+fn check_solved_on_enter(pieces_query: Query<&Piece>, keyboard_input: Res<ButtonInput<KeyCode>>) {
+    if !keyboard_input.just_pressed(KeyCode::Enter) {
+        return;
+    }
+
+    if Cube::is_solved(pieces_query) {
+        info!("Cube is solved");
+    } else {
+        info!("Cube is not solved");
+    }
 }
 
 fn spacebar_stepper_handler(

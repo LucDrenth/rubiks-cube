@@ -249,29 +249,29 @@ fn rotation_events_handler(
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
                                 if cube_rotation_event.twice {
                                     new_pieces_coordinates.push((
-                                        cube_pieces[*cube_index_to_rotate].x,
-                                        cube_pieces[*cube_index_to_rotate].y * -1,
-                                        cube_pieces[*cube_index_to_rotate].z * -1,
+                                        cube_pieces[*cube_index_to_rotate].current_x,
+                                        cube_pieces[*cube_index_to_rotate].current_y * -1,
+                                        cube_pieces[*cube_index_to_rotate].current_z * -1,
                                     ));
                                 } else if cube_rotation_event.negative_direction {
                                     new_pieces_coordinates.push((
-                                        cube_pieces[*cube_index_to_rotate].x,
-                                        cube_pieces[*cube_index_to_rotate].z,
-                                        cube_pieces[*cube_index_to_rotate].y * -1,
+                                        cube_pieces[*cube_index_to_rotate].current_x,
+                                        cube_pieces[*cube_index_to_rotate].current_z,
+                                        cube_pieces[*cube_index_to_rotate].current_y * -1,
                                     ));
                                 } else {
                                     new_pieces_coordinates.push((
-                                        cube_pieces[*cube_index_to_rotate].x,
-                                        cube_pieces[*cube_index_to_rotate].z * -1,
-                                        cube_pieces[*cube_index_to_rotate].y,
+                                        cube_pieces[*cube_index_to_rotate].current_x,
+                                        cube_pieces[*cube_index_to_rotate].current_z * -1,
+                                        cube_pieces[*cube_index_to_rotate].current_y,
                                     ));
                                 }
                             }
 
                             for (i, cube_index) in cubes_indices_to_rotate.iter().enumerate() {
-                                cube_pieces[*cube_index].x = new_pieces_coordinates[i].0;
-                                cube_pieces[*cube_index].y = new_pieces_coordinates[i].1;
-                                cube_pieces[*cube_index].z = new_pieces_coordinates[i].2;
+                                cube_pieces[*cube_index].current_x = new_pieces_coordinates[i].0;
+                                cube_pieces[*cube_index].current_y = new_pieces_coordinates[i].1;
+                                cube_pieces[*cube_index].current_z = new_pieces_coordinates[i].2;
                             }
                         }
                     }
@@ -313,29 +313,29 @@ fn rotation_events_handler(
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
                                 if cube_rotation_event.twice {
                                     new_pieces_coordinates.push((
-                                        cube_pieces[*cube_index_to_rotate].x * -1,
-                                        cube_pieces[*cube_index_to_rotate].y,
-                                        cube_pieces[*cube_index_to_rotate].z * -1,
+                                        cube_pieces[*cube_index_to_rotate].current_x * -1,
+                                        cube_pieces[*cube_index_to_rotate].current_y,
+                                        cube_pieces[*cube_index_to_rotate].current_z * -1,
                                     ));
                                 } else if cube_rotation_event.negative_direction {
                                     new_pieces_coordinates.push((
-                                        cube_pieces[*cube_index_to_rotate].z * -1,
-                                        cube_pieces[*cube_index_to_rotate].y,
-                                        cube_pieces[*cube_index_to_rotate].x,
+                                        cube_pieces[*cube_index_to_rotate].current_z * -1,
+                                        cube_pieces[*cube_index_to_rotate].current_y,
+                                        cube_pieces[*cube_index_to_rotate].current_x,
                                     ));
                                 } else {
                                     new_pieces_coordinates.push((
-                                        cube_pieces[*cube_index_to_rotate].z,
-                                        cube_pieces[*cube_index_to_rotate].y,
-                                        cube_pieces[*cube_index_to_rotate].x * -1,
+                                        cube_pieces[*cube_index_to_rotate].current_z,
+                                        cube_pieces[*cube_index_to_rotate].current_y,
+                                        cube_pieces[*cube_index_to_rotate].current_x * -1,
                                     ));
                                 }
                             }
 
                             for (i, cube_index) in cubes_indices_to_rotate.iter().enumerate() {
-                                cube_pieces[*cube_index].x = new_pieces_coordinates[i].0;
-                                cube_pieces[*cube_index].y = new_pieces_coordinates[i].1;
-                                cube_pieces[*cube_index].z = new_pieces_coordinates[i].2;
+                                cube_pieces[*cube_index].current_x = new_pieces_coordinates[i].0;
+                                cube_pieces[*cube_index].current_y = new_pieces_coordinates[i].1;
+                                cube_pieces[*cube_index].current_z = new_pieces_coordinates[i].2;
                             }
                         }
                     }
@@ -377,29 +377,29 @@ fn rotation_events_handler(
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
                                 if cube_rotation_event.twice {
                                     new_pieces_coordinates.push((
-                                        cube_pieces[*cube_index_to_rotate].x * -1,
-                                        cube_pieces[*cube_index_to_rotate].y * -1,
-                                        cube_pieces[*cube_index_to_rotate].z,
+                                        cube_pieces[*cube_index_to_rotate].current_x * -1,
+                                        cube_pieces[*cube_index_to_rotate].current_y * -1,
+                                        cube_pieces[*cube_index_to_rotate].current_z,
                                     ));
                                 } else if cube_rotation_event.negative_direction {
                                     new_pieces_coordinates.push((
-                                        cube_pieces[*cube_index_to_rotate].y,
-                                        cube_pieces[*cube_index_to_rotate].x * -1,
-                                        cube_pieces[*cube_index_to_rotate].z,
+                                        cube_pieces[*cube_index_to_rotate].current_y,
+                                        cube_pieces[*cube_index_to_rotate].current_x * -1,
+                                        cube_pieces[*cube_index_to_rotate].current_z,
                                     ));
                                 } else {
                                     new_pieces_coordinates.push((
-                                        cube_pieces[*cube_index_to_rotate].y * -1,
-                                        cube_pieces[*cube_index_to_rotate].x,
-                                        cube_pieces[*cube_index_to_rotate].z,
+                                        cube_pieces[*cube_index_to_rotate].current_y * -1,
+                                        cube_pieces[*cube_index_to_rotate].current_x,
+                                        cube_pieces[*cube_index_to_rotate].current_z,
                                     ));
                                 }
                             }
 
                             for (i, cube_index) in cubes_indices_to_rotate.iter().enumerate() {
-                                cube_pieces[*cube_index].x = new_pieces_coordinates[i].0;
-                                cube_pieces[*cube_index].y = new_pieces_coordinates[i].1;
-                                cube_pieces[*cube_index].z = new_pieces_coordinates[i].2;
+                                cube_pieces[*cube_index].current_x = new_pieces_coordinates[i].0;
+                                cube_pieces[*cube_index].current_y = new_pieces_coordinates[i].1;
+                                cube_pieces[*cube_index].current_z = new_pieces_coordinates[i].2;
                             }
                         }
                     }
@@ -427,18 +427,18 @@ fn rotation_events_handler(
                         let new_z: i32;
 
                         if cube_rotation_event.twice {
-                            new_y = piece.y * -1;
-                            new_z = piece.z * -1;
+                            new_y = piece.current_y * -1;
+                            new_z = piece.current_z * -1;
                         } else if cube_rotation_event.negative_direction {
-                            new_y = piece.y * -1;
-                            new_z = piece.z;
+                            new_y = piece.current_y * -1;
+                            new_z = piece.current_z;
                         } else {
-                            new_y = piece.z;
-                            new_z = piece.y * -1;
+                            new_y = piece.current_z;
+                            new_z = piece.current_y * -1;
                         }
 
-                        piece.y = new_y;
-                        piece.z = new_z;
+                        piece.current_y = new_y;
+                        piece.current_z = new_z;
                     }
                 }
                 CubeRotation::Y => {
@@ -462,18 +462,18 @@ fn rotation_events_handler(
                         let new_z: i32;
 
                         if cube_rotation_event.twice {
-                            new_x = piece.x * -1;
-                            new_z = piece.z * -1;
+                            new_x = piece.current_x * -1;
+                            new_z = piece.current_z * -1;
                         } else if cube_rotation_event.negative_direction {
-                            new_x = piece.z * -1;
-                            new_z = piece.x;
+                            new_x = piece.current_z * -1;
+                            new_z = piece.current_x;
                         } else {
-                            new_x = piece.z;
-                            new_z = piece.x * -1;
+                            new_x = piece.current_z;
+                            new_z = piece.current_x * -1;
                         }
 
-                        piece.x = new_x;
-                        piece.z = new_z;
+                        piece.current_x = new_x;
+                        piece.current_z = new_z;
                     }
                 }
                 CubeRotation::Z => {
@@ -497,18 +497,18 @@ fn rotation_events_handler(
                         let new_y: i32;
 
                         if cube_rotation_event.twice {
-                            new_x = piece.x * -1;
-                            new_y = piece.y * -1;
+                            new_x = piece.current_x * -1;
+                            new_y = piece.current_y * -1;
                         } else if cube_rotation_event.negative_direction {
-                            new_x = piece.y;
-                            new_y = piece.x * -1;
+                            new_x = piece.current_y;
+                            new_y = piece.current_x * -1;
                         } else {
-                            new_x = piece.y * -1;
-                            new_y = piece.x;
+                            new_x = piece.current_y * -1;
+                            new_y = piece.current_x;
                         }
 
-                        piece.x = new_x;
-                        piece.y = new_y;
+                        piece.current_x = new_x;
+                        piece.current_y = new_y;
                     }
                 }
             },

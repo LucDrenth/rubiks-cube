@@ -48,14 +48,27 @@ impl Cube {
             self.size as i32 / 2
         }
     }
+
+    pub fn is_solved(query: Query<&Piece>) -> bool {
+        for piece in query.iter() {
+            if !piece.is_in_original_place() {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 #[derive(Component, Clone, Debug)]
 pub struct Piece {
     pub faces: [Entity; 6],
-    pub x: i32,
-    pub y: i32,
-    pub z: i32,
+    pub current_x: i32,
+    pub current_y: i32,
+    pub current_z: i32,
+    pub original_x: i32,
+    pub original_y: i32,
+    pub original_z: i32,
 }
 
 impl Piece {
@@ -69,19 +82,19 @@ impl Piece {
 
         for (i, piece) in pieces.iter().enumerate() {
             if let Some(x) = x {
-                if piece.x != x {
+                if piece.current_x != x {
                     continue;
                 }
             }
 
             if let Some(y) = y {
-                if piece.y != y {
+                if piece.current_y != y {
                     continue;
                 }
             }
 
             if let Some(z) = z {
-                if piece.z != z {
+                if piece.current_z != z {
                     continue;
                 }
             }
@@ -90,6 +103,13 @@ impl Piece {
         }
 
         result
+    }
+
+    pub fn is_in_original_place(&self) -> bool {
+        // TODO this does not take the orientation of the piece in to account
+        return self.original_x == self.current_x
+            && self.original_y == self.current_y
+            && self.original_z == self.current_z;
     }
 }
 
@@ -319,9 +339,12 @@ fn spawn_cube(
                         face_front,
                         face_back,
                     ],
-                    x,
-                    y,
-                    z,
+                    current_x: x,
+                    current_y: y,
+                    current_z: z,
+                    original_x: x,
+                    original_y: y,
+                    original_z: z,
                 });
             }
         }
