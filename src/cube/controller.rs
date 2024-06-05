@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::schedules::CubeScheduleSet;
 
 use super::{
-    cube::{Cube, Piece},
+    cube::{Cube, Piece, PieceFace},
     rotation::RotationAnimation,
     CubeRotationEvent, Rotation3x3,
 };
@@ -121,12 +121,16 @@ fn random_face_rotation_on_tab(
     event_writer.send(rotation_event);
 }
 
-fn check_solved_on_enter(pieces_query: Query<&Piece>, keyboard_input: Res<ButtonInput<KeyCode>>) {
+fn check_solved_on_enter(
+    pieces_query: Query<&Piece>,
+    faces_query: Query<(&PieceFace, &Transform)>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
     if !keyboard_input.just_pressed(KeyCode::Enter) {
         return;
     }
 
-    if Cube::is_solved(pieces_query) {
+    if Cube::is_solved(pieces_query, faces_query) {
         info!("Cube is solved");
     } else {
         info!("Cube is not solved");

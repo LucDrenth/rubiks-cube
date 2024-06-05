@@ -49,9 +49,26 @@ impl Cube {
         }
     }
 
-    pub fn is_solved(query: Query<&Piece>) -> bool {
-        for piece in query.iter() {
+    pub fn is_solved(
+        piece_query: Query<&Piece>,
+        faces_query: Query<(&PieceFace, &Transform)>,
+    ) -> bool {
+        for piece in piece_query.iter() {
             if !piece.is_in_original_place() {
+                return false;
+            }
+        }
+
+        for (face, transform) in faces_query.iter() {
+            // Check if the transform is in the original position.
+
+            let dot = face.original_rotation.dot(transform.rotation).abs();
+
+            // The rotations are not exact, so we allow for a small margin
+            let epsilon = 0.01;
+
+            if dot < 1.0 - epsilon && dot >= epsilon {
+                info!("not solved: {}", dot.abs());
                 return false;
             }
         }
@@ -114,7 +131,9 @@ impl Piece {
 }
 
 #[derive(Component)]
-pub struct PieceFace;
+pub struct PieceFace {
+    original_rotation: Quat,
+}
 
 pub enum Face {
     Left = 0,
@@ -213,7 +232,9 @@ fn spawn_cube(
                             material: material,
                             ..default()
                         },
-                        PieceFace,
+                        PieceFace {
+                            original_rotation: transform.rotation,
+                        },
                     ))
                     .id();
 
@@ -236,7 +257,9 @@ fn spawn_cube(
                             material: material,
                             ..default()
                         },
-                        PieceFace,
+                        PieceFace {
+                            original_rotation: transform.rotation,
+                        },
                     ))
                     .id();
 
@@ -259,7 +282,9 @@ fn spawn_cube(
                             material: material,
                             ..default()
                         },
-                        PieceFace,
+                        PieceFace {
+                            original_rotation: transform.rotation,
+                        },
                     ))
                     .id();
 
@@ -282,11 +307,16 @@ fn spawn_cube(
                             material: material,
                             ..default()
                         },
-                        PieceFace,
+                        PieceFace {
+                            original_rotation: transform.rotation,
+                        },
                     ))
                     .id();
 
                 // front
+                let transform =
+                    Transform::from_translation(middle_point + Vec3::new(0.0, 0.0, face_offset));
+
                 let material = if z == cube.highest_piece_index() {
                     materials.add(Color::rgb(0.027, 0.89, 0.215)) // green
                 } else {
@@ -297,13 +327,13 @@ fn spawn_cube(
                     .spawn((
                         PbrBundle {
                             mesh: piece_face_mesh.clone(),
-                            transform: Transform::from_translation(
-                                middle_point + Vec3::new(0.0, 0.0, face_offset),
-                            ),
+                            transform: transform,
                             material: material,
                             ..default()
                         },
-                        PieceFace,
+                        PieceFace {
+                            original_rotation: transform.rotation,
+                        },
                     ))
                     .id();
 
@@ -326,7 +356,9 @@ fn spawn_cube(
                             material: material,
                             ..default()
                         },
-                        PieceFace,
+                        PieceFace {
+                            original_rotation: transform.rotation,
+                        },
                     ))
                     .id();
 
