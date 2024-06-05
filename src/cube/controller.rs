@@ -49,7 +49,12 @@ fn init_stepper(mut commands: Commands) {
     commands.spawn(RotationStepper { steps, current: 0 });
 }
 
+#[derive(Component)]
+pub struct LastRandomFaceRotationEvent(CubeRotationEvent);
+
 fn random_face_rotation_on_tab(
+    mut commands: Commands,
+    mut last_random_face_rotation_query: Query<&mut LastRandomFaceRotationEvent>,
     cube_query: Query<&Cube>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut event_writer: EventWriter<CubeRotationEvent>,
@@ -67,11 +72,27 @@ fn random_face_rotation_on_tab(
         return;
     }
 
-    let mut rotation_event = CubeRotationEvent::random_face_rotation(cube);
+    let mut rotation_event = match last_random_face_rotation_query.get_single_mut().ok() {
+        Some(mut last_random_face_rotation) => loop {
+            let new_rotation_event = CubeRotationEvent::random_face_rotation(cube);
+
+            if new_rotation_event.negates(&last_random_face_rotation.0) {
+                continue;
+            }
+
+            last_random_face_rotation.0 = new_rotation_event.clone();
+            break new_rotation_event;
+        },
+        None => {
+            let new_rotation_event = CubeRotationEvent::random_face_rotation(cube);
+            commands.spawn(LastRandomFaceRotationEvent(new_rotation_event.clone()));
+            new_rotation_event
+        }
+    };
+
     rotation_event.animation = Some(RotationAnimation {
         duration_in_seconds: 0.15,
     });
-
     event_writer.send(rotation_event);
 }
 
