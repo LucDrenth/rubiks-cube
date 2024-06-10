@@ -5,7 +5,8 @@ use bevy::prelude::*;
 use crate::schedules::CubeStartupSet;
 
 use super::{
-    controller::ControllerPlugin, rotation::CubeRotationPlugin, scramble::CubeScramblePlugin,
+    controller::ControllerPlugin, cube_state::CubeState, rotation::CubeRotationPlugin,
+    scramble::CubeScramblePlugin,
 };
 
 pub struct CubePlugin;
@@ -48,44 +49,16 @@ impl Cube {
             self.size as i32 / 2
         }
     }
-
-    pub fn is_solved(
-        piece_query: Query<&Piece>,
-        faces_query: Query<(&PieceFace, &Transform)>,
-    ) -> bool {
-        for piece in piece_query.iter() {
-            if !piece.is_in_original_place() {
-                return false;
-            }
-        }
-
-        for (face, transform) in faces_query.iter() {
-            // Check if the transform is in the original position.
-
-            let dot = face.original_rotation.dot(transform.rotation).abs();
-
-            // The rotations are not exact, so we allow for a small margin
-            let epsilon = 0.01;
-
-            if dot < 1.0 - epsilon && dot >= epsilon {
-                info!("not solved: {}", dot.abs());
-                return false;
-            }
-        }
-
-        return true;
-    }
 }
 
+/// TODO add orientation (matrix?) to easily check the current state (correct spot or not). The original_x etc. do not take the rotation in to account.
+/// Each piece has 24 possible states (you can look at each from 6 sides, rotating each side 4 times around the y axis).
 #[derive(Component, Clone, Debug)]
 pub struct Piece {
     pub faces: [Entity; 6],
     pub current_x: i32,
     pub current_y: i32,
     pub current_z: i32,
-    pub original_x: i32,
-    pub original_y: i32,
-    pub original_z: i32,
 }
 
 impl Piece {
@@ -121,27 +94,19 @@ impl Piece {
 
         result
     }
-
-    pub fn is_in_original_place(&self) -> bool {
-        // TODO this does not take the orientation of the piece in to account
-        return self.original_x == self.current_x
-            && self.original_y == self.current_y
-            && self.original_z == self.current_z;
-    }
 }
 
 #[derive(Component)]
-pub struct PieceFace {
-    original_rotation: Quat,
-}
+pub struct PieceFace;
 
+#[derive(PartialEq, Clone)]
 pub enum Face {
     Left = 0,
-    Right = 2,
-    Top = 3,
-    Bottom = 4,
-    Front = 5,
-    Back = 6,
+    Right = 1,
+    Top = 2,
+    Bottom = 3,
+    Front = 4,
+    Back = 5,
 }
 
 fn spawn_cube(
@@ -149,8 +114,14 @@ fn spawn_cube(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    let cube_size = 3;
+
+    if cube_size < 2 {
+        panic!("Invalid cube size {}", cube_size)
+    }
+
     let cube = Cube {
-        size: 3,
+        size: cube_size,
         piece_spread: 0.05,
         block_size: 1.0,
         inner_material: materials.add(Color::rgb(0.1, 0.1, 0.1)),
@@ -160,10 +131,6 @@ fn spawn_cube(
     let piece_face_mesh = meshes.add(Rectangle {
         half_size: Vec2::ONE * cube.block_size / 2.0,
     });
-
-    if cube.size < 2 {
-        panic!("Invalid cube size {}", cube.size)
-    }
 
     let range = cube.lowest_piece_index()..=cube.highest_piece_index();
 
@@ -232,9 +199,7 @@ fn spawn_cube(
                             material: material,
                             ..default()
                         },
-                        PieceFace {
-                            original_rotation: transform.rotation,
-                        },
+                        PieceFace,
                     ))
                     .id();
 
@@ -257,9 +222,7 @@ fn spawn_cube(
                             material: material,
                             ..default()
                         },
-                        PieceFace {
-                            original_rotation: transform.rotation,
-                        },
+                        PieceFace,
                     ))
                     .id();
 
@@ -282,9 +245,7 @@ fn spawn_cube(
                             material: material,
                             ..default()
                         },
-                        PieceFace {
-                            original_rotation: transform.rotation,
-                        },
+                        PieceFace,
                     ))
                     .id();
 
@@ -307,9 +268,7 @@ fn spawn_cube(
                             material: material,
                             ..default()
                         },
-                        PieceFace {
-                            original_rotation: transform.rotation,
-                        },
+                        PieceFace,
                     ))
                     .id();
 
@@ -331,9 +290,7 @@ fn spawn_cube(
                             material: material,
                             ..default()
                         },
-                        PieceFace {
-                            original_rotation: transform.rotation,
-                        },
+                        PieceFace,
                     ))
                     .id();
 
@@ -356,9 +313,7 @@ fn spawn_cube(
                             material: material,
                             ..default()
                         },
-                        PieceFace {
-                            original_rotation: transform.rotation,
-                        },
+                        PieceFace,
                     ))
                     .id();
 
@@ -374,13 +329,14 @@ fn spawn_cube(
                     current_x: x,
                     current_y: y,
                     current_z: z,
-                    original_x: x,
-                    original_y: y,
-                    original_z: z,
                 });
             }
         }
     }
 
-    commands.spawn((cube, Transform::default()));
+    commands.spawn((
+        cube,
+        CubeState::new(cube_size as usize),
+        Transform::default(),
+    ));
 }

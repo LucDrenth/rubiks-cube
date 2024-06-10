@@ -8,6 +8,7 @@ use crate::schedules::CubeScheduleSet;
 use super::{
     axis::Axis,
     cube::{Cube, Piece, PieceFace},
+    cube_state::CubeState,
 };
 
 pub struct CubeRotationPlugin;
@@ -171,6 +172,7 @@ pub enum CubeRotation {
 fn rotation_events_handler(
     mut commands: Commands,
     mut cube_query: Query<&mut Cube>,
+    mut cube_state_query: Query<&mut CubeState>,
     mut cube_pieces_query: Query<&mut Piece>,
     cube_transform_query: Query<&Transform, (With<Cube>, Without<PieceFace>)>,
     mut faces_query: Query<&mut Transform, With<PieceFace>>,
@@ -184,13 +186,20 @@ fn rotation_events_handler(
         error!("expected exactly 1 Cube Transform entity");
         return;
     };
+    let Ok(mut cube_state) = cube_state_query.get_single_mut() else {
+        error!("expected exactly 1 Cube Transform entity");
+        return;
+    };
 
     let mut cube_pieces: Vec<Mut<Piece>> = cube_pieces_query.iter_mut().collect();
 
     for cube_rotation_event in event_reader.read() {
         if cube.is_animating_rotation {
+            warn!("Skipping cube rotation event because cube is already rotating");
             continue;
         }
+
+        cube_state.rotate(cube_rotation_event);
 
         let mut rotation_amount = TAU / 4.0;
 

@@ -3,9 +3,7 @@ use bevy::prelude::*;
 use crate::schedules::CubeScheduleSet;
 
 use super::{
-    cube::{Cube, Piece, PieceFace},
-    rotation::RotationAnimation,
-    CubeRotationEvent, Rotation3x3,
+    cube::Cube, cube_state::CubeState, rotation::RotationAnimation, CubeRotationEvent, Rotation3x3,
 };
 
 pub struct ControllerPlugin;
@@ -15,10 +13,11 @@ impl Plugin for ControllerPlugin {
         app.add_systems(Startup, init_stepper).add_systems(
             Update,
             (
+                check_solved_on_enter,
                 spacebar_stepper_handler,
                 random_face_rotation_on_tab,
-                check_solved_on_enter,
             )
+                .chain()
                 .in_set(CubeScheduleSet::HandleUserInput),
         );
     }
@@ -49,6 +48,8 @@ fn init_stepper(mut commands: Commands) {
         // Rotation3x3::R,
         // Rotation3x3::UPrime,
         // Rotation3x3::RPrime,
+
+        // The algorithm below makes the cube pieces be in the right spot but have 2 of the pieces be in the wrong orientation.
         Rotation3x3::B2,
         Rotation3x3::R2,
         Rotation3x3::UPrime,
@@ -121,16 +122,17 @@ fn random_face_rotation_on_tab(
     event_writer.send(rotation_event);
 }
 
-fn check_solved_on_enter(
-    pieces_query: Query<&Piece>,
-    faces_query: Query<(&PieceFace, &Transform)>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-) {
+fn check_solved_on_enter(query: Query<&CubeState>, keyboard_input: Res<ButtonInput<KeyCode>>) {
     if !keyboard_input.just_pressed(KeyCode::Enter) {
         return;
     }
 
-    if Cube::is_solved(pieces_query, faces_query) {
+    let Ok(cube_state) = query.get_single() else {
+        error!("Expected exactly 1 CubeState component");
+        return;
+    };
+
+    if cube_state.is_solved() {
         info!("Cube is solved");
     } else {
         info!("Cube is not solved");
