@@ -237,7 +237,7 @@ fn rotation_events_handler(
             continue;
         }
 
-        // cube_state.handle_rotate_event(cube_rotation_event);
+        cube_state.handle_rotate_event(cube_rotation_event);
 
         let mut rotation_amount = TAU / 4.0;
 

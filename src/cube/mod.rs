@@ -17,3 +17,5 @@ mod scramble;
 pub use scramble::create_scramble_sequence;
 
 pub mod solver;
+
+mod algorithms;

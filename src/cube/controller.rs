@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::schedules::CubeScheduleSet;
 
 use super::{
-    cube::Cube, cube_state::CubeState, rotation::RotationAnimation, CubeRotationEvent, Rotation3x3,
+    algorithms, cube::Cube, cube_state::CubeState, rotation::RotationAnimation, CubeRotationEvent,
 };
 
 pub struct ControllerPlugin;
@@ -43,34 +43,11 @@ impl RotationStepper {
 }
 
 fn init_stepper(mut commands: Commands) {
-    let steps: Vec<CubeRotationEvent> = vec![
-        // Rotation3x3::U,
-        // Rotation3x3::R,
-        // Rotation3x3::UPrime,
-        // Rotation3x3::RPrime,
-
-        // The algorithm below makes the cube pieces be in the right spot but have 2 of the pieces be in the wrong orientation.
-        Rotation3x3::B2,
-        Rotation3x3::R2,
-        Rotation3x3::UPrime,
-        Rotation3x3::B2,
-        Rotation3x3::L2,
-        Rotation3x3::F2,
-        Rotation3x3::D2,
-        Rotation3x3::R2,
-        Rotation3x3::DPrime,
-        Rotation3x3::L,
-        Rotation3x3::RPrime,
-        Rotation3x3::F,
-        Rotation3x3::R2,
-        Rotation3x3::F,
-        Rotation3x3::L,
-        Rotation3x3::R,
-    ]
-    .iter()
-    .rev()
-    .map(|e| e.into())
-    .collect();
+    let steps: Vec<CubeRotationEvent> = algorithms::size_3x3::flipped_pieces()
+        .iter()
+        .rev()
+        .map(|e| e.into())
+        .collect();
 
     commands.spawn(RotationStepper { steps, current: 0 });
 }
