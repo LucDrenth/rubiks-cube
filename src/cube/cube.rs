@@ -99,7 +99,7 @@ impl Piece {
 #[derive(Component)]
 pub struct PieceFace;
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum Face {
     Left = 0,
     Right = 1,

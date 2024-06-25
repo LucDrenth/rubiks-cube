@@ -36,10 +36,20 @@ pub fn create_scramble_sequence(cube: &Cube, number_of_rotations: usize) -> Vec<
     while result.len() < number_of_rotations {
         let new_rotation = CubeRotationEvent::random_face_rotation(cube);
 
+        // Prevent a rotation that directly negates the last event
         if let Some(previous_rotation) = result.last() {
             if new_rotation.negates(previous_rotation) {
                 continue;
             }
+        }
+
+        // Prevent the same turn from being done more than 2 times in a row.
+        // Doing it 3 times in a row wastes 2 turns, since it might as wel have been 1 turn in the negative direction.
+        if result.len() >= 2
+            && new_rotation.equals(&result[result.len() - 1])
+            && new_rotation.equals(&result[result.len() - 2])
+        {
+            continue;
         }
 
         result.push(new_rotation);

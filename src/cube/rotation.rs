@@ -101,6 +101,12 @@ impl CubeRotationEvent {
 
         return false;
     }
+
+    pub fn equals(&self, comparison: &Self) -> bool {
+        return self.rotation == comparison.rotation
+            && self.negative_direction == comparison.negative_direction
+            && self.twice == comparison.twice;
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -110,6 +116,7 @@ pub enum Rotation {
 }
 
 /// Rotate the given faces (e.g. slices) of the cube on a given axis. This is relative to the current cube rotation.
+/// For even sized cubes (2x2, 4x4) there is no slice 0.
 #[derive(Clone, Debug, PartialEq)]
 pub enum FaceRotation {
     /// Rotate the given slices of the x axis.
@@ -199,7 +206,7 @@ fn rotation_events_handler(
             continue;
         }
 
-        cube_state.rotate(cube_rotation_event);
+        cube_state.handle_rotate_event(cube_rotation_event);
 
         let mut rotation_amount = TAU / 4.0;
 
