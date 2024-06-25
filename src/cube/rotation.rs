@@ -115,6 +115,27 @@ pub enum Rotation {
     Cube(CubeRotation),
 }
 
+impl Rotation {
+    pub fn face_x(slice: i32) -> Self {
+        Self::Face(FaceRotation::x(slice))
+    }
+    pub fn face_y(slice: i32) -> Self {
+        Self::Face(FaceRotation::y(slice))
+    }
+    pub fn face_z(slice: i32) -> Self {
+        Self::Face(FaceRotation::z(slice))
+    }
+    pub fn cube_x() -> Self {
+        Self::Cube(CubeRotation::X)
+    }
+    pub fn cube_y() -> Self {
+        Self::Cube(CubeRotation::X)
+    }
+    pub fn cube_z() -> Self {
+        Self::Cube(CubeRotation::X)
+    }
+}
+
 /// Rotate the given faces (e.g. slices) of the cube on a given axis. This is relative to the current cube rotation.
 /// For even sized cubes (2x2, 4x4) there is no slice 0.
 #[derive(Clone, Debug, PartialEq)]
@@ -159,6 +180,16 @@ impl FaceRotation {
         } else {
             Self::Z(vec![slice])
         }
+    }
+
+    pub fn x(slice: i32) -> Self {
+        Self::X(vec![slice])
+    }
+    pub fn y(slice: i32) -> Self {
+        Self::Y(vec![slice])
+    }
+    pub fn z(slice: i32) -> Self {
+        Self::Z(vec![slice])
     }
 }
 
@@ -206,7 +237,7 @@ fn rotation_events_handler(
             continue;
         }
 
-        cube_state.handle_rotate_event(cube_rotation_event);
+        // cube_state.handle_rotate_event(cube_rotation_event);
 
         let mut rotation_amount = TAU / 4.0;
 
@@ -600,12 +631,12 @@ fn handle_rotation_animations(
 
 #[cfg(test)]
 mod tests {
-    use super::{CubeRotationEvent, FaceRotation, Rotation};
+    use super::{CubeRotationEvent, Rotation};
 
     #[test]
     fn cube_rotation_event_negates() {
         let rotation_event = CubeRotationEvent {
-            rotation: Rotation::Face(FaceRotation::X(vec![-1])),
+            rotation: Rotation::face_x(-1),
             negative_direction: true,
             twice: false,
             animation: None,
@@ -614,7 +645,7 @@ mod tests {
         assert_eq!(rotation_event.negates(&rotation_event), false);
 
         let negating_event = CubeRotationEvent {
-            rotation: Rotation::Face(FaceRotation::X(vec![-1])),
+            rotation: Rotation::face_x(-1),
             negative_direction: false,
             twice: false,
             animation: None,
@@ -624,7 +655,7 @@ mod tests {
 
         // it does not negate because its on a different axis
         let non_negating_event = CubeRotationEvent {
-            rotation: Rotation::Face(FaceRotation::Y(vec![-1])),
+            rotation: Rotation::face_y(-1),
             negative_direction: false,
             twice: false,
             animation: None,

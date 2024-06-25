@@ -435,13 +435,13 @@ mod tests {
             cube_state.is_solved();
         };
 
-        test_4_face_rotations(FaceRotation::X(vec![-1]), false);
-        test_4_face_rotations(FaceRotation::X(vec![0]), false);
-        test_4_face_rotations(FaceRotation::X(vec![1]), false);
+        test_4_face_rotations(FaceRotation::x(-1), false);
+        test_4_face_rotations(FaceRotation::x(0), false);
+        test_4_face_rotations(FaceRotation::x(1), false);
 
-        test_4_face_rotations(FaceRotation::X(vec![-1]), true);
-        test_4_face_rotations(FaceRotation::X(vec![0]), true);
-        test_4_face_rotations(FaceRotation::X(vec![1]), true);
+        test_4_face_rotations(FaceRotation::x(-1), true);
+        test_4_face_rotations(FaceRotation::x(0), true);
+        test_4_face_rotations(FaceRotation::x(1), true);
 
         // TODO do rotations:
         // 1. rotation sequence where pieces are in the same spot, but not in the correct orientation. Assert that is_solved is false, then do it again and then assert is_solved is true.

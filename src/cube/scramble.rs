@@ -79,10 +79,7 @@ fn create_scramble_sequence_with_strategy(
 #[cfg(test)]
 mod tests {
     use crate::cube::{
-        create_scramble_sequence,
-        cube::CubeSize,
-        rotation::{FaceRotation, Rotation},
-        CubeRotationEvent,
+        create_scramble_sequence, cube::CubeSize, rotation::Rotation, CubeRotationEvent,
     };
 
     use super::create_scramble_sequence_with_strategy;
@@ -118,19 +115,19 @@ mod tests {
         // 2nd event negates 1st event
         let mut event_provider = FakeRandomEventProvider::new(vec![
             CubeRotationEvent {
-                rotation: Rotation::Face(FaceRotation::Y(vec![1])),
+                rotation: Rotation::face_y(1),
                 negative_direction: true,
                 twice: false,
                 animation: None,
             },
             CubeRotationEvent {
-                rotation: Rotation::Face(FaceRotation::Y(vec![1])),
+                rotation: Rotation::face_y(1),
                 negative_direction: false,
                 twice: false,
                 animation: None,
             },
             CubeRotationEvent {
-                rotation: Rotation::Face(FaceRotation::X(vec![1])),
+                rotation: Rotation::face_y(1),
                 negative_direction: false,
                 twice: false,
                 animation: None,
@@ -152,25 +149,25 @@ mod tests {
         // 3th event is the same as the 1st and 2nd
         let mut event_provider = FakeRandomEventProvider::new(vec![
             CubeRotationEvent {
-                rotation: Rotation::Face(FaceRotation::Y(vec![1])),
+                rotation: Rotation::face_y(1),
                 negative_direction: true,
                 twice: false,
                 animation: None,
             },
             CubeRotationEvent {
-                rotation: Rotation::Face(FaceRotation::Y(vec![1])),
+                rotation: Rotation::face_y(1),
                 negative_direction: true,
                 twice: false,
                 animation: None,
             },
             CubeRotationEvent {
-                rotation: Rotation::Face(FaceRotation::Y(vec![1])),
+                rotation: Rotation::face_y(1),
                 negative_direction: true,
                 twice: false,
                 animation: None,
             },
             CubeRotationEvent {
-                rotation: Rotation::Face(FaceRotation::X(vec![1])),
+                rotation: Rotation::face_x(1),
                 negative_direction: true,
                 twice: false,
                 animation: None,
