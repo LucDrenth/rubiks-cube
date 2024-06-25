@@ -7,7 +7,7 @@ use crate::schedules::CubeScheduleSet;
 
 use super::{
     axis::Axis,
-    cube::{Cube, Piece, PieceFace},
+    cube::{Cube, CubeSize, Piece, PieceFace},
     cube_state::CubeState,
 };
 
@@ -67,8 +67,8 @@ pub struct CubeRotationEvent {
 }
 
 impl CubeRotationEvent {
-    pub fn random_face_rotation(cube: &Cube) -> Self {
-        let face_rotation = FaceRotation::random(cube);
+    pub fn random_face_rotation(cube_size: &CubeSize) -> Self {
+        let face_rotation = FaceRotation::random(cube_size);
 
         let mut rng = rand::thread_rng();
         let direction = if rng.gen_range(0..=1) == 0 {
@@ -131,16 +131,16 @@ pub enum FaceRotation {
 }
 
 impl FaceRotation {
-    pub fn random(cube: &Cube) -> Self {
+    pub fn random(cube_size: &CubeSize) -> Self {
         let mut rng = rand::thread_rng();
 
-        let slice = if cube.size() % 2 == 1 {
-            rng.gen_range(cube.lowest_piece_index()..=cube.highest_piece_index())
+        let slice = if cube_size.0 % 2 == 1 {
+            rng.gen_range(cube_size.lowest_piece_index()..=cube_size.highest_piece_index())
         } else {
-            let mut result = if cube.size() == 2 {
+            let mut result = if cube_size.0 == 2 {
                 1
             } else {
-                rng.gen_range(1..(cube.size() / 2))
+                rng.gen_range(1..(cube_size.0 / 2))
             };
             let negative = rng.gen_range(0..=1);
 
@@ -220,7 +220,7 @@ fn rotation_events_handler(
 
         match &cube_rotation_event.rotation {
             Rotation::Face(face_rotation) => {
-                let cube_size = cube.size() as f32;
+                let cube_size: f32 = cube.size().0 as f32;
                 let cube_piece_spread = cube.piece_spread;
                 let pivot_coordinate = |slice: &i32| {
                     return *slice as f32 * (cube_size + cube_piece_spread);
@@ -229,7 +229,7 @@ fn rotation_events_handler(
                 match face_rotation {
                     FaceRotation::X(slices) => {
                         for slice in slices {
-                            if cube.size() % 2 == 0 && *slice == 0 {
+                            if cube.size().0 % 2 == 0 && *slice == 0 {
                                 warn!("Cube can not rotate slice with index 0 for even cubes");
                                 continue;
                             }
@@ -293,7 +293,7 @@ fn rotation_events_handler(
                     }
                     FaceRotation::Y(slices) => {
                         for slice in slices {
-                            if cube.size() % 2 == 0 && *slice == 0 {
+                            if cube.size().0 % 2 == 0 && *slice == 0 {
                                 warn!("Cube can not rotate slice with index 0 for even cubes");
                                 continue;
                             }
@@ -357,7 +357,7 @@ fn rotation_events_handler(
                     }
                     FaceRotation::Z(slices) => {
                         for slice in slices {
-                            if cube.size() % 2 == 0 && *slice == 0 {
+                            if cube.size().0 % 2 == 0 && *slice == 0 {
                                 warn!("Cube can not rotate slice with index 0 for even cubes");
                                 continue;
                             }

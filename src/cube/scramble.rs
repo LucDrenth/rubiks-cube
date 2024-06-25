@@ -2,7 +2,10 @@ use bevy::prelude::*;
 
 use crate::schedules::CubeStartupSet;
 
-use super::{cube::Cube, CubeRotationEvent};
+use super::{
+    cube::{Cube, CubeSize},
+    CubeRotationEvent,
+};
 
 pub struct CubeScramblePlugin;
 
@@ -24,17 +27,32 @@ fn apply_instant_scramble(
         return;
     };
 
-    let scramble_sequence = create_scramble_sequence(cube, 20);
+    let scramble_sequence = create_scramble_sequence(cube.size(), 20);
     for event in scramble_sequence {
         event_writer.send(event);
     }
 }
 
-pub fn create_scramble_sequence(cube: &Cube, number_of_rotations: usize) -> Vec<CubeRotationEvent> {
+pub fn create_scramble_sequence(
+    cube_size: &CubeSize,
+    number_of_rotations: usize,
+) -> Vec<CubeRotationEvent> {
+    create_scramble_sequence_with_strategy(
+        cube_size,
+        number_of_rotations,
+        &mut CubeRotationEvent::random_face_rotation,
+    )
+}
+
+fn create_scramble_sequence_with_strategy(
+    cube_size: &CubeSize,
+    number_of_rotations: usize,
+    random_event_strategy: &mut dyn FnMut(&CubeSize) -> CubeRotationEvent,
+) -> Vec<CubeRotationEvent> {
     let mut result: Vec<CubeRotationEvent> = Vec::with_capacity(number_of_rotations);
 
     while result.len() < number_of_rotations {
-        let new_rotation = CubeRotationEvent::random_face_rotation(cube);
+        let new_rotation = random_event_strategy(cube_size);
 
         // Prevent a rotation that directly negates the last event
         if let Some(previous_rotation) = result.last() {
@@ -56,4 +74,115 @@ pub fn create_scramble_sequence(cube: &Cube, number_of_rotations: usize) -> Vec<
     }
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::cube::{
+        create_scramble_sequence,
+        cube::CubeSize,
+        rotation::{FaceRotation, Rotation},
+        CubeRotationEvent,
+    };
+
+    use super::create_scramble_sequence_with_strategy;
+
+    struct FakeRandomEventProvider {
+        events: Vec<CubeRotationEvent>,
+        current: usize,
+    }
+
+    impl FakeRandomEventProvider {
+        fn new(events: Vec<CubeRotationEvent>) -> Self {
+            Self { events, current: 0 }
+        }
+
+        fn next(&mut self) -> CubeRotationEvent {
+            self.current += 1;
+            self.events[self.current - 1].clone()
+        }
+    }
+
+    #[test]
+    fn test_create_scramble_sequence() {
+        let cube_size = CubeSize(3);
+        let sequence_length = 5;
+        let sequence = create_scramble_sequence(&cube_size, sequence_length);
+        assert_eq!(sequence.len(), sequence_length);
+    }
+
+    #[test]
+    fn test_scramble_sequence_skips_directly_negating_sequence() {
+        let cube_size = CubeSize(3);
+
+        // 2nd event negates 1st event
+        let mut event_provider = FakeRandomEventProvider::new(vec![
+            CubeRotationEvent {
+                rotation: Rotation::Face(FaceRotation::Y(vec![1])),
+                negative_direction: true,
+                twice: false,
+                animation: None,
+            },
+            CubeRotationEvent {
+                rotation: Rotation::Face(FaceRotation::Y(vec![1])),
+                negative_direction: false,
+                twice: false,
+                animation: None,
+            },
+            CubeRotationEvent {
+                rotation: Rotation::Face(FaceRotation::X(vec![1])),
+                negative_direction: false,
+                twice: false,
+                animation: None,
+            },
+        ]);
+
+        let sequence =
+            create_scramble_sequence_with_strategy(&cube_size, 2, &mut |_| event_provider.next());
+
+        assert_eq!(sequence.len(), 2);
+        assert!(sequence[0].equals(&event_provider.events[0]));
+        assert!(sequence[1].equals(&event_provider.events[2]));
+    }
+
+    #[test]
+    fn test_scramble_sequence_skips_triple_same_rotation() {
+        let cube_size = CubeSize(3);
+
+        // 3th event is the same as the 1st and 2nd
+        let mut event_provider = FakeRandomEventProvider::new(vec![
+            CubeRotationEvent {
+                rotation: Rotation::Face(FaceRotation::Y(vec![1])),
+                negative_direction: true,
+                twice: false,
+                animation: None,
+            },
+            CubeRotationEvent {
+                rotation: Rotation::Face(FaceRotation::Y(vec![1])),
+                negative_direction: true,
+                twice: false,
+                animation: None,
+            },
+            CubeRotationEvent {
+                rotation: Rotation::Face(FaceRotation::Y(vec![1])),
+                negative_direction: true,
+                twice: false,
+                animation: None,
+            },
+            CubeRotationEvent {
+                rotation: Rotation::Face(FaceRotation::X(vec![1])),
+                negative_direction: true,
+                twice: false,
+                animation: None,
+            },
+        ]);
+
+        let sequence =
+            create_scramble_sequence_with_strategy(&cube_size, 3, &mut |_| event_provider.next());
+
+        assert_eq!(sequence.len(), 3);
+        assert!(sequence[0].equals(&event_provider.events[0]));
+        assert!(sequence[1].equals(&event_provider.events[1]));
+        assert!(sequence[2].equals(&event_provider.events[3]));
+    }
 }

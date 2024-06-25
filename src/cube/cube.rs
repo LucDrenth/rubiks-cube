@@ -22,7 +22,7 @@ impl Plugin for CubePlugin {
 
 #[derive(Component, Debug)]
 pub struct Cube {
-    size: i32,             // For example 3 for 3x3
+    cube_size: CubeSize,   // For example 3 for 3x3
     pub piece_spread: f32, // The size of the gap between the pieces
     block_size: f32,
     inner_material: Handle<StandardMaterial>,
@@ -30,23 +30,28 @@ pub struct Cube {
 }
 
 impl Cube {
-    pub fn size(&self) -> i32 {
-        self.size
+    pub fn size(&self) -> &CubeSize {
+        &self.cube_size
     }
+}
 
+#[derive(Debug)]
+pub struct CubeSize(pub i32);
+
+impl CubeSize {
     pub fn lowest_piece_index(&self) -> i32 {
-        if self.size % 2 == 1 {
-            -(self.size as i32 - 1) / 2
+        if self.0 % 2 == 1 {
+            -(self.0 as i32 - 1) / 2
         } else {
-            -self.size as i32 / 2
+            -self.0 as i32 / 2
         }
     }
 
     pub fn highest_piece_index(&self) -> i32 {
-        if self.size % 2 == 1 {
-            (self.size as i32 - 1) / 2
+        if self.0 % 2 == 1 {
+            (self.0 as i32 - 1) / 2
         } else {
-            self.size as i32 / 2
+            self.0 as i32 / 2
         }
     }
 }
@@ -121,7 +126,7 @@ fn spawn_cube(
     }
 
     let cube = Cube {
-        size: cube_size,
+        cube_size: CubeSize(cube_size),
         piece_spread: 0.05,
         block_size: 1.0,
         inner_material: materials.add(Color::rgb(0.1, 0.1, 0.1)),
@@ -132,7 +137,7 @@ fn spawn_cube(
         half_size: Vec2::ONE * cube.block_size / 2.0,
     });
 
-    let range = cube.lowest_piece_index()..=cube.highest_piece_index();
+    let range = cube.size().lowest_piece_index()..=cube.size().highest_piece_index();
 
     let spread_factor = 1.0 + cube.piece_spread;
     let face_offset = cube.block_size / 2.0;
@@ -140,12 +145,12 @@ fn spawn_cube(
     for x in range.clone() {
         for y in range.clone() {
             for z in range.clone() {
-                if cube.size() % 2 == 0 && (x == 0 || y == 0 || z == 0) {
+                if cube.size().0 % 2 == 0 && (x == 0 || y == 0 || z == 0) {
                     continue;
                 }
 
                 // The middle point of the cube piece
-                let mut middle_point = if cube.size() % 2 == 0 {
+                let mut middle_point = if cube.size().0 % 2 == 0 {
                     let mut result = Vec3::new(
                         x as f32 * cube.block_size,
                         y as f32 * cube.block_size,
@@ -185,7 +190,7 @@ fn spawn_cube(
                     Transform::from_translation(middle_point - Vec3::new(face_offset, 0.0, 0.0));
                 transform.rotate_local_y(-TAU / 4.0);
 
-                let material = if x == cube.lowest_piece_index() {
+                let material = if x == cube.size().lowest_piece_index() {
                     materials.add(Color::rgb(0.99, 0.49, 0.05)) // orange
                 } else {
                     cube.inner_material.clone()
@@ -207,7 +212,7 @@ fn spawn_cube(
                 let mut transform =
                     Transform::from_translation(middle_point + Vec3::new(face_offset, 0.0, 0.0));
 
-                let material = if x == cube.highest_piece_index() {
+                let material = if x == cube.size().highest_piece_index() {
                     materials.add(Color::rgb(0.99, 0.0, 0.0)) // red
                 } else {
                     cube.inner_material.clone()
@@ -231,7 +236,7 @@ fn spawn_cube(
                     Transform::from_translation(middle_point + Vec3::new(0.0, face_offset, 0.0));
                 transform.rotate_x(-TAU / 4.0);
 
-                let material = if y == cube.highest_piece_index() {
+                let material = if y == cube.size().highest_piece_index() {
                     materials.add(Color::rgb(0.99, 0.99, 0.99)) // white
                 } else {
                     cube.inner_material.clone()
@@ -254,7 +259,7 @@ fn spawn_cube(
                     Transform::from_translation(middle_point - Vec3::new(0.0, face_offset, 0.0));
                 transform.rotate_x(TAU / 4.0);
 
-                let material = if y == cube.lowest_piece_index() {
+                let material = if y == cube.size().lowest_piece_index() {
                     materials.add(Color::rgb(0.99, 0.99, 0.0)) // yellow
                 } else {
                     cube.inner_material.clone()
@@ -276,7 +281,7 @@ fn spawn_cube(
                 let transform =
                     Transform::from_translation(middle_point + Vec3::new(0.0, 0.0, face_offset));
 
-                let material = if z == cube.highest_piece_index() {
+                let material = if z == cube.size().highest_piece_index() {
                     materials.add(Color::rgb(0.027, 0.89, 0.215)) // green
                 } else {
                     cube.inner_material.clone()
@@ -299,7 +304,7 @@ fn spawn_cube(
                     Transform::from_translation(middle_point - Vec3::new(0.0, 0.0, face_offset));
                 transform.rotate_local_y(-TAU / 2.0);
 
-                let material = if z == cube.lowest_piece_index() {
+                let material = if z == cube.size().lowest_piece_index() {
                     materials.add(Color::rgb(0.0, 0.0, 0.99)) // blue
                 } else {
                     cube.inner_material.clone()

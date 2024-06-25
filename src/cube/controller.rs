@@ -100,7 +100,7 @@ fn random_face_rotation_on_tab(
 
     let mut rotation_event = match last_random_face_rotation_query.get_single_mut().ok() {
         Some(mut last_random_face_rotation) => loop {
-            let new_rotation_event = CubeRotationEvent::random_face_rotation(cube);
+            let new_rotation_event = CubeRotationEvent::random_face_rotation(cube.size());
 
             if new_rotation_event.negates(&last_random_face_rotation.0) {
                 continue;
@@ -110,7 +110,7 @@ fn random_face_rotation_on_tab(
             break new_rotation_event;
         },
         None => {
-            let new_rotation_event = CubeRotationEvent::random_face_rotation(cube);
+            let new_rotation_event = CubeRotationEvent::random_face_rotation(cube.size());
             commands.spawn(LastRandomFaceRotationEvent(new_rotation_event.clone()));
             new_rotation_event
         }
