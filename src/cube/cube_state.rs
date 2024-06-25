@@ -101,7 +101,26 @@ impl CubeState {
 
                             if event.negative_direction {
                                 for i in 0..self.cube_size {
-                                    todo!()
+                                    let current_face_index = i * self.cube_size
+                                        + slice_to_column_index(slice, self.cube_size);
+
+                                    // front to top
+                                    new_face_states.top.0[current_face_index] =
+                                        self.face_states.front.0[current_face_index].clone();
+
+                                    // bottom to front
+                                    new_face_states.front.0[current_face_index] =
+                                        self.face_states.bottom.0[current_face_index].clone();
+
+                                    // back to bottom
+                                    new_face_states.bottom.0
+                                        [invert_face_index_x(current_face_index, self.cube_size)] =
+                                        self.face_states.back.0[current_face_index].clone();
+
+                                    // top to back
+                                    new_face_states.back.0
+                                        [invert_face_index_x(current_face_index, self.cube_size)] =
+                                        self.face_states.top.0[current_face_index].clone();
                                 }
 
                                 if has_edge_on_positive_side(slice, self.cube_size) {
@@ -419,6 +438,10 @@ mod tests {
         test_4_face_rotations(FaceRotation::X(vec![-1]), false);
         test_4_face_rotations(FaceRotation::X(vec![0]), false);
         test_4_face_rotations(FaceRotation::X(vec![1]), false);
+
+        test_4_face_rotations(FaceRotation::X(vec![-1]), true);
+        test_4_face_rotations(FaceRotation::X(vec![0]), true);
+        test_4_face_rotations(FaceRotation::X(vec![1]), true);
 
         // TODO do rotations:
         // 1. rotation sequence where pieces are in the same spot, but not in the correct orientation. Assert that is_solved is false, then do it again and then assert is_solved is true.
