@@ -1,2 +1,2 @@
 # About
-A 3d rubiks cube with solving capability (work in progress)
+A 3D rubiks cube with solving capability (work in progress)

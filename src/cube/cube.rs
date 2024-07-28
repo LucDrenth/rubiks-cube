@@ -20,6 +20,7 @@ impl Plugin for CubePlugin {
     }
 }
 
+/// A 3D representation of a cube
 #[derive(Component, Debug)]
 pub struct Cube {
     cube_size: CubeSize,   // For example 3 for 3x3

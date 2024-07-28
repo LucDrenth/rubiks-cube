@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use super::{cube::Face, CubeRotationEvent};
 
+/// Holds an efficient and precise state of a cube.
 #[derive(Component)]
 pub struct CubeState {
     cube_size: usize,
@@ -171,9 +172,51 @@ impl CubeState {
                             let mut new_face_states = self.face_states.clone();
 
                             if event.negative_direction {
-                                todo!()
+                                for i in 0..self.cube_size {
+                                    let current_face_index = i * self.cube_size
+                                        + slice_to_column_index(slice, self.cube_size);
+
+                                    // front to left
+                                    todo!();
+
+                                    // left to back
+                                    todo!();
+
+                                    // back to right
+                                    todo!();
+
+                                    // right to front
+                                    todo!();
+                                }
+
+                                if has_edge_on_positive_side(slice, self.cube_size) {
+                                    todo!();
+                                } else if has_edge_on_negative_side(slice, self.cube_size) {
+                                    todo!();
+                                }
                             } else {
-                                todo!()
+                                for i in 0..self.cube_size {
+                                    let current_face_index = i * self.cube_size
+                                        + slice_to_column_index(slice, self.cube_size);
+
+                                    // front to right
+                                    todo!();
+
+                                    // right to back
+                                    todo!();
+
+                                    // back to left
+                                    todo!();
+
+                                    // left to front
+                                    todo!();
+                                }
+
+                                if has_edge_on_positive_side(slice, self.cube_size) {
+                                    todo!();
+                                } else if has_edge_on_negative_side(slice, self.cube_size) {
+                                    todo!();
+                                }
                             }
 
                             self.face_states = new_face_states;
@@ -184,9 +227,51 @@ impl CubeState {
                             let mut new_face_states = self.face_states.clone();
 
                             if event.negative_direction {
-                                todo!()
+                                for i in 0..self.cube_size {
+                                    let current_face_index = i * self.cube_size
+                                        + slice_to_column_index(slice, self.cube_size);
+
+                                    // top to right
+                                    todo!();
+
+                                    // right to bottom
+                                    todo!();
+
+                                    // bottom to left
+                                    todo!();
+
+                                    // left to top
+                                    todo!();
+                                }
+
+                                if has_edge_on_positive_side(slice, self.cube_size) {
+                                    todo!();
+                                } else if has_edge_on_negative_side(slice, self.cube_size) {
+                                    todo!();
+                                }
                             } else {
-                                todo!()
+                                for i in 0..self.cube_size {
+                                    let current_face_index = i * self.cube_size
+                                        + slice_to_column_index(slice, self.cube_size);
+
+                                    // top to left
+                                    todo!();
+
+                                    // left to bottom
+                                    todo!();
+
+                                    // bottom to right
+                                    todo!();
+
+                                    // right to top
+                                    todo!();
+                                }
+
+                                if has_edge_on_positive_side(slice, self.cube_size) {
+                                    todo!();
+                                } else if has_edge_on_negative_side(slice, self.cube_size) {
+                                    todo!();
+                                }
                             }
 
                             self.face_states = new_face_states;
