@@ -1,4 +1,4 @@
-/// This file contains rotations in cubing notation. They are abstraction over CubeRotationEvent, and make it easy
+/// This file contains rotations in cubing notation. They are abstractions over CubeRotationEvent, and make it easy
 /// to implement cubing algorithms.
 use super::{rotation::Rotation, CubeRotationEvent};
 
