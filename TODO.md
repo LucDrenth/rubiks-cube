@@ -1,6 +1,9 @@
 # TODO's
 
 ## Must
+- UI button to scramble with animations
+- UI button to scramble instantly (without animations)
+- UI button to run solver
 - Implement solving algorithm(s).
 
 ## Nice to have
