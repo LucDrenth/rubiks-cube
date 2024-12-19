@@ -127,7 +127,7 @@ mod tests {
                 animation: None,
             },
             CubeRotationEvent {
-                rotation: Rotation::face_y(1),
+                rotation: Rotation::face_z(1),
                 negative_direction: false,
                 twice: false,
                 animation: None,
