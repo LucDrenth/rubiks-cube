@@ -6,6 +6,7 @@ use schedules::SchedulesPlugin;
 mod camera;
 mod cube;
 mod schedules;
+mod utils;
 
 fn main() {
     App::new()

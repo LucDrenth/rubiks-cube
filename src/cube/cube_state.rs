@@ -335,7 +335,10 @@ impl CubeState {
         for y in 0..self.cube_size {
             print!("\t\t\t\t");
             for x in 0..self.cube_size {
-                print!("{:?}\t", self.face_states.top.0[x + y * self.cube_size]);
+                print!(
+                    "{}\t",
+                    self.face_states.top.0[x + y * self.cube_size].as_colored_string()
+                );
             }
             println!();
         }
@@ -345,19 +348,31 @@ impl CubeState {
         // left, front, right, bottom
         for y in 0..self.cube_size {
             for x in 0..self.cube_size {
-                print!("{:?}\t", self.face_states.left.0[x + y * self.cube_size]);
+                print!(
+                    "{}\t",
+                    self.face_states.left.0[x + y * self.cube_size].as_colored_string()
+                );
             }
             print!("\t");
             for x in 0..self.cube_size {
-                print!("{:?}\t", self.face_states.front.0[x + y * self.cube_size]);
+                print!(
+                    "{}\t",
+                    self.face_states.front.0[x + y * self.cube_size].as_colored_string()
+                );
             }
             print!("\t");
             for x in 0..self.cube_size {
-                print!("{:?}\t", self.face_states.right.0[x + y * self.cube_size]);
+                print!(
+                    "{}\t",
+                    self.face_states.right.0[x + y * self.cube_size].as_colored_string()
+                );
             }
             print!("\t");
             for x in 0..self.cube_size {
-                print!("{:?}\t", self.face_states.back.0[x + y * self.cube_size]);
+                print!(
+                    "{}\t",
+                    self.face_states.back.0[x + y * self.cube_size].as_colored_string()
+                );
             }
             println!();
         }
@@ -368,7 +383,10 @@ impl CubeState {
         for y in 0..self.cube_size {
             print!("\t\t\t\t");
             for x in 0..self.cube_size {
-                print!("{:?}\t", self.face_states.bottom.0[x + y * self.cube_size]);
+                print!(
+                    "{}\t",
+                    self.face_states.bottom.0[x + y * self.cube_size].as_colored_string()
+                );
             }
             println!();
         }

@@ -2,7 +2,7 @@ use std::f32::consts::TAU;
 
 use bevy::prelude::*;
 
-use crate::schedules::CubeStartupSet;
+use crate::{schedules::CubeStartupSet, utils::console};
 
 use super::{
     controller::ControllerPlugin, cube_state::CubeState, rotation::CubeRotationPlugin,
@@ -113,6 +113,20 @@ pub enum Face {
     Bottom = 3,
     Front = 4,
     Back = 5,
+}
+
+impl Face {
+    pub fn as_colored_string(&self) -> String {
+        let color = match &self {
+            Face::Left => console::COLOR_ORANGE,
+            Face::Right => console::COLOR_RED,
+            Face::Top => console::COLOR_WHITE,
+            Face::Bottom => console::COLOR_YELLOW,
+            Face::Front => console::COLOR_GREEN,
+            Face::Back => console::COLOR_BLUE,
+        };
+        return format!("{}{:?}{}", color, self, console::COLOR_CLEAR);
+    }
 }
 
 fn spawn_cube(
