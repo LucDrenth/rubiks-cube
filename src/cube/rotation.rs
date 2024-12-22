@@ -140,13 +140,13 @@ impl Rotation {
 /// For even sized cubes (2x2, 4x4) there is no slice 0.
 #[derive(Clone, Debug, PartialEq)]
 pub enum FaceRotation {
-    /// Rotate the given slices of the x axis.
+    /// Rotate the given slices on the x axis.
     /// For a rotation in the default direction, when looking at the front of the cube, the front row ends up at the bottom.
     X(Vec<i32>),
-    /// Rotate the given slices of the y axis.
+    /// Rotate the given slices on the y axis.
     /// For a rotation in the default direction, when looking at the front of the cube, the front row ends up at the right side.
     Y(Vec<i32>),
-    /// Rotate the given slices of the z axis
+    /// Rotate the given slices on the z axis
     /// For a rotation in the default direction, when looking at the front of the cube, the top row ends up at the left side.
     Z(Vec<i32>),
 }
