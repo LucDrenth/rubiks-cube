@@ -114,9 +114,11 @@ impl CubeState {
                                         self.face_states.bottom.0[current_face_index].clone();
 
                                     // back to bottom
-                                    new_face_states.bottom.0
-                                        [invert_face_index_x(current_face_index, self.cube_size)] =
-                                        self.face_states.back.0[current_face_index].clone();
+                                    new_face_states.bottom.0[current_face_index] = self
+                                        .face_states
+                                        .back
+                                        .0[invert_face_index_x(current_face_index, self.cube_size)]
+                                    .clone();
 
                                     // top to back
                                     new_face_states.back.0
@@ -143,11 +145,9 @@ impl CubeState {
                                         self.face_states.front.0[current_face_index].clone();
 
                                     // bottom to back
-                                    new_face_states.back.0[current_face_index] = self
-                                        .face_states
-                                        .bottom
-                                        .0[invert_face_index_x(current_face_index, self.cube_size)]
-                                    .clone();
+                                    new_face_states.back.0
+                                        [invert_face_index_x(current_face_index, self.cube_size)] =
+                                        self.face_states.bottom.0[current_face_index].clone();
 
                                     // back to top
                                     new_face_states.top.0[current_face_index] = self
@@ -455,7 +455,7 @@ mod tests {
             has_edge_on_negative_side, has_edge_on_positive_side, invert_face_index_x,
             invert_face_index_y, slice_to_column_index,
         },
-        rotation::{FaceRotation, Rotation},
+        rotation::{CubeRotation, FaceRotation, Rotation},
         CubeRotationEvent,
     };
 
@@ -521,33 +521,82 @@ mod tests {
     }
 
     #[test]
-    fn test_handle_rotation_event() {
+    fn test_handle_face_rotation_event() {
         let mut cube_state = CubeState::new(3);
         assert!(cube_state.is_solved());
 
+        // tests that the cube state is solved after doing the same rotation 4 times
         let mut test_4_face_rotations = |face_rotation: FaceRotation, invert_direction: bool| {
-            for _ in 0..4 {
+            for i in 1..=4 {
                 cube_state.handle_rotate_event(&CubeRotationEvent {
                     rotation: Rotation::Face(face_rotation.clone()),
                     negative_direction: invert_direction,
                     twice: false,
                     animation: None,
                 });
+
+                if i < 4 {
+                    assert!(!cube_state.is_solved());
+                }
             }
 
-            cube_state.is_solved();
+            assert!(cube_state.is_solved());
         };
 
+        // text x rotations
         test_4_face_rotations(FaceRotation::x(-1), false);
         test_4_face_rotations(FaceRotation::x(0), false);
         test_4_face_rotations(FaceRotation::x(1), false);
-
         test_4_face_rotations(FaceRotation::x(-1), true);
         test_4_face_rotations(FaceRotation::x(0), true);
         test_4_face_rotations(FaceRotation::x(1), true);
 
-        // TODO do rotations:
-        // 1. rotation sequence where pieces are in the same spot, but not in the correct orientation. Assert that is_solved is false, then do it again and then assert is_solved is true.
+        // text y rotations
+        // TODO uncomment once y rotations have been implemented
+        // test_4_face_rotations(FaceRotation::y(-1), false);
+        // test_4_face_rotations(FaceRotation::y(0), false);
+        // test_4_face_rotations(FaceRotation::y(1), false);
+        // test_4_face_rotations(FaceRotation::y(-1), true);
+        // test_4_face_rotations(FaceRotation::y(0), true);
+        // test_4_face_rotations(FaceRotation::y(1), true);
+
+        // text z rotations
+        // TODO uncomment once y rotations have been implemented
+        // test_4_face_rotations(FaceRotation::z(-1), false);
+        // test_4_face_rotations(FaceRotation::z(0), false);
+        // test_4_face_rotations(FaceRotation::z(1), false);
+        // test_4_face_rotations(FaceRotation::z(-1), true);
+        // test_4_face_rotations(FaceRotation::z(0), true);
+        // test_4_face_rotations(FaceRotation::z(1), true);
+
+        // TODO rotation sequence where pieces are in the same spot, but not in the correct orientation. Assert that is_solved is false, then do it again and then assert is_solved is true.
+    }
+
+    #[test]
+    fn test_handle_cube_rotation_event() {
+        let mut cube_state = CubeState::new(3);
+        assert!(cube_state.is_solved());
+
+        // tests that the cube state is solved after doing the same rotation 4 times
+        let mut test_4_cube_rotations = |cube_rotation: CubeRotation, invert_direction: bool| {
+            for _ in 1..=4 {
+                cube_state.handle_rotate_event(&CubeRotationEvent {
+                    rotation: Rotation::Cube(cube_rotation.clone()),
+                    negative_direction: invert_direction,
+                    twice: false,
+                    animation: None,
+                });
+
+                assert!(cube_state.is_solved());
+            }
+        };
+
+        test_4_cube_rotations(CubeRotation::X, true);
+        test_4_cube_rotations(CubeRotation::X, false);
+        test_4_cube_rotations(CubeRotation::Y, true);
+        test_4_cube_rotations(CubeRotation::Y, false);
+        test_4_cube_rotations(CubeRotation::Z, true);
+        test_4_cube_rotations(CubeRotation::Z, false);
     }
 
     #[test]
