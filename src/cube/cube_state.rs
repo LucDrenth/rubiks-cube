@@ -715,60 +715,61 @@ mod tests {
     #[test]
     fn test_handle_face_rotation_event() {
         // tests that the cube state is solved after doing the same rotation 4 times
-        let test_4_face_rotations = |face_rotation: FaceRotation, invert_direction: bool| {
-            let mut cube_state = CubeState::new(3);
-            assert!(cube_state.is_solved());
+        let test_4_face_rotations =
+            |cube_size: usize, face_rotation: FaceRotation, invert_direction: bool| {
+                let mut cube_state = CubeState::new(cube_size);
+                assert!(cube_state.is_solved());
 
-            cube_state.print_indices();
-            println!();
-
-            for i in 1..=4 {
-                cube_state.handle_rotate_event(&CubeRotationEvent {
-                    rotation: Rotation::Face(face_rotation.clone()),
-                    negative_direction: invert_direction,
-                    twice: false,
-                    animation: None,
-                });
-
-                if i < 4 {
-                    assert!(!cube_state.is_solved());
-                }
-
-                println!("========================");
                 cube_state.print_indices();
                 println!();
-            }
 
-            assert!(cube_state.is_solved());
-        };
+                for i in 1..=4 {
+                    cube_state.handle_rotate_event(&CubeRotationEvent {
+                        rotation: Rotation::Face(face_rotation.clone()),
+                        negative_direction: invert_direction,
+                        twice: false,
+                        animation: None,
+                    });
 
-        // text x rotations
-        test_4_face_rotations(FaceRotation::x(-1), false);
-        test_4_face_rotations(FaceRotation::x(0), false);
-        test_4_face_rotations(FaceRotation::x(1), false);
-        test_4_face_rotations(FaceRotation::x(-1), true);
-        test_4_face_rotations(FaceRotation::x(0), true);
-        test_4_face_rotations(FaceRotation::x(1), true);
+                    if i < 4 {
+                        assert!(!cube_state.is_solved());
+                    }
 
-        // text y rotations
-        test_4_face_rotations(FaceRotation::y(-1), false);
-        test_4_face_rotations(FaceRotation::y(0), false);
-        test_4_face_rotations(FaceRotation::y(1), false);
-        test_4_face_rotations(FaceRotation::y(-1), true);
-        test_4_face_rotations(FaceRotation::y(0), true);
-        test_4_face_rotations(FaceRotation::y(1), true);
+                    println!("========================");
+                    cube_state.print_indices();
+                    println!();
+                }
 
-        // text z rotations
-        test_4_face_rotations(FaceRotation::z(-1), false);
-        test_4_face_rotations(FaceRotation::z(0), false);
-        test_4_face_rotations(FaceRotation::z(1), false);
-        test_4_face_rotations(FaceRotation::z(-1), true);
-        test_4_face_rotations(FaceRotation::z(0), true);
-        test_4_face_rotations(FaceRotation::z(1), true);
+                assert!(cube_state.is_solved());
+            };
+
+        for cube_size in 2..=4 {
+            // text x rotations
+            test_4_face_rotations(cube_size, FaceRotation::x(-1), false);
+            test_4_face_rotations(cube_size, FaceRotation::x(0), false);
+            test_4_face_rotations(cube_size, FaceRotation::x(1), false);
+            test_4_face_rotations(cube_size, FaceRotation::x(-1), true);
+            test_4_face_rotations(cube_size, FaceRotation::x(0), true);
+            test_4_face_rotations(cube_size, FaceRotation::x(1), true);
+
+            // text y rotations,
+            test_4_face_rotations(cube_size, FaceRotation::y(-1), false);
+            test_4_face_rotations(cube_size, FaceRotation::y(0), false);
+            test_4_face_rotations(cube_size, FaceRotation::y(1), false);
+            test_4_face_rotations(cube_size, FaceRotation::y(-1), true);
+            test_4_face_rotations(cube_size, FaceRotation::y(0), true);
+            test_4_face_rotations(cube_size, FaceRotation::y(1), true);
+
+            // text z rotations,
+            test_4_face_rotations(cube_size, FaceRotation::z(-1), false);
+            test_4_face_rotations(cube_size, FaceRotation::z(0), false);
+            test_4_face_rotations(cube_size, FaceRotation::z(1), false);
+            test_4_face_rotations(cube_size, FaceRotation::z(-1), true);
+            test_4_face_rotations(cube_size, FaceRotation::z(0), true);
+            test_4_face_rotations(cube_size, FaceRotation::z(1), true);
+        }
 
         // TODO rotation sequence where pieces are in the same spot, but not in the correct orientation. Assert that is_solved is false, then do it again and then assert is_solved is true.
-
-        // TODO 4x4
     }
 
     #[test]
