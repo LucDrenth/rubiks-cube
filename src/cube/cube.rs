@@ -105,30 +105,6 @@ impl Piece {
 #[derive(Component)]
 pub struct PieceFace;
 
-#[derive(PartialEq, Clone, Debug)]
-pub enum Face {
-    Left = 0,
-    Right = 1,
-    Top = 2,
-    Bottom = 3,
-    Front = 4,
-    Back = 5,
-}
-
-impl Face {
-    pub fn as_colored_string(&self) -> String {
-        let color = match &self {
-            Face::Left => console::COLOR_ORANGE,
-            Face::Right => console::COLOR_RED,
-            Face::Top => console::COLOR_WHITE,
-            Face::Bottom => console::COLOR_YELLOW,
-            Face::Front => console::COLOR_GREEN,
-            Face::Back => console::COLOR_BLUE,
-        };
-        return format!("{}{:?}{}", color, self, console::COLOR_CLEAR);
-    }
-}
-
 fn spawn_cube(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,

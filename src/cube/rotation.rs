@@ -146,8 +146,9 @@ pub enum FaceRotation {
     /// Rotate the given slices on the y axis.
     /// For a rotation in the default direction, when looking at the front of the cube, the front row ends up at the right side.
     Y(Vec<i32>),
-    /// Rotate the given slices on the z axis
+    /// Rotate the given slices on the z axis.
     /// For a rotation in the default direction, when looking at the front of the cube, the top row ends up at the left side.
+    /// The positive slice indices are on the front of the cube and the negative slice indices are on the back of the cube.
     Z(Vec<i32>),
 }
 

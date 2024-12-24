@@ -1,12 +1,48 @@
 use bevy::prelude::*;
 
-use super::{cube::Face, CubeRotationEvent};
+use crate::utils::console;
+
+use super::CubeRotationEvent;
 
 /// Holds an efficient and precise state of a cube.
+///
+/// Only the outwards facing faces are stored, resulting in `n^2 * 6` stored elements where `n = cube_size`.
 #[derive(Component)]
 pub struct CubeState {
     cube_size: usize,
     face_states: FaceStates,
+}
+
+#[derive(PartialEq, Clone, Debug)]
+pub enum Face {
+    Left = 0,
+    Right = 1,
+    Top = 2,
+    Bottom = 3,
+    Front = 4,
+    Back = 5,
+}
+
+impl Face {
+    pub fn as_colored_string(&self) -> String {
+        return format!(
+            "{}{:?}{}",
+            self.to_console_color(),
+            self,
+            console::COLOR_CLEAR
+        );
+    }
+
+    fn to_console_color(&self) -> &str {
+        match &self {
+            Face::Left => console::COLOR_ORANGE,
+            Face::Right => console::COLOR_RED,
+            Face::Top => console::COLOR_WHITE,
+            Face::Bottom => console::COLOR_YELLOW,
+            Face::Front => console::COLOR_GREEN,
+            Face::Back => console::COLOR_BLUE,
+        }
+    }
 }
 
 /// The indices of a folded out 3x3 cube would be as follows:
@@ -50,10 +86,8 @@ impl FaceState {
     fn rotate_left(&mut self, cube_size: usize) {
         let mut new_state = self.0.clone();
 
-        for y in 0..cube_size {
-            for x in 0..cube_size {
-                new_state[x + y * cube_size] = self.0[(cube_size - y - 1) + x * cube_size].clone();
-            }
+        for i in 0..self.0.len() {
+            new_state[Self::rotate_face_index_left(i, cube_size)] = self.0[i].clone();
         }
 
         self.0 = new_state;
@@ -62,13 +96,23 @@ impl FaceState {
     fn rotate_right(&mut self, cube_size: usize) {
         let mut new_state = self.0.clone();
 
-        for y in 0..cube_size {
-            for x in 0..cube_size {
-                new_state[x + y * cube_size] = self.0[y + (cube_size - x - 1) * cube_size].clone();
-            }
+        for i in 0..self.0.len() {
+            new_state[Self::rotate_face_index_right(i, cube_size)] = self.0[i].clone();
         }
 
         self.0 = new_state;
+    }
+
+    fn rotate_face_index_left(i: usize, cube_size: usize) -> usize {
+        let x = i % cube_size;
+        let y = i / cube_size;
+        y + (cube_size - x - 1) * cube_size
+    }
+
+    fn rotate_face_index_right(i: usize, cube_size: usize) -> usize {
+        let x = i % cube_size;
+        let y = i / cube_size;
+        (cube_size - y - 1) + x * cube_size
     }
 }
 
@@ -103,7 +147,7 @@ impl CubeState {
                             if event.negative_direction {
                                 for i in 0..self.cube_size {
                                     let current_face_index = i * self.cube_size
-                                        + slice_to_column_index(slice, self.cube_size);
+                                        + slice_to_column_index(*slice, self.cube_size);
 
                                     // front to top
                                     new_face_states.top.0[current_face_index] =
@@ -134,7 +178,7 @@ impl CubeState {
                             } else {
                                 for i in 0..self.cube_size {
                                     let current_face_index = i * self.cube_size
-                                        + slice_to_column_index(slice, self.cube_size);
+                                        + slice_to_column_index(*slice, self.cube_size);
 
                                     // top to front
                                     new_face_states.front.0[current_face_index] =
@@ -173,49 +217,59 @@ impl CubeState {
 
                             if event.negative_direction {
                                 for i in 0..self.cube_size {
+                                    // TODO double check this value
                                     let current_face_index = i * self.cube_size
-                                        + slice_to_column_index(slice, self.cube_size);
+                                        + slice_to_column_index(*slice, self.cube_size);
 
                                     // front to left
-                                    todo!();
+                                    new_face_states.left.0[current_face_index] =
+                                        self.face_states.front.0[current_face_index].clone();
 
                                     // left to back
-                                    todo!();
+                                    new_face_states.back.0[current_face_index] =
+                                        self.face_states.left.0[current_face_index].clone();
 
                                     // back to right
-                                    todo!();
+                                    new_face_states.right.0[current_face_index] =
+                                        self.face_states.back.0[current_face_index].clone();
 
                                     // right to front
-                                    todo!();
+                                    new_face_states.front.0[current_face_index] =
+                                        self.face_states.right.0[current_face_index].clone();
                                 }
 
                                 if has_edge_on_positive_side(slice, self.cube_size) {
-                                    todo!();
+                                    new_face_states.bottom.rotate_right(self.cube_size);
                                 } else if has_edge_on_negative_side(slice, self.cube_size) {
-                                    todo!();
+                                    new_face_states.top.rotate_right(self.cube_size);
                                 }
                             } else {
                                 for i in 0..self.cube_size {
+                                    // TODO double check this value
                                     let current_face_index = i * self.cube_size
-                                        + slice_to_column_index(slice, self.cube_size);
+                                        + slice_to_column_index(*slice, self.cube_size);
 
                                     // front to right
-                                    todo!();
+                                    new_face_states.right.0[current_face_index] =
+                                        self.face_states.front.0[current_face_index].clone();
 
                                     // right to back
-                                    todo!();
+                                    new_face_states.back.0[current_face_index] =
+                                        self.face_states.right.0[current_face_index].clone();
 
                                     // back to left
-                                    todo!();
+                                    new_face_states.left.0[current_face_index] =
+                                        self.face_states.back.0[current_face_index].clone();
 
                                     // left to front
-                                    todo!();
+                                    new_face_states.front.0[current_face_index] =
+                                        self.face_states.left.0[current_face_index].clone();
                                 }
 
                                 if has_edge_on_positive_side(slice, self.cube_size) {
-                                    todo!();
+                                    new_face_states.bottom.rotate_left(self.cube_size);
                                 } else if has_edge_on_negative_side(slice, self.cube_size) {
-                                    todo!();
+                                    new_face_states.top.rotate_left(self.cube_size);
                                 }
                             }
 
@@ -226,51 +280,75 @@ impl CubeState {
                         for slice in slices {
                             let mut new_face_states = self.face_states.clone();
 
-                            if event.negative_direction {
-                                for i in 0..self.cube_size {
-                                    let current_face_index = i * self.cube_size
-                                        + slice_to_column_index(slice, self.cube_size);
+                            for i in 0..self.cube_size {
+                                let face_index_top = slice_to_column_index(*slice, self.cube_size)
+                                    * self.cube_size
+                                    + i;
 
+                                let face_index_right = self.cube_size
+                                    - slice_to_column_index(*slice, self.cube_size)
+                                    - 1
+                                    + i * self.cube_size;
+
+                                let face_index_bottom = invert_face_index_x(
+                                    (self.cube_size
+                                        - slice_to_column_index(*slice, self.cube_size)
+                                        - 1)
+                                        * self.cube_size
+                                        + i,
+                                    self.cube_size,
+                                );
+
+                                let face_index_left = invert_face_index_y(
+                                    slice_to_column_index(*slice, self.cube_size)
+                                        + i * self.cube_size,
+                                    self.cube_size,
+                                );
+
+                                if event.negative_direction {
                                     // top to right
-                                    todo!();
+                                    new_face_states.right.0[face_index_right] =
+                                        self.face_states.top.0[face_index_top].clone();
 
                                     // right to bottom
-                                    todo!();
+                                    new_face_states.bottom.0[face_index_bottom] =
+                                        self.face_states.right.0[face_index_right].clone();
 
                                     // bottom to left
-                                    todo!();
+                                    new_face_states.left.0[face_index_left] =
+                                        self.face_states.bottom.0[face_index_bottom].clone();
 
                                     // left to top
-                                    todo!();
-                                }
+                                    new_face_states.top.0[face_index_top] =
+                                        self.face_states.left.0[face_index_left].clone();
 
-                                if has_edge_on_positive_side(slice, self.cube_size) {
-                                    todo!();
-                                } else if has_edge_on_negative_side(slice, self.cube_size) {
-                                    todo!();
-                                }
-                            } else {
-                                for i in 0..self.cube_size {
-                                    let current_face_index = i * self.cube_size
-                                        + slice_to_column_index(slice, self.cube_size);
-
+                                    if has_edge_on_positive_side(slice, self.cube_size) {
+                                        new_face_states.front.rotate_right(self.cube_size);
+                                    } else if has_edge_on_negative_side(slice, self.cube_size) {
+                                        new_face_states.back.rotate_left(self.cube_size);
+                                    }
+                                } else {
                                     // top to left
-                                    todo!();
+                                    new_face_states.left.0[face_index_left] =
+                                        self.face_states.top.0[face_index_top].clone();
 
                                     // left to bottom
-                                    todo!();
+                                    new_face_states.bottom.0[face_index_bottom] =
+                                        self.face_states.left.0[face_index_left].clone();
 
                                     // bottom to right
-                                    todo!();
+                                    new_face_states.right.0[face_index_right] =
+                                        self.face_states.bottom.0[face_index_bottom].clone();
 
                                     // right to top
-                                    todo!();
-                                }
+                                    new_face_states.top.0[face_index_top] =
+                                        self.face_states.right.0[face_index_right].clone();
 
-                                if has_edge_on_positive_side(slice, self.cube_size) {
-                                    todo!();
-                                } else if has_edge_on_negative_side(slice, self.cube_size) {
-                                    todo!();
+                                    if has_edge_on_positive_side(slice, self.cube_size) {
+                                        new_face_states.front.rotate_left(self.cube_size);
+                                    } else if has_edge_on_negative_side(slice, self.cube_size) {
+                                        new_face_states.back.rotate_right(self.cube_size);
+                                    }
                                 }
                             }
 
@@ -330,7 +408,7 @@ impl CubeState {
     }
 
     /// Prints the current state in a folded format for debugging.
-    fn print(&self) {
+    fn print_faces(&self) {
         // top
         for y in 0..self.cube_size {
             print!("\t\t\t\t");
@@ -391,6 +469,81 @@ impl CubeState {
             println!();
         }
     }
+
+    /// Prints the current state in a folded format for debugging.
+    fn print_indices(&self) {
+        // top
+        for y in 0..self.cube_size {
+            print!("\t");
+            for x in 0..self.cube_size {
+                print!(
+                    "{}{}{} ",
+                    self.face_states.top.0[x + y * self.cube_size].to_console_color(),
+                    x + y * self.cube_size,
+                    console::COLOR_CLEAR
+                );
+            }
+            println!();
+        }
+
+        println!();
+
+        // left, front, right, bottom
+        for y in 0..self.cube_size {
+            for x in 0..self.cube_size {
+                print!(
+                    "{}{}{} ",
+                    self.face_states.left.0[x + y * self.cube_size].to_console_color(),
+                    x + y * self.cube_size,
+                    console::COLOR_CLEAR
+                );
+            }
+            print!("\t");
+            for x in 0..self.cube_size {
+                print!(
+                    "{}{}{} ",
+                    self.face_states.front.0[x + y * self.cube_size].to_console_color(),
+                    x + y * self.cube_size,
+                    console::COLOR_CLEAR
+                );
+            }
+            print!("\t");
+            for x in 0..self.cube_size {
+                print!(
+                    "{}{}{} ",
+                    self.face_states.right.0[x + y * self.cube_size].to_console_color(),
+                    x + y * self.cube_size,
+                    console::COLOR_CLEAR
+                );
+            }
+            print!("\t");
+            for x in 0..self.cube_size {
+                print!(
+                    "{}{}{} ",
+                    self.face_states.back.0[x + y * self.cube_size].to_console_color(),
+                    x + y * self.cube_size,
+                    console::COLOR_CLEAR
+                );
+            }
+            println!();
+        }
+
+        println!();
+
+        // bottom
+        for y in 0..self.cube_size {
+            print!("\t");
+            for x in 0..self.cube_size {
+                print!(
+                    "{}{}{} ",
+                    self.face_states.bottom.0[x + y * self.cube_size].to_console_color(),
+                    x + y * self.cube_size,
+                    console::COLOR_CLEAR
+                );
+            }
+            println!();
+        }
+    }
 }
 
 impl FaceStates {
@@ -424,7 +577,7 @@ fn has_edge_on_negative_side(slice: &i32, cube_size: usize) -> bool {
     }
 }
 
-fn slice_to_column_index(slice: &i32, cube_size: usize) -> usize {
+fn slice_to_column_index(slice: i32, cube_size: usize) -> usize {
     if cube_size % 2 == 0 {
         if slice.is_positive() {
             return (slice - 1 + cube_size as i32 / 2) as usize;
@@ -450,10 +603,9 @@ fn invert_face_index_y(face_index: usize, cube_size: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use crate::cube::{
-        cube::Face,
         cube_state::{
             has_edge_on_negative_side, has_edge_on_positive_side, invert_face_index_x,
-            invert_face_index_y, slice_to_column_index,
+            invert_face_index_y, slice_to_column_index, Face,
         },
         rotation::{CubeRotation, FaceRotation, Rotation},
         CubeRotationEvent,
@@ -468,6 +620,46 @@ mod tests {
 
         assert!(!unsolved_face_state.is_solved());
         assert!(solved_face_state.is_solved());
+    }
+
+    #[test]
+    fn rotate_face_index_left() {
+        // 2x2
+        assert_eq!(2, FaceState::rotate_face_index_left(0, 2));
+        assert_eq!(0, FaceState::rotate_face_index_left(1, 2));
+        assert_eq!(3, FaceState::rotate_face_index_left(2, 2));
+        assert_eq!(1, FaceState::rotate_face_index_left(3, 2));
+
+        // 3x3
+        assert_eq!(6, FaceState::rotate_face_index_left(0, 3));
+        assert_eq!(3, FaceState::rotate_face_index_left(1, 3));
+        assert_eq!(0, FaceState::rotate_face_index_left(2, 3));
+        assert_eq!(7, FaceState::rotate_face_index_left(3, 3));
+        assert_eq!(4, FaceState::rotate_face_index_left(4, 3));
+        assert_eq!(1, FaceState::rotate_face_index_left(5, 3));
+        assert_eq!(8, FaceState::rotate_face_index_left(6, 3));
+        assert_eq!(5, FaceState::rotate_face_index_left(7, 3));
+        assert_eq!(2, FaceState::rotate_face_index_left(8, 3));
+    }
+
+    #[test]
+    fn rotate_face_index_right() {
+        // 2x2
+        assert_eq!(1, FaceState::rotate_face_index_right(0, 2));
+        assert_eq!(3, FaceState::rotate_face_index_right(1, 2));
+        assert_eq!(0, FaceState::rotate_face_index_right(2, 2));
+        assert_eq!(2, FaceState::rotate_face_index_right(3, 2));
+
+        // 3x3
+        assert_eq!(2, FaceState::rotate_face_index_right(0, 3));
+        assert_eq!(5, FaceState::rotate_face_index_right(1, 3));
+        assert_eq!(8, FaceState::rotate_face_index_right(2, 3));
+        assert_eq!(1, FaceState::rotate_face_index_right(3, 3));
+        assert_eq!(4, FaceState::rotate_face_index_right(4, 3));
+        assert_eq!(7, FaceState::rotate_face_index_right(5, 3));
+        assert_eq!(0, FaceState::rotate_face_index_right(6, 3));
+        assert_eq!(3, FaceState::rotate_face_index_right(7, 3));
+        assert_eq!(6, FaceState::rotate_face_index_right(8, 3));
     }
 
     #[test]
@@ -522,11 +714,14 @@ mod tests {
 
     #[test]
     fn test_handle_face_rotation_event() {
-        let mut cube_state = CubeState::new(3);
-        assert!(cube_state.is_solved());
-
         // tests that the cube state is solved after doing the same rotation 4 times
-        let mut test_4_face_rotations = |face_rotation: FaceRotation, invert_direction: bool| {
+        let test_4_face_rotations = |face_rotation: FaceRotation, invert_direction: bool| {
+            let mut cube_state = CubeState::new(3);
+            assert!(cube_state.is_solved());
+
+            cube_state.print_indices();
+            println!();
+
             for i in 1..=4 {
                 cube_state.handle_rotate_event(&CubeRotationEvent {
                     rotation: Rotation::Face(face_rotation.clone()),
@@ -538,6 +733,10 @@ mod tests {
                 if i < 4 {
                     assert!(!cube_state.is_solved());
                 }
+
+                println!("========================");
+                cube_state.print_indices();
+                println!();
             }
 
             assert!(cube_state.is_solved());
@@ -552,65 +751,73 @@ mod tests {
         test_4_face_rotations(FaceRotation::x(1), true);
 
         // text y rotations
-        // TODO uncomment once y rotations have been implemented
-        // test_4_face_rotations(FaceRotation::y(-1), false);
-        // test_4_face_rotations(FaceRotation::y(0), false);
-        // test_4_face_rotations(FaceRotation::y(1), false);
-        // test_4_face_rotations(FaceRotation::y(-1), true);
-        // test_4_face_rotations(FaceRotation::y(0), true);
-        // test_4_face_rotations(FaceRotation::y(1), true);
+        test_4_face_rotations(FaceRotation::y(-1), false);
+        test_4_face_rotations(FaceRotation::y(0), false);
+        test_4_face_rotations(FaceRotation::y(1), false);
+        test_4_face_rotations(FaceRotation::y(-1), true);
+        test_4_face_rotations(FaceRotation::y(0), true);
+        test_4_face_rotations(FaceRotation::y(1), true);
 
         // text z rotations
-        // TODO uncomment once y rotations have been implemented
-        // test_4_face_rotations(FaceRotation::z(-1), false);
-        // test_4_face_rotations(FaceRotation::z(0), false);
-        // test_4_face_rotations(FaceRotation::z(1), false);
-        // test_4_face_rotations(FaceRotation::z(-1), true);
-        // test_4_face_rotations(FaceRotation::z(0), true);
-        // test_4_face_rotations(FaceRotation::z(1), true);
+        test_4_face_rotations(FaceRotation::z(-1), false);
+        test_4_face_rotations(FaceRotation::z(0), false);
+        test_4_face_rotations(FaceRotation::z(1), false);
+        test_4_face_rotations(FaceRotation::z(-1), true);
+        test_4_face_rotations(FaceRotation::z(0), true);
+        test_4_face_rotations(FaceRotation::z(1), true);
 
         // TODO rotation sequence where pieces are in the same spot, but not in the correct orientation. Assert that is_solved is false, then do it again and then assert is_solved is true.
+
+        // TODO 4x4
     }
 
     #[test]
     fn test_handle_cube_rotation_event() {
-        let mut cube_state = CubeState::new(3);
-        assert!(cube_state.is_solved());
-
         // tests that the cube state is solved after doing the same rotation 4 times
-        let mut test_4_cube_rotations = |cube_rotation: CubeRotation, invert_direction: bool| {
-            for _ in 1..=4 {
-                cube_state.handle_rotate_event(&CubeRotationEvent {
-                    rotation: Rotation::Cube(cube_rotation.clone()),
-                    negative_direction: invert_direction,
-                    twice: false,
-                    animation: None,
-                });
-
+        let test_4_cube_rotations =
+            |cube_size: usize, cube_rotation: CubeRotation, invert_direction: bool| {
+                let mut cube_state = CubeState::new(cube_size);
                 assert!(cube_state.is_solved());
-            }
-        };
 
-        test_4_cube_rotations(CubeRotation::X, true);
-        test_4_cube_rotations(CubeRotation::X, false);
-        test_4_cube_rotations(CubeRotation::Y, true);
-        test_4_cube_rotations(CubeRotation::Y, false);
-        test_4_cube_rotations(CubeRotation::Z, true);
-        test_4_cube_rotations(CubeRotation::Z, false);
+                for _ in 1..=4 {
+                    cube_state.handle_rotate_event(&CubeRotationEvent {
+                        rotation: Rotation::Cube(cube_rotation.clone()),
+                        negative_direction: invert_direction,
+                        twice: false,
+                        animation: None,
+                    });
+
+                    assert!(cube_state.is_solved());
+                }
+            };
+
+        test_4_cube_rotations(3, CubeRotation::X, true);
+        test_4_cube_rotations(3, CubeRotation::X, false);
+        test_4_cube_rotations(3, CubeRotation::Y, true);
+        test_4_cube_rotations(3, CubeRotation::Y, false);
+        test_4_cube_rotations(3, CubeRotation::Z, true);
+        test_4_cube_rotations(3, CubeRotation::Z, false);
+
+        test_4_cube_rotations(4, CubeRotation::X, true);
+        test_4_cube_rotations(4, CubeRotation::X, false);
+        test_4_cube_rotations(4, CubeRotation::Y, true);
+        test_4_cube_rotations(4, CubeRotation::Y, false);
+        test_4_cube_rotations(4, CubeRotation::Z, true);
+        test_4_cube_rotations(4, CubeRotation::Z, false);
     }
 
     #[test]
     fn test_slice_to_column_index() {
         // 3x3
-        assert_eq!(0, slice_to_column_index(&-1, 3));
-        assert_eq!(1, slice_to_column_index(&0, 3));
-        assert_eq!(2, slice_to_column_index(&1, 3));
+        assert_eq!(0, slice_to_column_index(-1, 3));
+        assert_eq!(1, slice_to_column_index(0, 3));
+        assert_eq!(2, slice_to_column_index(1, 3));
 
         // 4x4
-        assert_eq!(0, slice_to_column_index(&-2, 4));
-        assert_eq!(1, slice_to_column_index(&-1, 4));
-        assert_eq!(2, slice_to_column_index(&1, 4));
-        assert_eq!(3, slice_to_column_index(&2, 4));
+        assert_eq!(0, slice_to_column_index(-2, 4));
+        assert_eq!(1, slice_to_column_index(-1, 4));
+        assert_eq!(2, slice_to_column_index(1, 4));
+        assert_eq!(3, slice_to_column_index(2, 4));
     }
 
     #[test]
