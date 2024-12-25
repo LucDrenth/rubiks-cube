@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::schedules::CubeStartupSet;
 
 use super::{
+    algorithms,
     cube::{Cube, CubeSize},
     CubeRotationEvent,
 };
@@ -18,22 +19,35 @@ impl Plugin for CubeScramblePlugin {
     }
 }
 
+// For debugging
 fn apply_instant_scramble(
     cube_query: Query<&Cube>,
     mut event_writer: EventWriter<CubeRotationEvent>,
 ) {
-    let Ok(cube) = cube_query.get_single() else {
+    let Ok(_cube) = cube_query.get_single() else {
         error!("expected exactly 1 Cube in query result");
         return;
     };
 
-    let scramble_sequence = create_scramble_sequence(cube.size(), 20);
+    let scramble_sequence =
+        create_scramble_sequence_from_algorithm(algorithms::size_3x3::flipped_pieces());
+
     for event in scramble_sequence {
         event_writer.send(event);
     }
 }
 
-pub fn create_scramble_sequence(
+pub fn create_scramble_sequence_from_algorithm<T>(algorithm: Vec<T>) -> Vec<CubeRotationEvent>
+where
+    T: Into<CubeRotationEvent>,
+{
+    algorithm
+        .into_iter()
+        .map(|rotation| rotation.into())
+        .collect()
+}
+
+pub fn create_random_scramble_sequence(
     cube_size: &CubeSize,
     number_of_rotations: usize,
 ) -> Vec<CubeRotationEvent> {
@@ -79,7 +93,7 @@ fn create_scramble_sequence_with_strategy(
 #[cfg(test)]
 mod tests {
     use crate::cube::{
-        create_scramble_sequence, cube::CubeSize, rotation::Rotation, CubeRotationEvent,
+        create_random_scramble_sequence, cube::CubeSize, rotation::Rotation, CubeRotationEvent,
     };
 
     use super::create_scramble_sequence_with_strategy;
@@ -101,10 +115,10 @@ mod tests {
     }
 
     #[test]
-    fn test_create_scramble_sequence() {
+    fn test_create_random_scramble_sequence() {
         let cube_size = CubeSize(3);
         let sequence_length = 5;
-        let sequence = create_scramble_sequence(&cube_size, sequence_length);
+        let sequence = create_random_scramble_sequence(&cube_size, sequence_length);
         assert_eq!(sequence.len(), sequence_length);
     }
 

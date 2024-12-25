@@ -3,7 +3,8 @@ use bevy::prelude::*;
 use crate::schedules::CubeScheduleSet;
 
 use super::{
-    algorithms, cube::Cube, cube_state::CubeState, rotation::RotationAnimation, CubeRotationEvent,
+    algorithms, create_scramble_sequence_from_algorithm, cube::Cube, cube_state::CubeState,
+    rotation::RotationAnimation, CubeRotationEvent,
 };
 
 pub struct ControllerPlugin;
@@ -43,12 +44,7 @@ impl RotationStepper {
 }
 
 fn init_stepper(mut commands: Commands) {
-    let steps: Vec<CubeRotationEvent> = algorithms::size_3x3::flipped_pieces()
-        .iter()
-        .rev()
-        .map(|e| e.into())
-        .collect();
-
+    let steps = create_scramble_sequence_from_algorithm(algorithms::size_3x3::flipped_pieces());
     commands.spawn(RotationStepper { steps, current: 0 });
 }
 

@@ -14,7 +14,8 @@ pub use rotation::CubeRotationEvent;
 mod axis;
 
 mod scramble;
-pub use scramble::create_scramble_sequence;
+pub use scramble::create_random_scramble_sequence;
+pub use scramble::create_scramble_sequence_from_algorithm;
 
 pub mod solver;
 

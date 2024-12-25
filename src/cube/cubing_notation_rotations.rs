@@ -74,7 +74,7 @@ pub enum Rotation3x3 {
     BPrime,
 }
 
-impl Into<CubeRotationEvent> for &CubeRotation {
+impl Into<CubeRotationEvent> for CubeRotation {
     fn into(self) -> CubeRotationEvent {
         match self {
             CubeRotation::X => CubeRotationEvent {
@@ -135,7 +135,7 @@ impl Into<CubeRotationEvent> for &CubeRotation {
     }
 }
 
-impl Into<CubeRotationEvent> for &Rotation2x2 {
+impl Into<CubeRotationEvent> for Rotation2x2 {
     fn into(self) -> CubeRotationEvent {
         match self {
             Rotation2x2::L => CubeRotationEvent {
@@ -250,7 +250,7 @@ impl Into<CubeRotationEvent> for &Rotation2x2 {
     }
 }
 
-impl Into<CubeRotationEvent> for &Rotation3x3 {
+impl Into<CubeRotationEvent> for Rotation3x3 {
     fn into(self) -> CubeRotationEvent {
         match self {
             Rotation3x3::L => CubeRotationEvent {
