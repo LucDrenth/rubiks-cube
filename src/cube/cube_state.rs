@@ -321,12 +321,6 @@ impl CubeState {
                                     // left to top
                                     new_face_states.top.0[face_index_top] =
                                         self.face_states.left.0[face_index_left].clone();
-
-                                    if has_edge_on_positive_side(slice, self.cube_size) {
-                                        new_face_states.front.rotate_right(self.cube_size);
-                                    } else if has_edge_on_negative_side(slice, self.cube_size) {
-                                        new_face_states.back.rotate_left(self.cube_size);
-                                    }
                                 } else {
                                     // top to left
                                     new_face_states.left.0[face_index_left] =
@@ -343,12 +337,20 @@ impl CubeState {
                                     // right to top
                                     new_face_states.top.0[face_index_top] =
                                         self.face_states.right.0[face_index_right].clone();
+                                }
+                            }
 
-                                    if has_edge_on_positive_side(slice, self.cube_size) {
-                                        new_face_states.front.rotate_left(self.cube_size);
-                                    } else if has_edge_on_negative_side(slice, self.cube_size) {
-                                        new_face_states.back.rotate_right(self.cube_size);
-                                    }
+                            if event.negative_direction {
+                                if has_edge_on_positive_side(slice, self.cube_size) {
+                                    new_face_states.front.rotate_right(self.cube_size);
+                                } else if has_edge_on_negative_side(slice, self.cube_size) {
+                                    new_face_states.back.rotate_left(self.cube_size);
+                                }
+                            } else {
+                                if has_edge_on_positive_side(slice, self.cube_size) {
+                                    new_face_states.front.rotate_left(self.cube_size);
+                                } else if has_edge_on_negative_side(slice, self.cube_size) {
+                                    new_face_states.back.rotate_right(self.cube_size);
                                 }
                             }
 
@@ -407,7 +409,7 @@ impl CubeState {
         }
     }
 
-    /// Prints the current state in a folded format for debugging.
+    /// Prints the current state in a folded format for debugging. Does not work well for cubes 4x4 cubes or bigger.
     fn print_faces(&self) {
         // top
         for y in 0..self.cube_size {
