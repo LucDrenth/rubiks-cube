@@ -607,7 +607,7 @@ fn handle_rotation_animations(
     time: Res<Time>,
 ) {
     for (entity, mut transform, mut animation) in query.iter_mut() {
-        let mut progress = time.delta_seconds() / animation.duration_in_seconds;
+        let mut progress = time.delta_secs() / animation.duration_in_seconds;
         animation.progress += progress;
 
         // prevent overshooting the target

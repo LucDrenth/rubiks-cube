@@ -19,15 +19,14 @@ fn main() {
 }
 
 fn spawn_light(mut commands: Commands) {
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
+    commands.spawn((
+        PointLight {
             shadows_enabled: true,
             intensity: 10_000_000.,
             range: 300.0,
             shadow_depth_bias: 0.8,
             ..default()
         },
-        transform: Transform::from_xyz(15.0, 15.0, 15.0),
-        ..default()
-    });
+        Transform::from_xyz(15.0, 15.0, 15.0),
+    ));
 }

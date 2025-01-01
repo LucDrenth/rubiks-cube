@@ -10,10 +10,10 @@ impl Plugin for CameraPlugin {
 }
 
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(6.5, 7.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(6.5, 7.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
 }
 
 // Camera controls to rotate around the center point
@@ -52,13 +52,13 @@ fn camera_controls(
     if let Some(rotation) = rotation_x {
         transform.rotate_around(
             Vec3::ZERO,
-            Quat::from_rotation_x(rotation * time.delta_seconds()),
+            Quat::from_rotation_x(rotation * time.delta_secs()),
         );
     }
     if let Some(rotation) = rotation_y {
         transform.rotate_around(
             Vec3::ZERO,
-            Quat::from_rotation_y(rotation * time.delta_seconds()),
+            Quat::from_rotation_y(rotation * time.delta_secs()),
         );
     }
 }

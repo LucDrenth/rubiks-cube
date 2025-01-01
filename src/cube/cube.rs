@@ -2,7 +2,7 @@ use std::f32::consts::TAU;
 
 use bevy::prelude::*;
 
-use crate::{schedules::CubeStartupSet, utils::console};
+use crate::schedules::CubeStartupSet;
 
 use super::{
     controller::ControllerPlugin, cube_state::CubeState, rotation::CubeRotationPlugin,
@@ -120,7 +120,7 @@ fn spawn_cube(
         cube_size: CubeSize(cube_size),
         piece_spread: 0.05,
         block_size: 1.0,
-        inner_material: materials.add(Color::rgb(0.1, 0.1, 0.1)),
+        inner_material: materials.add(Color::srgb(0.1, 0.1, 0.1)),
         is_animating_rotation: false,
     };
 
@@ -182,19 +182,16 @@ fn spawn_cube(
                 transform.rotate_local_y(-TAU / 4.0);
 
                 let material = if x == cube.size().lowest_piece_index() {
-                    materials.add(Color::rgb(0.99, 0.49, 0.05)) // orange
+                    materials.add(Color::srgb(0.99, 0.49, 0.05)) // orange
                 } else {
                     cube.inner_material.clone()
                 };
 
                 let face_left = commands
                     .spawn((
-                        PbrBundle {
-                            mesh: piece_face_mesh.clone(),
-                            transform: transform,
-                            material: material,
-                            ..default()
-                        },
+                        Mesh3d(piece_face_mesh.clone()),
+                        transform,
+                        MeshMaterial3d(material),
                         PieceFace,
                     ))
                     .id();
@@ -204,7 +201,7 @@ fn spawn_cube(
                     Transform::from_translation(middle_point + Vec3::new(face_offset, 0.0, 0.0));
 
                 let material = if x == cube.size().highest_piece_index() {
-                    materials.add(Color::rgb(0.99, 0.0, 0.0)) // red
+                    materials.add(Color::srgb(0.99, 0.0, 0.0)) // red
                 } else {
                     cube.inner_material.clone()
                 };
@@ -212,12 +209,9 @@ fn spawn_cube(
                 transform.rotate_local_y(TAU / 4.0);
                 let face_right = commands
                     .spawn((
-                        PbrBundle {
-                            mesh: piece_face_mesh.clone(),
-                            transform: transform,
-                            material: material,
-                            ..default()
-                        },
+                        Mesh3d(piece_face_mesh.clone()),
+                        transform,
+                        MeshMaterial3d(material),
                         PieceFace,
                     ))
                     .id();
@@ -228,19 +222,16 @@ fn spawn_cube(
                 transform.rotate_x(-TAU / 4.0);
 
                 let material = if y == cube.size().highest_piece_index() {
-                    materials.add(Color::rgb(0.99, 0.99, 0.99)) // white
+                    materials.add(Color::srgb(0.99, 0.99, 0.99)) // white
                 } else {
                     cube.inner_material.clone()
                 };
 
                 let face_top = commands
                     .spawn((
-                        PbrBundle {
-                            mesh: piece_face_mesh.clone(),
-                            transform: transform,
-                            material: material,
-                            ..default()
-                        },
+                        Mesh3d(piece_face_mesh.clone()),
+                        transform,
+                        MeshMaterial3d(material),
                         PieceFace,
                     ))
                     .id();
@@ -251,19 +242,16 @@ fn spawn_cube(
                 transform.rotate_x(TAU / 4.0);
 
                 let material = if y == cube.size().lowest_piece_index() {
-                    materials.add(Color::rgb(0.99, 0.99, 0.0)) // yellow
+                    materials.add(Color::srgb(0.99, 0.99, 0.0)) // yellow
                 } else {
                     cube.inner_material.clone()
                 };
 
                 let face_bottom = commands
                     .spawn((
-                        PbrBundle {
-                            mesh: piece_face_mesh.clone(),
-                            transform: transform,
-                            material: material,
-                            ..default()
-                        },
+                        Mesh3d(piece_face_mesh.clone()),
+                        transform,
+                        MeshMaterial3d(material),
                         PieceFace,
                     ))
                     .id();
@@ -273,19 +261,16 @@ fn spawn_cube(
                     Transform::from_translation(middle_point + Vec3::new(0.0, 0.0, face_offset));
 
                 let material = if z == cube.size().highest_piece_index() {
-                    materials.add(Color::rgb(0.027, 0.89, 0.215)) // green
+                    materials.add(Color::srgb(0.027, 0.89, 0.215)) // green
                 } else {
                     cube.inner_material.clone()
                 };
 
                 let face_front = commands
                     .spawn((
-                        PbrBundle {
-                            mesh: piece_face_mesh.clone(),
-                            transform: transform,
-                            material: material,
-                            ..default()
-                        },
+                        Mesh3d(piece_face_mesh.clone()),
+                        transform,
+                        MeshMaterial3d(material),
                         PieceFace,
                     ))
                     .id();
@@ -296,19 +281,16 @@ fn spawn_cube(
                 transform.rotate_local_y(-TAU / 2.0);
 
                 let material = if z == cube.size().lowest_piece_index() {
-                    materials.add(Color::rgb(0.0, 0.0, 0.99)) // blue
+                    materials.add(Color::srgb(0.0, 0.0, 0.99)) // blue
                 } else {
                     cube.inner_material.clone()
                 };
 
                 let face_back = commands
                     .spawn((
-                        PbrBundle {
-                            mesh: piece_face_mesh.clone(),
-                            transform: transform,
-                            material: material,
-                            ..default()
-                        },
+                        Mesh3d(piece_face_mesh.clone()),
+                        transform,
+                        MeshMaterial3d(material),
                         PieceFace,
                     ))
                     .id();

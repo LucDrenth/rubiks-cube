@@ -549,7 +549,7 @@ mod tests {
             invert_face_index_y, slice_to_column_index, Face,
         },
         rotation::{CubeRotation, FaceRotation, Rotation},
-        CubeRotationEvent, Rotation3x3,
+        CubeRotationEvent,
     };
 
     use super::{CubeState, FaceState};
