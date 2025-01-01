@@ -1,11 +1,11 @@
-use bevy::prelude::*;
+use bevy::{input::mouse::MouseMotion, log, prelude::*};
 
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_camera);
-        app.add_systems(Update, camera_controls);
+        app.add_systems(Update, (camera_controls_keyboard, camera_controls_mouse));
     }
 }
 
@@ -17,7 +17,7 @@ fn spawn_camera(mut commands: Commands) {
 }
 
 // Camera controls to rotate around the center point
-fn camera_controls(
+fn camera_controls_keyboard(
     mut query: Query<&mut Transform, With<Camera>>,
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -61,4 +61,30 @@ fn camera_controls(
             Quat::from_rotation_y(rotation * time.delta_secs()),
         );
     }
+}
+
+fn camera_controls_mouse(
+    mut query: Query<&mut Transform, With<Camera>>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    mut moust_motion_event_reader: EventReader<MouseMotion>,
+) {
+    let Ok(mut transform) = query.get_single_mut() else {
+        error!("Expected exactly 1 camera component");
+        return;
+    };
+
+    if !mouse_input.pressed(MouseButton::Left) {
+        return;
+    }
+
+    let mut mouse_moved = Vec2::ZERO;
+
+    for mouse_motion in moust_motion_event_reader.read() {
+        mouse_moved += mouse_motion.delta;
+    }
+
+    mouse_moved /= 50.0;
+
+    transform.rotate_around(Vec3::ZERO, Quat::from_rotation_y(-mouse_moved.x));
+    transform.rotate_around(Vec3::ZERO, Quat::from_rotation_x(-mouse_moved.y));
 }
