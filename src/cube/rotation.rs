@@ -30,12 +30,15 @@ impl Plugin for CubeRotationPlugin {
 #[derive(Clone, Debug)]
 pub struct RotationAnimation {
     pub duration_in_seconds: f32,
+    pub ease_function: Option<EaseFunction>,
 }
 
 #[derive(Component)]
 struct RotationAnimator {
-    progress: f32,
+    start: Transform,
+    progress: f32, // between 0.0 and 1.0
     duration_in_seconds: f32,
+    ease_function: EaseFunction,
     amount_to_rotate: f32, // in radians
     axis: Axis,
     pivot_point: Vec3,
@@ -43,14 +46,17 @@ struct RotationAnimator {
 
 impl RotationAnimator {
     fn new(
+        start: Transform,
         animation: &RotationAnimation,
         amount_to_rotate: f32,
         axis: Axis,
         pivot_point: Vec3,
     ) -> Self {
         Self {
+            start,
             progress: 0.0,
             duration_in_seconds: animation.duration_in_seconds,
+            ease_function: animation.ease_function.unwrap_or(EaseFunction::Linear),
             amount_to_rotate,
             axis,
             pivot_point,
@@ -583,8 +589,13 @@ fn rotate_face(
 
     match animation {
         Some(animation_properties) => {
-            let animator =
-                RotationAnimator::new(animation_properties, rotation_amount, axis, pivot_point);
+            let animator = RotationAnimator::new(
+                transform.clone(),
+                animation_properties,
+                rotation_amount,
+                axis,
+                pivot_point,
+            );
             commands.entity(face).insert(animator);
 
             cube.is_animating_rotation = true;
@@ -607,24 +618,26 @@ fn handle_rotation_animations(
     time: Res<Time>,
 ) {
     for (entity, mut transform, mut animation) in query.iter_mut() {
-        let mut progress = time.delta_secs() / animation.duration_in_seconds;
-        animation.progress += progress;
+        animation.progress += time.delta_secs() / animation.duration_in_seconds;
+        animation.progress = animation.progress.clamp(0.0, 1.0);
 
-        // prevent overshooting the target
-        if animation.progress >= 1.0 {
-            progress -= animation.progress - 1.0;
-            animation.progress = 1.0;
-        }
+        let eased_progress = EasingCurve::new(0.0, 1.0, animation.ease_function)
+            .sample(animation.progress)
+            .unwrap();
 
-        let angle = animation.amount_to_rotate * progress;
+        let angle = eased_progress * animation.amount_to_rotate;
         let rotation = match animation.axis {
             Axis::X => Quat::from_rotation_x(angle),
             Axis::Y => Quat::from_rotation_y(angle),
             Axis::Z => Quat::from_rotation_z(angle),
         };
+        let mut new_transform = animation.start.clone();
+        new_transform.rotate_around(animation.pivot_point, rotation);
 
-        transform.rotate_around(animation.pivot_point, rotation);
+        transform.rotation = new_transform.rotation;
+        transform.translation = new_transform.translation;
 
+        // cleanup if animation is done
         if animation.progress >= 1.0 {
             commands.entity(entity).remove::<RotationAnimator>();
             cube_query.get_single_mut().unwrap().is_animating_rotation = false;

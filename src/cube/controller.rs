@@ -91,6 +91,7 @@ fn random_face_rotation_on_tab(
 
     rotation_event.animation = Some(RotationAnimation {
         duration_in_seconds: 0.15,
+        ease_function: None,
     });
     event_writer.send(rotation_event);
 }
@@ -136,6 +137,7 @@ fn spacebar_stepper_handler(
     let mut rotation_event = stepper.step();
     rotation_event.animation = Some(RotationAnimation {
         duration_in_seconds: 0.25,
+        ease_function: Some(EaseFunction::CubicOut),
     });
     event_writer.send(rotation_event);
 }
