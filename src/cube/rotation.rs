@@ -135,10 +135,10 @@ impl Rotation {
         Self::Cube(CubeRotation::X)
     }
     pub fn cube_y() -> Self {
-        Self::Cube(CubeRotation::X)
+        Self::Cube(CubeRotation::Y)
     }
     pub fn cube_z() -> Self {
-        Self::Cube(CubeRotation::X)
+        Self::Cube(CubeRotation::Z)
     }
 }
 
