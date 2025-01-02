@@ -461,113 +461,117 @@ fn rotation_events_handler(
                     }
                 }
             }
-            Rotation::Cube(cube_rotation) => match cube_rotation {
-                CubeRotation::X => {
-                    for piece in &mut cube_pieces {
-                        // Rotate faces
-                        for face in piece.faces {
-                            rotate_face(
-                                &mut commands,
-                                &mut faces_query,
-                                &mut cube,
-                                face,
-                                cube_transform.translation,
-                                &cube_rotation_event.animation,
-                                Axis::X,
-                                rotation_amount,
-                            );
+            Rotation::Cube(cube_rotation) => {
+                let pivot_point = Vec3::ZERO;
+
+                match cube_rotation {
+                    CubeRotation::X => {
+                        for piece in &mut cube_pieces {
+                            // Rotate faces
+                            for face in piece.faces {
+                                rotate_face(
+                                    &mut commands,
+                                    &mut faces_query,
+                                    &mut cube,
+                                    face,
+                                    pivot_point,
+                                    &cube_rotation_event.animation,
+                                    Axis::X,
+                                    rotation_amount,
+                                );
+                            }
+
+                            // Update piece indices
+                            let new_y: i32;
+                            let new_z: i32;
+
+                            if cube_rotation_event.twice {
+                                new_y = piece.current_y * -1;
+                                new_z = piece.current_z * -1;
+                            } else if cube_rotation_event.negative_direction {
+                                new_y = piece.current_y * -1;
+                                new_z = piece.current_z;
+                            } else {
+                                new_y = piece.current_z;
+                                new_z = piece.current_y * -1;
+                            }
+
+                            piece.current_y = new_y;
+                            piece.current_z = new_z;
                         }
+                    }
+                    CubeRotation::Y => {
+                        for piece in &mut cube_pieces {
+                            // Rotate faces
+                            for face in piece.faces {
+                                rotate_face(
+                                    &mut commands,
+                                    &mut faces_query,
+                                    &mut cube,
+                                    face,
+                                    pivot_point,
+                                    &cube_rotation_event.animation,
+                                    Axis::Y,
+                                    rotation_amount,
+                                );
+                            }
 
-                        // Update piece indices
-                        let new_y: i32;
-                        let new_z: i32;
+                            // Update piece indices
+                            let new_x: i32;
+                            let new_z: i32;
 
-                        if cube_rotation_event.twice {
-                            new_y = piece.current_y * -1;
-                            new_z = piece.current_z * -1;
-                        } else if cube_rotation_event.negative_direction {
-                            new_y = piece.current_y * -1;
-                            new_z = piece.current_z;
-                        } else {
-                            new_y = piece.current_z;
-                            new_z = piece.current_y * -1;
+                            if cube_rotation_event.twice {
+                                new_x = piece.current_x * -1;
+                                new_z = piece.current_z * -1;
+                            } else if cube_rotation_event.negative_direction {
+                                new_x = piece.current_z * -1;
+                                new_z = piece.current_x;
+                            } else {
+                                new_x = piece.current_z;
+                                new_z = piece.current_x * -1;
+                            }
+
+                            piece.current_x = new_x;
+                            piece.current_z = new_z;
                         }
+                    }
+                    CubeRotation::Z => {
+                        for piece in &mut cube_pieces {
+                            // Rotate faces
+                            for face in piece.faces {
+                                rotate_face(
+                                    &mut commands,
+                                    &mut faces_query,
+                                    &mut cube,
+                                    face,
+                                    pivot_point,
+                                    &cube_rotation_event.animation,
+                                    Axis::Z,
+                                    rotation_amount,
+                                );
+                            }
 
-                        piece.current_y = new_y;
-                        piece.current_z = new_z;
+                            // Update piece indices
+                            let new_x: i32;
+                            let new_y: i32;
+
+                            if cube_rotation_event.twice {
+                                new_x = piece.current_x * -1;
+                                new_y = piece.current_y * -1;
+                            } else if cube_rotation_event.negative_direction {
+                                new_x = piece.current_y;
+                                new_y = piece.current_x * -1;
+                            } else {
+                                new_x = piece.current_y * -1;
+                                new_y = piece.current_x;
+                            }
+
+                            piece.current_x = new_x;
+                            piece.current_y = new_y;
+                        }
                     }
                 }
-                CubeRotation::Y => {
-                    for piece in &mut cube_pieces {
-                        // Rotate faces
-                        for face in piece.faces {
-                            rotate_face(
-                                &mut commands,
-                                &mut faces_query,
-                                &mut cube,
-                                face,
-                                cube_transform.translation,
-                                &cube_rotation_event.animation,
-                                Axis::Y,
-                                rotation_amount,
-                            );
-                        }
-
-                        // Update piece indices
-                        let new_x: i32;
-                        let new_z: i32;
-
-                        if cube_rotation_event.twice {
-                            new_x = piece.current_x * -1;
-                            new_z = piece.current_z * -1;
-                        } else if cube_rotation_event.negative_direction {
-                            new_x = piece.current_z * -1;
-                            new_z = piece.current_x;
-                        } else {
-                            new_x = piece.current_z;
-                            new_z = piece.current_x * -1;
-                        }
-
-                        piece.current_x = new_x;
-                        piece.current_z = new_z;
-                    }
-                }
-                CubeRotation::Z => {
-                    for piece in &mut cube_pieces {
-                        // Rotate faces
-                        for face in piece.faces {
-                            rotate_face(
-                                &mut commands,
-                                &mut faces_query,
-                                &mut cube,
-                                face,
-                                cube_transform.translation,
-                                &cube_rotation_event.animation,
-                                Axis::Z,
-                                rotation_amount,
-                            );
-                        }
-
-                        // Update piece indices
-                        let new_x: i32;
-                        let new_y: i32;
-
-                        if cube_rotation_event.twice {
-                            new_x = piece.current_x * -1;
-                            new_y = piece.current_y * -1;
-                        } else if cube_rotation_event.negative_direction {
-                            new_x = piece.current_y;
-                            new_y = piece.current_x * -1;
-                        } else {
-                            new_x = piece.current_y * -1;
-                            new_y = piece.current_x;
-                        }
-
-                        piece.current_x = new_x;
-                        piece.current_y = new_y;
-                    }
-                }
-            },
+            }
         }
     }
 }

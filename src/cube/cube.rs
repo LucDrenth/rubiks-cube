@@ -21,7 +21,7 @@ impl Plugin for CubePlugin {
 }
 
 /// A 3D representation of a cube
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 pub struct Cube {
     cube_size: CubeSize,   // For example 3 for 3x3
     pub piece_spread: f32, // The size of the gap between the pieces
@@ -36,7 +36,7 @@ impl Cube {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct CubeSize(pub i32);
 
 impl CubeSize {
@@ -133,6 +133,12 @@ fn spawn_cube(
     let spread_factor = 1.0 + cube.piece_spread;
     let face_offset = cube.block_size / 2.0;
 
+    let mut cube_entity = commands.spawn((
+        cube.clone(),
+        CubeState::new(cube_size as usize),
+        Transform::default(),
+    ));
+
     for x in range.clone() {
         for y in range.clone() {
             for z in range.clone() {
@@ -187,14 +193,17 @@ fn spawn_cube(
                     cube.inner_material.clone()
                 };
 
-                let face_left = commands
-                    .spawn((
-                        Mesh3d(piece_face_mesh.clone()),
-                        transform,
-                        MeshMaterial3d(material),
-                        PieceFace,
-                    ))
-                    .id();
+                let mut face_left = Entity::PLACEHOLDER;
+                cube_entity.with_children(|parent| {
+                    face_left = parent
+                        .spawn((
+                            Mesh3d(piece_face_mesh.clone()),
+                            transform,
+                            MeshMaterial3d(material),
+                            PieceFace,
+                        ))
+                        .id();
+                });
 
                 // right
                 let mut transform =
@@ -207,14 +216,18 @@ fn spawn_cube(
                 };
 
                 transform.rotate_local_y(TAU / 4.0);
-                let face_right = commands
-                    .spawn((
-                        Mesh3d(piece_face_mesh.clone()),
-                        transform,
-                        MeshMaterial3d(material),
-                        PieceFace,
-                    ))
-                    .id();
+
+                let mut face_right = Entity::PLACEHOLDER;
+                cube_entity.with_children(|parent| {
+                    face_right = parent
+                        .spawn((
+                            Mesh3d(piece_face_mesh.clone()),
+                            transform,
+                            MeshMaterial3d(material),
+                            PieceFace,
+                        ))
+                        .id();
+                });
 
                 // top
                 let mut transform =
@@ -227,14 +240,17 @@ fn spawn_cube(
                     cube.inner_material.clone()
                 };
 
-                let face_top = commands
-                    .spawn((
-                        Mesh3d(piece_face_mesh.clone()),
-                        transform,
-                        MeshMaterial3d(material),
-                        PieceFace,
-                    ))
-                    .id();
+                let mut face_top = Entity::PLACEHOLDER;
+                cube_entity.with_children(|parent| {
+                    face_top = parent
+                        .spawn((
+                            Mesh3d(piece_face_mesh.clone()),
+                            transform,
+                            MeshMaterial3d(material),
+                            PieceFace,
+                        ))
+                        .id();
+                });
 
                 // bottom
                 let mut transform =
@@ -247,14 +263,17 @@ fn spawn_cube(
                     cube.inner_material.clone()
                 };
 
-                let face_bottom = commands
-                    .spawn((
-                        Mesh3d(piece_face_mesh.clone()),
-                        transform,
-                        MeshMaterial3d(material),
-                        PieceFace,
-                    ))
-                    .id();
+                let mut face_bottom = Entity::PLACEHOLDER;
+                cube_entity.with_children(|parent| {
+                    face_bottom = parent
+                        .spawn((
+                            Mesh3d(piece_face_mesh.clone()),
+                            transform,
+                            MeshMaterial3d(material),
+                            PieceFace,
+                        ))
+                        .id();
+                });
 
                 // front
                 let transform =
@@ -266,14 +285,17 @@ fn spawn_cube(
                     cube.inner_material.clone()
                 };
 
-                let face_front = commands
-                    .spawn((
-                        Mesh3d(piece_face_mesh.clone()),
-                        transform,
-                        MeshMaterial3d(material),
-                        PieceFace,
-                    ))
-                    .id();
+                let mut face_front = Entity::PLACEHOLDER;
+                cube_entity.with_children(|parent| {
+                    face_front = parent
+                        .spawn((
+                            Mesh3d(piece_face_mesh.clone()),
+                            transform,
+                            MeshMaterial3d(material),
+                            PieceFace,
+                        ))
+                        .id();
+                });
 
                 // back
                 let mut transform =
@@ -286,35 +308,34 @@ fn spawn_cube(
                     cube.inner_material.clone()
                 };
 
-                let face_back = commands
-                    .spawn((
-                        Mesh3d(piece_face_mesh.clone()),
-                        transform,
-                        MeshMaterial3d(material),
-                        PieceFace,
-                    ))
-                    .id();
+                let mut face_back = Entity::PLACEHOLDER;
+                cube_entity.with_children(|parent| {
+                    face_back = parent
+                        .spawn((
+                            Mesh3d(piece_face_mesh.clone()),
+                            transform,
+                            MeshMaterial3d(material),
+                            PieceFace,
+                        ))
+                        .id();
+                });
 
-                commands.spawn(Piece {
-                    faces: [
-                        face_left,
-                        face_right,
-                        face_top,
-                        face_bottom,
-                        face_front,
-                        face_back,
-                    ],
-                    current_x: x,
-                    current_y: y,
-                    current_z: z,
+                cube_entity.with_children(|parent| {
+                    parent.spawn(Piece {
+                        faces: [
+                            face_left,
+                            face_right,
+                            face_top,
+                            face_bottom,
+                            face_front,
+                            face_back,
+                        ],
+                        current_x: x,
+                        current_y: y,
+                        current_z: z,
+                    });
                 });
             }
         }
     }
-
-    commands.spawn((
-        cube,
-        CubeState::new(cube_size as usize),
-        Transform::default(),
-    ));
 }

@@ -1,4 +1,5 @@
 mod cube;
+pub use cube::Cube;
 pub use cube::CubePlugin;
 
 mod cube_state;
@@ -10,6 +11,7 @@ pub use cubing_notation_rotations::*;
 
 mod rotation;
 pub use rotation::CubeRotationEvent;
+pub use rotation::RotationAnimation as CubeRotationAnimation;
 
 mod axis;
 
