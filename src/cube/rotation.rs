@@ -275,12 +275,8 @@ fn rotation_events_handler(
                             }
 
                             let pivot_point = Vec3::new(pivot_coordinate(slice), 0.0, 0.0);
-                            let cubes_indices_to_rotate = Piece::get_piece_indices_with_coords(
-                                &cube_pieces,
-                                Some(*slice),
-                                None,
-                                None,
-                            );
+                            let cubes_indices_to_rotate =
+                                Piece::get_piece_indices(&cube_pieces, Axis::X, *slice);
 
                             // Rotate pieces
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
@@ -339,12 +335,8 @@ fn rotation_events_handler(
                             }
 
                             let pivot_point = Vec3::new(0.0, pivot_coordinate(slice), 0.0);
-                            let cubes_indices_to_rotate = Piece::get_piece_indices_with_coords(
-                                &cube_pieces,
-                                None,
-                                Some(*slice),
-                                None,
-                            );
+                            let cubes_indices_to_rotate =
+                                Piece::get_piece_indices(&cube_pieces, Axis::Y, *slice);
 
                             // Rotate pieces
                             for cube_index_to_rotate in &cubes_indices_to_rotate {
@@ -403,12 +395,8 @@ fn rotation_events_handler(
                             }
 
                             let pivot_point = Vec3::new(0.0, 0.0, pivot_coordinate(slice));
-                            let cubes_indices_to_rotate = Piece::get_piece_indices_with_coords(
-                                &cube_pieces,
-                                None,
-                                None,
-                                Some(*slice),
-                            );
+                            let cubes_indices_to_rotate =
+                                Piece::get_piece_indices(&cube_pieces, Axis::Z, *slice);
 
                             // Rotate pieces
                             for cube_index_to_rotate in &cubes_indices_to_rotate {

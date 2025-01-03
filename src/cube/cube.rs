@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::schedules::CubeStartupSet;
 
 use super::{
-    controller::ControllerPlugin, cube_state::CubeState, rotation::CubeRotationPlugin,
+    axis::Axis, controller::ControllerPlugin, cube_state::CubeState, rotation::CubeRotationPlugin,
     scramble::CubeScramblePlugin,
 };
 
@@ -68,31 +68,19 @@ pub struct Piece {
 }
 
 impl Piece {
-    pub fn get_piece_indices_with_coords(
-        pieces: &Vec<Mut<Piece>>,
-        x: Option<i32>,
-        y: Option<i32>,
-        z: Option<i32>,
-    ) -> Vec<usize> {
+    /// Get all piece indicies of a slice
+    pub fn get_piece_indices(pieces: &Vec<Mut<Piece>>, axis: Axis, slice_index: i32) -> Vec<usize> {
         let mut result = vec![];
 
         for (i, piece) in pieces.iter().enumerate() {
-            if let Some(x) = x {
-                if piece.current_x != x {
-                    continue;
-                }
-            }
+            let current_piece_index = match axis {
+                Axis::X => piece.current_x,
+                Axis::Y => piece.current_y,
+                Axis::Z => piece.current_z,
+            };
 
-            if let Some(y) = y {
-                if piece.current_y != y {
-                    continue;
-                }
-            }
-
-            if let Some(z) = z {
-                if piece.current_z != z {
-                    continue;
-                }
+            if current_piece_index != slice_index {
+                continue;
             }
 
             result.push(i);
