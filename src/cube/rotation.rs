@@ -477,11 +477,11 @@ fn rotation_events_handler(
                                 new_y = piece.current_y * -1;
                                 new_z = piece.current_z * -1;
                             } else if cube_rotation_event.negative_direction {
-                                new_y = piece.current_y * -1;
-                                new_z = piece.current_z;
-                            } else {
                                 new_y = piece.current_z;
                                 new_z = piece.current_y * -1;
+                            } else {
+                                new_y = piece.current_z * -1;
+                                new_z = piece.current_y;
                             }
 
                             piece.current_y = new_y;
