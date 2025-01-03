@@ -11,16 +11,21 @@ impl Plugin for ControlsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (rotate_cube_with_keys, rotate_cube_with_mouse)
-                .in_set(CubeScheduleSet::HandleUserInput),
+            (rotate_cube_with_keys, move_cube_with_mouse).in_set(CubeScheduleSet::HandleUserInput),
         );
     }
 }
 
 fn rotate_cube_with_keys(
+    mut cube_query: Query<&mut Cube>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut event_writer: EventWriter<CubeRotationEvent>,
 ) {
+    let cube = cube_query.get_single().unwrap();
+    if cube.is_animating_rotation {
+        return;
+    }
+
     let animiation = CubeRotationAnimation {
         duration_in_seconds: 0.4,
         ease_function: Some(EaseFunction::CubicOut),
@@ -36,6 +41,10 @@ fn rotate_cube_with_keys(
         cube_rotation = Some(CubeRotation::X);
     } else if keyboard_input.pressed(KeyCode::ArrowDown) || keyboard_input.pressed(KeyCode::KeyS) {
         cube_rotation = Some(CubeRotation::XPrime);
+    } else if keyboard_input.pressed(KeyCode::KeyR) {
+        cube_rotation = Some(CubeRotation::Z);
+    } else if keyboard_input.pressed(KeyCode::KeyF) {
+        cube_rotation = Some(CubeRotation::ZPrime);
     }
 
     match cube_rotation {
@@ -48,7 +57,7 @@ fn rotate_cube_with_keys(
     }
 }
 
-fn rotate_cube_with_mouse(
+fn move_cube_with_mouse(
     mut cube_query: Query<&mut Transform, With<Cube>>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     mut moust_motion_event_reader: EventReader<MouseMotion>,
