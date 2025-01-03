@@ -12,7 +12,13 @@ mod utils;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Rubiks cube".into(),
+                ..default()
+            }),
+            ..default()
+        }))
         .add_plugins(CameraPlugin)
         .add_plugins(ControlsPlugin)
         .add_plugins(CubePlugin)
