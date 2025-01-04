@@ -125,6 +125,7 @@ fn spawn_cube(
         cube.clone(),
         CubeState::new(cube_size as usize),
         Transform::default(),
+        Visibility::Visible,
     ));
 
     for x in range.clone() {
