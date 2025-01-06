@@ -221,16 +221,11 @@ fn rotation_events_handler(
     mut cube_query: Query<&mut Cube>,
     mut cube_state_query: Query<&mut CubeState>,
     mut cube_pieces_query: Query<&mut Piece>,
-    cube_transform_query: Query<&Transform, (With<Cube>, Without<PieceFace>)>,
     mut faces_query: Query<&mut Transform, With<PieceFace>>,
     mut event_reader: EventReader<CubeRotationEvent>,
 ) {
     let Ok(mut cube) = cube_query.get_single_mut() else {
         error!("expected exactly 1 Cube entity");
-        return;
-    };
-    let Ok(cube_transform) = cube_transform_query.get_single() else {
-        error!("expected exactly 1 Cube Transform entity");
         return;
     };
     let Ok(mut cube_state) = cube_state_query.get_single_mut() else {

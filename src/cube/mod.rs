@@ -5,6 +5,7 @@ pub use cube::CubePlugin;
 mod cube_state;
 
 mod controller;
+pub use controller::SequenceResource;
 
 mod cubing_notation_rotations;
 pub use cubing_notation_rotations::*;

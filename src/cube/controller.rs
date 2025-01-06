@@ -2,20 +2,21 @@ use bevy::prelude::*;
 
 use crate::schedules::CubeScheduleSet;
 
-use super::{
-    algorithms, create_scramble_sequence_from_algorithm, cube::Cube, cube_state::CubeState,
-    rotation::RotationAnimation, CubeRotationEvent,
-};
+use super::{cube::Cube, cube_state::CubeState, rotation::RotationAnimation, CubeRotationEvent};
 
 pub struct ControllerPlugin;
 
 impl Plugin for ControllerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, init_stepper).add_systems(
+        app.insert_resource(SequenceResource {
+            steps: vec![],
+            current_step: 0,
+        })
+        .add_systems(
             Update,
             (
                 check_solved_on_enter,
-                spacebar_stepper_handler,
+                sequence_handler,
                 random_face_rotation_on_tab,
             )
                 .chain()
@@ -24,28 +25,49 @@ impl Plugin for ControllerPlugin {
     }
 }
 
-#[derive(Component)]
-pub struct RotationStepper {
+#[derive(Resource)]
+pub struct SequenceResource {
     steps: Vec<CubeRotationEvent>,
-    current: usize,
+    current_step: usize,
 }
 
-impl RotationStepper {
-    fn step(&mut self) -> CubeRotationEvent {
-        let event = self.steps[self.current].clone();
-
-        self.current += 1;
-        if self.current >= self.steps.len() {
-            self.current = 0;
-        }
-
-        event
+impl SequenceResource {
+    pub fn set(&mut self, steps: Vec<CubeRotationEvent>) {
+        self.steps = steps;
+        self.current_step = 0;
     }
 }
 
-fn init_stepper(mut commands: Commands) {
-    let steps = create_scramble_sequence_from_algorithm(algorithms::size_3x3::flipped_pieces());
-    commands.spawn(RotationStepper { steps, current: 0 });
+fn sequence_handler(
+    cube_query: Query<&Cube>,
+    mut sequence_resource: ResMut<SequenceResource>,
+    mut event_writer: EventWriter<CubeRotationEvent>,
+) {
+    let Ok(cube) = cube_query.get_single() else {
+        error!("expected exactly 1 Cube component");
+        return;
+    };
+
+    if cube.is_animating_rotation {
+        return;
+    }
+
+    loop {
+        if sequence_resource.current_step >= sequence_resource.steps.len() {
+            return;
+        }
+
+        let rotation_event = sequence_resource.steps[sequence_resource.current_step].clone();
+        event_writer.send(rotation_event);
+        sequence_resource.current_step += 1;
+
+        if sequence_resource.steps[sequence_resource.current_step - 1]
+            .animation
+            .is_some()
+        {
+            return;
+        }
+    }
 }
 
 #[derive(Component)]
@@ -111,33 +133,4 @@ fn check_solved_on_enter(query: Query<&CubeState>, keyboard_input: Res<ButtonInp
     } else {
         info!("Cube is not solved");
     }
-}
-
-fn spacebar_stepper_handler(
-    mut stepper_query: Query<&mut RotationStepper>,
-    cube_query: Query<&Cube>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut event_writer: EventWriter<CubeRotationEvent>,
-) {
-    if !keyboard_input.pressed(KeyCode::Space) {
-        return;
-    }
-
-    let Ok(cube) = cube_query.get_single() else {
-        error!("expected exactly 1 Cube component");
-        return;
-    };
-
-    if cube.is_animating_rotation {
-        return;
-    }
-
-    let mut stepper = stepper_query.get_single_mut().unwrap();
-
-    let mut rotation_event = stepper.step();
-    rotation_event.animation = Some(RotationAnimation {
-        duration_in_seconds: 0.25,
-        ease_function: Some(EaseFunction::CubicOut),
-    });
-    event_writer.send(rotation_event);
 }

@@ -2,6 +2,7 @@ use bevy::{input::mouse::MouseMotion, prelude::*};
 
 use crate::{
     cube::{Cube, CubeRotation, CubeRotationAnimation, CubeRotationEvent},
+    interface::interface::UiResource,
     schedules::CubeScheduleSet,
 };
 
@@ -17,7 +18,7 @@ impl Plugin for ControlsPlugin {
 }
 
 fn rotate_cube_with_keys(
-    mut cube_query: Query<&mut Cube>,
+    cube_query: Query<&mut Cube>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut event_writer: EventWriter<CubeRotationEvent>,
 ) {
@@ -60,11 +61,12 @@ fn rotate_cube_with_keys(
 fn move_cube_with_mouse(
     mut cube_query: Query<&mut Transform, With<Cube>>,
     mouse_input: Res<ButtonInput<MouseButton>>,
+    ui_resource: Res<UiResource>,
     mut moust_motion_event_reader: EventReader<MouseMotion>,
 ) {
     let mut cube_transform = cube_query.get_single_mut().unwrap();
 
-    if !mouse_input.pressed(MouseButton::Left) {
+    if !mouse_input.pressed(MouseButton::Left) || ui_resource.did_handle_click {
         return;
     }
 

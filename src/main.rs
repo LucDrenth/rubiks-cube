@@ -2,11 +2,13 @@ use bevy::prelude::*;
 use camera::CameraPlugin;
 use controls::ControlsPlugin;
 use cube::CubePlugin;
+use interface::interface::InterfacePlugin;
 use schedules::SchedulesPlugin;
 
 mod camera;
 mod controls;
 mod cube;
+mod interface;
 mod schedules;
 mod utils;
 
@@ -22,6 +24,7 @@ fn main() {
         .add_plugins(CameraPlugin)
         .add_plugins(ControlsPlugin)
         .add_plugins(CubePlugin)
+        .add_plugins(InterfacePlugin)
         .add_plugins(SchedulesPlugin)
         .add_systems(Startup, spawn_light)
         .run();
