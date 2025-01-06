@@ -114,13 +114,30 @@ fn scramble_button_action(
 
     match interaction {
         Interaction::Pressed => {
-            let mut scramble_sequence = cube::create_random_scramble_sequence(cube.size(), 20);
+            let scramble_length = 20;
+            let rotation_duration = 0.15;
+
+            let mut scramble_sequence =
+                cube::create_random_scramble_sequence(cube.size(), scramble_length);
             for cube_rotation in scramble_sequence.iter_mut() {
                 cube_rotation.animation = Some(CubeRotationAnimation {
-                    duration_in_seconds: 0.15,
+                    duration_in_seconds: rotation_duration,
                     ease_function: Some(EaseFunction::Linear),
                 });
             }
+
+            if scramble_length > 2 {
+                // ease out last rotations
+                scramble_sequence[scramble_length - 2].animation = Some(CubeRotationAnimation {
+                    duration_in_seconds: rotation_duration * 1.3,
+                    ease_function: Some(EaseFunction::Linear),
+                });
+                scramble_sequence[scramble_length - 1].animation = Some(CubeRotationAnimation {
+                    duration_in_seconds: rotation_duration * 2.0,
+                    ease_function: Some(EaseFunction::CubicOut),
+                });
+            }
+
             sequence_resource.set(scramble_sequence);
         }
         Interaction::Hovered => {
