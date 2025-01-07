@@ -1,4 +1,4 @@
-use bevy::{log, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     cube::{self, solver, CubeRotationAnimation, CubeState, SequenceResource},
@@ -69,12 +69,19 @@ fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) 
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 position_type: PositionType::Absolute,
-                padding: UiRect::all(Val::Px(16.0)),
+                padding: UiRect::px(16.0, 16.0, 8.0, 8.0),
                 width: Val::Percent(100.),
                 column_gap: Val::Px(8.),
+                border: UiRect {
+                    left: Val::ZERO,
+                    right: Val::ZERO,
+                    top: Val::ZERO,
+                    bottom: Val::Px(2.0),
+                },
                 ..default()
             },
             BackgroundColor(Color::srgb_u8(155, 155, 155)),
+            BorderColor(COLOR_YELLOW),
         ))
         .with_children(|parent| {
             parent
