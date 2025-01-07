@@ -1,7 +1,7 @@
-use bevy::prelude::*;
+use bevy::{log, prelude::*};
 
 use crate::{
-    cube::{self, CubeRotationAnimation, SequenceResource},
+    cube::{self, solver, CubeRotationAnimation, CubeState, SequenceResource},
     schedules::CubeScheduleSet,
 };
 
@@ -26,7 +26,13 @@ impl Plugin for InterfacePlugin {
         .add_systems(Startup, init_scramble_button)
         .add_systems(
             Update,
-            (update_ui_resource, scramble_button_action).in_set(CubeScheduleSet::HandleUserInput),
+            (
+                update_ui_resource,
+                buttons_hover_effect,
+                scramble_button_action,
+                solve_button_action,
+            )
+                .in_set(CubeScheduleSet::HandleUserInput),
         );
     }
 }
@@ -53,98 +59,180 @@ fn update_ui_resource(
 
 #[derive(Component)]
 pub struct ScrambleButton;
+#[derive(Component)]
+pub struct SolveButton;
 
 fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
-            ScrambleButton,
-            CaptureClick,
-            Button,
             Node {
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 position_type: PositionType::Absolute,
-                top: Val::Px(18.),
-                right: Val::Px(16.),
-                padding: UiRect {
-                    left: Val::Px(16.0),
-                    right: Val::Px(16.),
-                    top: Val::Px(8.),
-                    bottom: Val::Px(8.),
-                },
-                border: UiRect::all(Val::Px(2.)),
+                padding: UiRect::all(Val::Px(16.0)),
+                width: Val::Percent(100.),
+                column_gap: Val::Px(8.),
                 ..default()
             },
-            BorderColor(Color::srgb_u8(243, 200, 2)),
-            BorderRadius::px(4., 4., 4., 4.),
-            BackgroundColor(Color::srgb_u8(56, 56, 56)),
-            BoxShadow {
-                color: Color::BLACK,
-                x_offset: Val::Px(3.),
-                y_offset: Val::Px(3.),
-                spread_radius: Val::Px(3.),
-                blur_radius: Val::Px(1.),
-            },
+            BackgroundColor(Color::srgb_u8(155, 155, 155)),
         ))
-        .with_child((
-            Text::new("scramble"),
-            TextFont {
-                font: asset_server.load("fonts/roboto.ttf"),
-                font_size: 16.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.9, 0.9, 0.9)),
-        ));
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    ScrambleButton,
+                    CaptureClick,
+                    Button,
+                    Node {
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        padding: UiRect {
+                            left: Val::Px(16.0),
+                            right: Val::Px(16.),
+                            top: Val::Px(8.),
+                            bottom: Val::Px(8.),
+                        },
+                        border: UiRect::all(Val::Px(2.)),
+                        ..default()
+                    },
+                    BorderColor(Color::srgb_u8(243, 200, 2)),
+                    BorderRadius::px(4., 4., 4., 4.),
+                    BackgroundColor(Color::srgb_u8(56, 56, 56)),
+                    BoxShadow {
+                        color: Color::BLACK,
+                        x_offset: Val::Px(3.),
+                        y_offset: Val::Px(3.),
+                        spread_radius: Val::Px(3.),
+                        blur_radius: Val::Px(1.),
+                    },
+                ))
+                .with_child((
+                    Text::new("scramble"),
+                    TextFont {
+                        font: asset_server.load("fonts/roboto.ttf"),
+                        font_size: 16.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                ));
+
+            parent
+                .spawn((
+                    SolveButton,
+                    CaptureClick,
+                    Button,
+                    Node {
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        padding: UiRect {
+                            left: Val::Px(16.0),
+                            right: Val::Px(16.),
+                            top: Val::Px(8.),
+                            bottom: Val::Px(8.),
+                        },
+                        border: UiRect::all(Val::Px(2.)),
+                        ..default()
+                    },
+                    BorderColor(Color::srgb_u8(243, 200, 2)),
+                    BorderRadius::px(4., 4., 4., 4.),
+                    BackgroundColor(Color::srgb_u8(56, 56, 56)),
+                    BoxShadow {
+                        color: Color::BLACK,
+                        x_offset: Val::Px(3.),
+                        y_offset: Val::Px(3.),
+                        spread_radius: Val::Px(3.),
+                        blur_radius: Val::Px(1.),
+                    },
+                ))
+                .with_child((
+                    Text::new("solve"),
+                    TextFont {
+                        font: asset_server.load("fonts/roboto.ttf"),
+                        font_size: 16.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                ));
+        });
+}
+
+fn buttons_hover_effect(mut query: Query<(&Interaction, &mut BorderColor), Changed<Interaction>>) {
+    for (interaction, mut border_color) in query.iter_mut() {
+        match interaction {
+            Interaction::Pressed => (),
+            Interaction::Hovered => {
+                border_color.0 = COLOR_YELLOW;
+            }
+            Interaction::None => {
+                border_color.0 = Color::BLACK;
+            }
+        };
+    }
 }
 
 fn scramble_button_action(
-    mut scramble_button_query: Query<
-        (&Interaction, &mut BorderColor),
-        (With<ScrambleButton>, Changed<Interaction>),
-    >,
+    mut scramble_button_query: Query<&Interaction, (With<ScrambleButton>, Changed<Interaction>)>,
     cube_query: Query<&cube::Cube>,
     mut sequence_resource: ResMut<SequenceResource>,
 ) {
-    let (interaction, mut border_color) = match scramble_button_query.get_single_mut() {
+    let interaction = match scramble_button_query.get_single_mut() {
         Ok(v) => v,
         Err(_) => return,
     };
 
+    if *interaction != Interaction::Pressed {
+        return;
+    }
+
     let cube = cube_query.get_single().unwrap();
 
-    match interaction {
-        Interaction::Pressed => {
-            let scramble_length = 20;
-            let rotation_duration = 0.15;
+    let scramble_length = 20;
+    let rotation_duration = 0.15;
 
-            let mut scramble_sequence =
-                cube::create_random_scramble_sequence(cube.size(), scramble_length);
-            for cube_rotation in scramble_sequence.iter_mut() {
-                cube_rotation.animation = Some(CubeRotationAnimation {
-                    duration_in_seconds: rotation_duration,
-                    ease_function: Some(EaseFunction::Linear),
-                });
-            }
+    let mut scramble_sequence = cube::create_random_scramble_sequence(cube.size(), scramble_length);
+    for cube_rotation in scramble_sequence.iter_mut() {
+        cube_rotation.animation = Some(CubeRotationAnimation {
+            duration_in_seconds: rotation_duration,
+            ease_function: Some(EaseFunction::Linear),
+        });
+    }
 
-            if scramble_length > 2 {
-                // ease out last rotations
-                scramble_sequence[scramble_length - 2].animation = Some(CubeRotationAnimation {
-                    duration_in_seconds: rotation_duration * 1.3,
-                    ease_function: Some(EaseFunction::Linear),
-                });
-                scramble_sequence[scramble_length - 1].animation = Some(CubeRotationAnimation {
-                    duration_in_seconds: rotation_duration * 2.0,
-                    ease_function: Some(EaseFunction::CubicOut),
-                });
-            }
+    if scramble_length > 2 {
+        // ease out last rotations
+        scramble_sequence[scramble_length - 2].animation = Some(CubeRotationAnimation {
+            duration_in_seconds: rotation_duration * 1.3,
+            ease_function: Some(EaseFunction::Linear),
+        });
+        scramble_sequence[scramble_length - 1].animation = Some(CubeRotationAnimation {
+            duration_in_seconds: rotation_duration * 2.0,
+            ease_function: Some(EaseFunction::CubicOut),
+        });
+    }
 
-            sequence_resource.set(scramble_sequence);
-        }
-        Interaction::Hovered => {
-            border_color.0 = COLOR_YELLOW;
-        }
-        Interaction::None => {
-            border_color.0 = Color::BLACK;
-        }
+    sequence_resource.set(scramble_sequence);
+}
+
+fn solve_button_action(
+    mut solve_button_query: Query<&Interaction, (With<SolveButton>, Changed<Interaction>)>,
+    cube_state_query: Query<&CubeState>,
+    mut sequence_resource: ResMut<SequenceResource>,
+) {
+    let interaction = match solve_button_query.get_single_mut() {
+        Ok(v) => v,
+        Err(_) => return,
     };
+
+    if *interaction != Interaction::Pressed {
+        return;
+    }
+
+    let cube_state = cube_state_query.get_single().unwrap();
+    let mut solve_sequence = solver::get_solve_sequence(cube_state);
+    for cube_rotation in solve_sequence.iter_mut() {
+        cube_rotation.animation = Some(CubeRotationAnimation {
+            duration_in_seconds: 0.35,
+            ease_function: Some(EaseFunction::CubicOut),
+        });
+    }
+
+    sequence_resource.set(solve_sequence);
 }

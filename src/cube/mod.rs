@@ -3,6 +3,7 @@ pub use cube::Cube;
 pub use cube::CubePlugin;
 
 mod cube_state;
+pub use cube_state::CubeState;
 
 mod controller;
 pub use controller::SequenceResource;

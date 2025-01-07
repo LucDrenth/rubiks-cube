@@ -1,11 +1,10 @@
-use super::{cube_state::CubeState, CubeRotationEvent};
-use bevy::prelude::*;
+use bevy::log;
 
-pub fn get_solve_sequence(cube_state_query: Query<&CubeState>) -> Vec<CubeRotationEvent> {
-    let Ok(cube_state) = cube_state_query.get_single() else {
-        error!("expecte exactly 1 CubeState component");
-        return vec![];
-    };
+use super::{algorithms, cube_state::CubeState, CubeRotationEvent};
 
-    todo!()
+pub fn get_solve_sequence(cube_state: &CubeState) -> Vec<CubeRotationEvent> {
+    // TODO
+
+    log::info!("TODO implement solving algorithm");
+    return vec![];
 }
