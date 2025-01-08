@@ -23,4 +23,4 @@ pub use scramble::create_scramble_sequence_from_algorithm;
 
 pub mod solver;
 
-mod algorithms;
+pub mod algorithms;

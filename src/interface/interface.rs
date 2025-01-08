@@ -1,7 +1,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    cube::{self, solver, CubeRotationAnimation, CubeState, SequenceResource},
+    cube::{
+        self,
+        solver::{self, SolveStrategy},
+        CubeRotationAnimation, CubeState, SequenceResource,
+    },
     schedules::CubeScheduleSet,
 };
 
@@ -233,7 +237,7 @@ fn solve_button_action(
     }
 
     let cube_state = cube_state_query.get_single().unwrap();
-    let mut solve_sequence = solver::get_solve_sequence(cube_state);
+    let mut solve_sequence = solver::get_solve_sequence(SolveStrategy::Kociemba, cube_state);
     for cube_rotation in solve_sequence.iter_mut() {
         cube_rotation.animation = Some(CubeRotationAnimation {
             duration_in_seconds: 0.35,
