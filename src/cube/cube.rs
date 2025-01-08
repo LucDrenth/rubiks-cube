@@ -6,7 +6,6 @@ use crate::schedules::CubeStartupSet;
 
 use super::{
     axis::Axis, controller::ControllerPlugin, cube_state::CubeState, rotation::CubeRotationPlugin,
-    scramble::CubeScramblePlugin,
 };
 
 pub struct CubePlugin;
@@ -15,7 +14,6 @@ impl Plugin for CubePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ControllerPlugin)
             .add_plugins(CubeRotationPlugin)
-            .add_plugins(CubeScramblePlugin)
             .add_systems(Startup, spawn_cube.in_set(CubeStartupSet::SpawnCube));
     }
 }

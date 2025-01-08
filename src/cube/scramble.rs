@@ -1,41 +1,4 @@
-use bevy::prelude::*;
-
-use crate::schedules::CubeStartupSet;
-
-use super::{
-    algorithms,
-    cube::{Cube, CubeSize},
-    CubeRotationEvent,
-};
-
-pub struct CubeScramblePlugin;
-
-impl Plugin for CubeScramblePlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(
-            Startup,
-            apply_instant_scramble.in_set(CubeStartupSet::ApplyScramble),
-        );
-    }
-}
-
-// For debugging
-fn apply_instant_scramble(
-    cube_query: Query<&Cube>,
-    mut event_writer: EventWriter<CubeRotationEvent>,
-) {
-    let Ok(_cube) = cube_query.get_single() else {
-        error!("expected exactly 1 Cube in query result");
-        return;
-    };
-
-    let scramble_sequence =
-        create_scramble_sequence_from_algorithm(algorithms::size_3x3::flipped_pieces());
-
-    for event in scramble_sequence {
-        event_writer.send(event);
-    }
-}
+use super::{cube::CubeSize, CubeRotationEvent};
 
 pub fn create_scramble_sequence_from_algorithm<T>(algorithm: Vec<T>) -> Vec<CubeRotationEvent>
 where
