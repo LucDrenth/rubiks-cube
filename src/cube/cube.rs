@@ -59,7 +59,6 @@ impl CubeSize {
 /// Each piece has 24 possible states (you can look at each from 6 sides, rotating each side 4 times around the y axis).
 #[derive(Component, Clone, Debug)]
 pub struct Piece {
-    pub faces: [Entity; 6],
     pub current_x: i32,
     pub current_y: i32,
     pub current_z: i32,
@@ -67,7 +66,7 @@ pub struct Piece {
 
 impl Piece {
     /// Get all piece indicies of a slice
-    pub fn get_piece_indices(pieces: &Vec<Mut<Piece>>, axis: Axis, slice_index: i32) -> Vec<usize> {
+    pub fn get_piece_indices(pieces: &Vec<&mut Piece>, axis: Axis, slice_index: i32) -> Vec<usize> {
         let mut result = vec![];
 
         for (i, piece) in pieces.iter().enumerate() {
@@ -169,157 +168,124 @@ fn spawn_cube(
                 };
                 middle_point *= spread_factor;
 
-                // left
-                let mut transform =
-                    Transform::from_translation(middle_point - Vec3::new(face_offset, 0.0, 0.0));
-                transform.rotate_local_y(-TAU / 4.0);
-
-                let material = if x == cube.size().lowest_piece_index() {
-                    materials.add(Color::srgb(0.99, 0.49, 0.05)) // orange
-                } else {
-                    cube.inner_material.clone()
-                };
-
-                let mut face_left = Entity::PLACEHOLDER;
                 cube_entity.with_children(|parent| {
-                    face_left = parent
-                        .spawn((
+                    let mut piece_entity = parent.spawn((
+                        Piece {
+                            current_x: x,
+                            current_y: y,
+                            current_z: z,
+                        },
+                        Transform::from_translation(middle_point),
+                    ));
+
+                    piece_entity.with_children(|parent| {
+                        // left face
+                        let mut transform =
+                            Transform::from_translation(-Vec3::new(face_offset, 0.0, 0.0));
+                        transform.rotate_local_y(-TAU / 4.0);
+
+                        let material = if x == cube.size().lowest_piece_index() {
+                            materials.add(Color::srgb(0.99, 0.49, 0.05)) // orange
+                        } else {
+                            cube.inner_material.clone()
+                        };
+
+                        parent.spawn((
                             Mesh3d(piece_face_mesh.clone()),
                             transform,
                             MeshMaterial3d(material),
                             PieceFace,
-                        ))
-                        .id();
-                });
+                        ));
 
-                // right
-                let mut transform =
-                    Transform::from_translation(middle_point + Vec3::new(face_offset, 0.0, 0.0));
+                        // right face
+                        let mut transform =
+                            Transform::from_translation(Vec3::new(face_offset, 0.0, 0.0));
 
-                let material = if x == cube.size().highest_piece_index() {
-                    materials.add(Color::srgb(0.99, 0.0, 0.0)) // red
-                } else {
-                    cube.inner_material.clone()
-                };
+                        let material = if x == cube.size().highest_piece_index() {
+                            materials.add(Color::srgb(0.99, 0.0, 0.0)) // red
+                        } else {
+                            cube.inner_material.clone()
+                        };
 
-                transform.rotate_local_y(TAU / 4.0);
+                        transform.rotate_local_y(TAU / 4.0);
 
-                let mut face_right = Entity::PLACEHOLDER;
-                cube_entity.with_children(|parent| {
-                    face_right = parent
-                        .spawn((
+                        parent.spawn((
                             Mesh3d(piece_face_mesh.clone()),
                             transform,
                             MeshMaterial3d(material),
                             PieceFace,
-                        ))
-                        .id();
-                });
+                        ));
 
-                // top
-                let mut transform =
-                    Transform::from_translation(middle_point + Vec3::new(0.0, face_offset, 0.0));
-                transform.rotate_x(-TAU / 4.0);
+                        // top face
+                        let mut transform =
+                            Transform::from_translation(Vec3::new(0.0, face_offset, 0.0));
+                        transform.rotate_x(-TAU / 4.0);
 
-                let material = if y == cube.size().highest_piece_index() {
-                    materials.add(Color::srgb(0.99, 0.99, 0.99)) // white
-                } else {
-                    cube.inner_material.clone()
-                };
+                        let material = if y == cube.size().highest_piece_index() {
+                            materials.add(Color::srgb(0.99, 0.99, 0.99)) // white
+                        } else {
+                            cube.inner_material.clone()
+                        };
 
-                let mut face_top = Entity::PLACEHOLDER;
-                cube_entity.with_children(|parent| {
-                    face_top = parent
-                        .spawn((
+                        parent.spawn((
                             Mesh3d(piece_face_mesh.clone()),
                             transform,
                             MeshMaterial3d(material),
                             PieceFace,
-                        ))
-                        .id();
-                });
+                        ));
 
-                // bottom
-                let mut transform =
-                    Transform::from_translation(middle_point - Vec3::new(0.0, face_offset, 0.0));
-                transform.rotate_x(TAU / 4.0);
+                        // bottom face
+                        let mut transform =
+                            Transform::from_translation(-Vec3::new(0.0, face_offset, 0.0));
+                        transform.rotate_x(TAU / 4.0);
 
-                let material = if y == cube.size().lowest_piece_index() {
-                    materials.add(Color::srgb(0.99, 0.99, 0.0)) // yellow
-                } else {
-                    cube.inner_material.clone()
-                };
+                        let material = if y == cube.size().lowest_piece_index() {
+                            materials.add(Color::srgb(0.99, 0.99, 0.0)) // yellow
+                        } else {
+                            cube.inner_material.clone()
+                        };
 
-                let mut face_bottom = Entity::PLACEHOLDER;
-                cube_entity.with_children(|parent| {
-                    face_bottom = parent
-                        .spawn((
+                        parent.spawn((
                             Mesh3d(piece_face_mesh.clone()),
                             transform,
                             MeshMaterial3d(material),
                             PieceFace,
-                        ))
-                        .id();
-                });
+                        ));
 
-                // front
-                let transform =
-                    Transform::from_translation(middle_point + Vec3::new(0.0, 0.0, face_offset));
+                        // front face
+                        let transform =
+                            Transform::from_translation(Vec3::new(0.0, 0.0, face_offset));
 
-                let material = if z == cube.size().highest_piece_index() {
-                    materials.add(Color::srgb(0.027, 0.89, 0.215)) // green
-                } else {
-                    cube.inner_material.clone()
-                };
+                        let material = if z == cube.size().highest_piece_index() {
+                            materials.add(Color::srgb(0.027, 0.89, 0.215)) // green
+                        } else {
+                            cube.inner_material.clone()
+                        };
 
-                let mut face_front = Entity::PLACEHOLDER;
-                cube_entity.with_children(|parent| {
-                    face_front = parent
-                        .spawn((
+                        parent.spawn((
                             Mesh3d(piece_face_mesh.clone()),
                             transform,
                             MeshMaterial3d(material),
                             PieceFace,
-                        ))
-                        .id();
-                });
+                        ));
 
-                // back
-                let mut transform =
-                    Transform::from_translation(middle_point - Vec3::new(0.0, 0.0, face_offset));
-                transform.rotate_local_y(-TAU / 2.0);
+                        // back face
+                        let mut transform =
+                            Transform::from_translation(-Vec3::new(0.0, 0.0, face_offset));
+                        transform.rotate_local_y(-TAU / 2.0);
 
-                let material = if z == cube.size().lowest_piece_index() {
-                    materials.add(Color::srgb(0.0, 0.0, 0.99)) // blue
-                } else {
-                    cube.inner_material.clone()
-                };
+                        let material = if z == cube.size().lowest_piece_index() {
+                            materials.add(Color::srgb(0.0, 0.0, 0.99)) // blue
+                        } else {
+                            cube.inner_material.clone()
+                        };
 
-                let mut face_back = Entity::PLACEHOLDER;
-                cube_entity.with_children(|parent| {
-                    face_back = parent
-                        .spawn((
+                        parent.spawn((
                             Mesh3d(piece_face_mesh.clone()),
                             transform,
                             MeshMaterial3d(material),
                             PieceFace,
-                        ))
-                        .id();
-                });
-
-                cube_entity.with_children(|parent| {
-                    parent.spawn(Piece {
-                        faces: [
-                            face_left,
-                            face_right,
-                            face_top,
-                            face_bottom,
-                            face_front,
-                            face_back,
-                        ],
-                        current_x: x,
-                        current_y: y,
-                        current_z: z,
+                        ));
                     });
                 });
             }

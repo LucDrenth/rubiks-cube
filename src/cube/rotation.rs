@@ -7,7 +7,7 @@ use crate::schedules::CubeScheduleSet;
 
 use super::{
     axis::Axis,
-    cube::{Cube, CubeSize, Piece, PieceFace},
+    cube::{Cube, CubeSize, Piece},
     cube_state::CubeState,
 };
 
@@ -220,8 +220,7 @@ fn rotation_events_handler(
     mut commands: Commands,
     mut cube_query: Query<&mut Cube>,
     mut cube_state_query: Query<&mut CubeState>,
-    mut cube_pieces_query: Query<&mut Piece>,
-    mut faces_query: Query<&mut Transform, With<PieceFace>>,
+    mut cube_pieces_query: Query<(Entity, &mut Piece, &mut Transform)>,
     mut event_reader: EventReader<CubeRotationEvent>,
 ) {
     let Ok(mut cube) = cube_query.get_single_mut() else {
@@ -233,7 +232,17 @@ fn rotation_events_handler(
         return;
     };
 
-    let mut cube_pieces: Vec<Mut<Piece>> = cube_pieces_query.iter_mut().collect();
+    let mut cube_piece_entities = Vec::new();
+    let mut cube_pieces = Vec::new();
+    let mut cube_piece_transforms = Vec::new();
+    let mut number_of_pieces = 0;
+
+    for (entity, piece, transform) in cube_pieces_query.iter_mut() {
+        cube_piece_entities.push(entity);
+        cube_pieces.push(piece.into_inner());
+        cube_piece_transforms.push(transform.into_inner());
+        number_of_pieces += 1;
+    }
 
     for cube_rotation_event in event_reader.read() {
         if cube.is_animating_rotation {
@@ -270,30 +279,28 @@ fn rotation_events_handler(
                             }
 
                             let pivot_point = Vec3::new(pivot_coordinate(slice), 0.0, 0.0);
-                            let cubes_indices_to_rotate =
+                            let piece_indices_to_rotate =
                                 Piece::get_piece_indices(&cube_pieces, Axis::X, *slice);
 
                             // Rotate pieces
-                            for cube_index_to_rotate in &cubes_indices_to_rotate {
-                                for face in cube_pieces[*cube_index_to_rotate].faces {
-                                    rotate_face(
-                                        &mut commands,
-                                        &mut faces_query,
-                                        &mut cube,
-                                        face,
-                                        pivot_point,
-                                        &cube_rotation_event.animation,
-                                        Axis::X,
-                                        rotation_amount,
-                                    );
-                                }
+                            for piece_index_to_rotate in &piece_indices_to_rotate {
+                                rotate_piece(
+                                    &mut commands,
+                                    cube_piece_entities[*piece_index_to_rotate],
+                                    cube_piece_transforms[*piece_index_to_rotate],
+                                    &mut cube,
+                                    pivot_point,
+                                    &cube_rotation_event.animation,
+                                    Axis::X,
+                                    rotation_amount,
+                                );
                             }
 
                             // Update piece indices
                             let mut new_pieces_coordinates: Vec<(i32, i32, i32)> =
-                                Vec::with_capacity(cubes_indices_to_rotate.len());
+                                Vec::with_capacity(piece_indices_to_rotate.len());
 
-                            for cube_index_to_rotate in &cubes_indices_to_rotate {
+                            for cube_index_to_rotate in &piece_indices_to_rotate {
                                 if cube_rotation_event.twice {
                                     new_pieces_coordinates.push((
                                         cube_pieces[*cube_index_to_rotate].current_x,
@@ -315,10 +322,10 @@ fn rotation_events_handler(
                                 }
                             }
 
-                            for (i, cube_index) in cubes_indices_to_rotate.iter().enumerate() {
-                                cube_pieces[*cube_index].current_x = new_pieces_coordinates[i].0;
-                                cube_pieces[*cube_index].current_y = new_pieces_coordinates[i].1;
-                                cube_pieces[*cube_index].current_z = new_pieces_coordinates[i].2;
+                            for (i, piece_index) in piece_indices_to_rotate.iter().enumerate() {
+                                cube_pieces[*piece_index].current_x = new_pieces_coordinates[i].0;
+                                cube_pieces[*piece_index].current_y = new_pieces_coordinates[i].1;
+                                cube_pieces[*piece_index].current_z = new_pieces_coordinates[i].2;
                             }
                         }
                     }
@@ -330,30 +337,28 @@ fn rotation_events_handler(
                             }
 
                             let pivot_point = Vec3::new(0.0, pivot_coordinate(slice), 0.0);
-                            let cubes_indices_to_rotate =
+                            let piece_indices_to_rotate =
                                 Piece::get_piece_indices(&cube_pieces, Axis::Y, *slice);
 
                             // Rotate pieces
-                            for cube_index_to_rotate in &cubes_indices_to_rotate {
-                                for face in cube_pieces[*cube_index_to_rotate].faces {
-                                    rotate_face(
-                                        &mut commands,
-                                        &mut faces_query,
-                                        &mut cube,
-                                        face,
-                                        pivot_point,
-                                        &cube_rotation_event.animation,
-                                        Axis::Y,
-                                        rotation_amount,
-                                    );
-                                }
+                            for piece_index_to_rotate in &piece_indices_to_rotate {
+                                rotate_piece(
+                                    &mut commands,
+                                    cube_piece_entities[*piece_index_to_rotate],
+                                    &mut cube_piece_transforms[*piece_index_to_rotate],
+                                    &mut cube,
+                                    pivot_point,
+                                    &cube_rotation_event.animation,
+                                    Axis::Y,
+                                    rotation_amount,
+                                );
                             }
 
                             // Update piece indices
                             let mut new_pieces_coordinates: Vec<(i32, i32, i32)> =
-                                Vec::with_capacity(cubes_indices_to_rotate.len());
+                                Vec::with_capacity(piece_indices_to_rotate.len());
 
-                            for cube_index_to_rotate in &cubes_indices_to_rotate {
+                            for cube_index_to_rotate in &piece_indices_to_rotate {
                                 if cube_rotation_event.twice {
                                     new_pieces_coordinates.push((
                                         cube_pieces[*cube_index_to_rotate].current_x * -1,
@@ -375,10 +380,10 @@ fn rotation_events_handler(
                                 }
                             }
 
-                            for (i, cube_index) in cubes_indices_to_rotate.iter().enumerate() {
-                                cube_pieces[*cube_index].current_x = new_pieces_coordinates[i].0;
-                                cube_pieces[*cube_index].current_y = new_pieces_coordinates[i].1;
-                                cube_pieces[*cube_index].current_z = new_pieces_coordinates[i].2;
+                            for (i, piece_index) in piece_indices_to_rotate.iter().enumerate() {
+                                cube_pieces[*piece_index].current_x = new_pieces_coordinates[i].0;
+                                cube_pieces[*piece_index].current_y = new_pieces_coordinates[i].1;
+                                cube_pieces[*piece_index].current_z = new_pieces_coordinates[i].2;
                             }
                         }
                     }
@@ -390,30 +395,28 @@ fn rotation_events_handler(
                             }
 
                             let pivot_point = Vec3::new(0.0, 0.0, pivot_coordinate(slice));
-                            let cubes_indices_to_rotate =
+                            let piece_indices_to_rotate =
                                 Piece::get_piece_indices(&cube_pieces, Axis::Z, *slice);
 
                             // Rotate pieces
-                            for cube_index_to_rotate in &cubes_indices_to_rotate {
-                                for face in cube_pieces[*cube_index_to_rotate].faces {
-                                    rotate_face(
-                                        &mut commands,
-                                        &mut faces_query,
-                                        &mut cube,
-                                        face,
-                                        pivot_point,
-                                        &cube_rotation_event.animation,
-                                        Axis::Z,
-                                        rotation_amount,
-                                    );
-                                }
+                            for piece_index_to_rotate in &piece_indices_to_rotate {
+                                rotate_piece(
+                                    &mut commands,
+                                    cube_piece_entities[*piece_index_to_rotate],
+                                    &mut cube_piece_transforms[*piece_index_to_rotate],
+                                    &mut cube,
+                                    pivot_point,
+                                    &cube_rotation_event.animation,
+                                    Axis::Z,
+                                    rotation_amount,
+                                );
                             }
 
                             // Update piece indices
                             let mut new_pieces_coordinates: Vec<(i32, i32, i32)> =
-                                Vec::with_capacity(cubes_indices_to_rotate.len());
+                                Vec::with_capacity(piece_indices_to_rotate.len());
 
-                            for cube_index_to_rotate in &cubes_indices_to_rotate {
+                            for cube_index_to_rotate in &piece_indices_to_rotate {
                                 if cube_rotation_event.twice {
                                     new_pieces_coordinates.push((
                                         cube_pieces[*cube_index_to_rotate].current_x * -1,
@@ -435,10 +438,10 @@ fn rotation_events_handler(
                                 }
                             }
 
-                            for (i, cube_index) in cubes_indices_to_rotate.iter().enumerate() {
-                                cube_pieces[*cube_index].current_x = new_pieces_coordinates[i].0;
-                                cube_pieces[*cube_index].current_y = new_pieces_coordinates[i].1;
-                                cube_pieces[*cube_index].current_z = new_pieces_coordinates[i].2;
+                            for (i, piece_index) in piece_indices_to_rotate.iter().enumerate() {
+                                cube_pieces[*piece_index].current_x = new_pieces_coordinates[i].0;
+                                cube_pieces[*piece_index].current_y = new_pieces_coordinates[i].1;
+                                cube_pieces[*piece_index].current_z = new_pieces_coordinates[i].2;
                             }
                         }
                     }
@@ -450,13 +453,13 @@ fn rotation_events_handler(
                 match cube_rotation {
                     CubeRotation::X => {
                         for piece in &mut cube_pieces {
-                            // Rotate faces
-                            for face in piece.faces {
-                                rotate_face(
+                            // Rotate pieces
+                            for piece_index_to_rotate in 0..number_of_pieces {
+                                rotate_piece(
                                     &mut commands,
-                                    &mut faces_query,
+                                    cube_piece_entities[piece_index_to_rotate],
+                                    &mut cube_piece_transforms[piece_index_to_rotate],
                                     &mut cube,
-                                    face,
                                     pivot_point,
                                     &cube_rotation_event.animation,
                                     Axis::X,
@@ -485,13 +488,13 @@ fn rotation_events_handler(
                     }
                     CubeRotation::Y => {
                         for piece in &mut cube_pieces {
-                            // Rotate faces
-                            for face in piece.faces {
-                                rotate_face(
+                            // Rotate pieces
+                            for piece_index_to_rotate in 0..number_of_pieces {
+                                rotate_piece(
                                     &mut commands,
-                                    &mut faces_query,
+                                    cube_piece_entities[piece_index_to_rotate],
+                                    &mut cube_piece_transforms[piece_index_to_rotate],
                                     &mut cube,
-                                    face,
                                     pivot_point,
                                     &cube_rotation_event.animation,
                                     Axis::Y,
@@ -520,13 +523,13 @@ fn rotation_events_handler(
                     }
                     CubeRotation::Z => {
                         for piece in &mut cube_pieces {
-                            // Rotate faces
-                            for face in piece.faces {
-                                rotate_face(
+                            // Rotate pieces
+                            for piece_index_to_rotate in 0..number_of_pieces {
+                                rotate_piece(
                                     &mut commands,
-                                    &mut faces_query,
+                                    cube_piece_entities[piece_index_to_rotate],
+                                    &mut cube_piece_transforms[piece_index_to_rotate],
                                     &mut cube,
-                                    face,
                                     pivot_point,
                                     &cube_rotation_event.animation,
                                     Axis::Z,
@@ -559,31 +562,26 @@ fn rotation_events_handler(
     }
 }
 
-fn rotate_face(
+fn rotate_piece(
     commands: &mut Commands,
-    faces_query: &mut Query<&mut Transform, With<PieceFace>>,
+    piece_entity: Entity,
+    piece_transform: &mut Transform,
     cube: &mut Cube,
-    face: Entity,
     pivot_point: Vec3,
     animation: &Option<RotationAnimation>,
     axis: Axis,
     rotation_amount: f32,
 ) {
-    let Ok(mut transform) = faces_query.get_mut(face) else {
-        error!("failed to get cube face transform for rotating");
-        return;
-    };
-
     match animation {
         Some(animation_properties) => {
             let animator = RotationAnimator::new(
-                transform.clone(),
+                piece_transform.clone(),
                 animation_properties,
                 rotation_amount,
                 axis,
                 pivot_point,
             );
-            commands.entity(face).insert(animator);
+            commands.entity(piece_entity).insert(animator);
 
             cube.is_animating_rotation = true;
         }
@@ -593,7 +591,7 @@ fn rotate_face(
                 Axis::Y => Quat::from_rotation_y(rotation_amount),
                 Axis::Z => Quat::from_rotation_z(rotation_amount),
             };
-            transform.rotate_around(pivot_point, rotation);
+            piece_transform.rotate_around(pivot_point, rotation);
         }
     };
 }
