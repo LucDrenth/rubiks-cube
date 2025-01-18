@@ -1,6 +1,8 @@
 use bevy::log;
 
-use super::{cube_state::CubeState, CubeRotationEvent};
+use crate::cube::{CubeRotationEvent, CubeState};
+
+use super::kociemba::get_solve_sequence_with_kociemba;
 
 pub enum SolveStrategy {
     /// Finds a solution with a number of moves close to an optimal solution.
@@ -19,11 +21,6 @@ pub fn get_solve_sequence(
         SolveStrategy::Kociemba => return get_solve_sequence_with_kociemba(cube_state),
         SolveStrategy::GodsAlgorithm => return get_solve_sequence_with_gods_algorithm(cube_state),
     }
-}
-
-pub fn get_solve_sequence_with_kociemba(cube_state: &CubeState) -> Vec<CubeRotationEvent> {
-    log::info!("TODO implement");
-    return vec![];
 }
 
 pub fn get_solve_sequence_with_gods_algorithm(cube_state: &CubeState) -> Vec<CubeRotationEvent> {
