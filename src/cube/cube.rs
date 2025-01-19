@@ -8,6 +8,13 @@ use super::{
     axis::Axis, controller::ControllerPlugin, cube_state::CubeState, rotation::CubeRotationPlugin,
 };
 
+const COLOR_LEFT: Color = Color::srgb(0.99, 0.49, 0.05); // orange
+const COLOR_RIGHT: Color = Color::srgb(0.99, 0.0, 0.0); // red
+const COLOR_TOP: Color = Color::srgb(0.99, 0.99, 0.99); // white
+const COLOR_BOTTOM: Color = Color::srgb(0.99, 0.99, 0.0); // yellow
+const COLOR_FRONT: Color = Color::srgb(0.027, 0.89, 0.215); // green
+const COLOR_BACK: Color = Color::srgb(0.0, 0.0, 0.99); // blue
+
 pub struct CubePlugin;
 
 impl Plugin for CubePlugin {
@@ -185,7 +192,7 @@ fn spawn_cube(
                         transform.rotate_local_y(-TAU / 4.0);
 
                         let material = if x == cube.size().lowest_piece_index() {
-                            materials.add(Color::srgb(0.99, 0.49, 0.05)) // orange
+                            materials.add(COLOR_LEFT)
                         } else {
                             cube.inner_material.clone()
                         };
@@ -202,7 +209,7 @@ fn spawn_cube(
                             Transform::from_translation(Vec3::new(face_offset, 0.0, 0.0));
 
                         let material = if x == cube.size().highest_piece_index() {
-                            materials.add(Color::srgb(0.99, 0.0, 0.0)) // red
+                            materials.add(COLOR_RIGHT)
                         } else {
                             cube.inner_material.clone()
                         };
@@ -222,7 +229,7 @@ fn spawn_cube(
                         transform.rotate_x(-TAU / 4.0);
 
                         let material = if y == cube.size().highest_piece_index() {
-                            materials.add(Color::srgb(0.99, 0.99, 0.99)) // white
+                            materials.add(COLOR_TOP)
                         } else {
                             cube.inner_material.clone()
                         };
@@ -240,7 +247,7 @@ fn spawn_cube(
                         transform.rotate_x(TAU / 4.0);
 
                         let material = if y == cube.size().lowest_piece_index() {
-                            materials.add(Color::srgb(0.99, 0.99, 0.0)) // yellow
+                            materials.add(COLOR_BOTTOM)
                         } else {
                             cube.inner_material.clone()
                         };
@@ -257,7 +264,7 @@ fn spawn_cube(
                             Transform::from_translation(Vec3::new(0.0, 0.0, face_offset));
 
                         let material = if z == cube.size().highest_piece_index() {
-                            materials.add(Color::srgb(0.027, 0.89, 0.215)) // green
+                            materials.add(COLOR_FRONT)
                         } else {
                             cube.inner_material.clone()
                         };
@@ -275,7 +282,7 @@ fn spawn_cube(
                         transform.rotate_local_y(-TAU / 2.0);
 
                         let material = if z == cube.size().lowest_piece_index() {
-                            materials.add(Color::srgb(0.0, 0.0, 0.99)) // blue
+                            materials.add(COLOR_BACK)
                         } else {
                             cube.inner_material.clone()
                         };
