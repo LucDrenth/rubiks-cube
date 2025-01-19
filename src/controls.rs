@@ -12,9 +12,34 @@ impl Plugin for ControlsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (rotate_cube_with_keys, move_cube_with_mouse).in_set(CubeScheduleSet::HandleUserInput),
+            (
+                scale_cube_with_keys,
+                rotate_cube_with_keys,
+                move_cube_with_mouse,
+            )
+                .in_set(CubeScheduleSet::HandleUserInput),
         );
     }
+}
+
+fn scale_cube_with_keys(
+    mut cube_transform_query: Query<&mut Transform, With<Cube>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>,
+) {
+    let mut transform = cube_transform_query.get_single_mut().unwrap();
+
+    let speed = 1.0;
+
+    if keyboard_input.pressed(KeyCode::ArrowUp) {
+        transform.scale += Vec3::splat(speed * time.delta_secs());
+    } else if keyboard_input.pressed(KeyCode::ArrowDown) {
+        transform.scale -= Vec3::splat(speed * time.delta_secs());
+    } else {
+        return;
+    }
+
+    transform.scale = transform.scale.clamp(Vec3::ZERO, Vec3::ONE);
 }
 
 fn rotate_cube_with_keys(
@@ -34,13 +59,13 @@ fn rotate_cube_with_keys(
 
     let mut cube_rotation: Option<CubeRotation> = None;
 
-    if keyboard_input.pressed(KeyCode::ArrowLeft) || keyboard_input.pressed(KeyCode::KeyA) {
+    if keyboard_input.pressed(KeyCode::KeyA) {
         cube_rotation = Some(CubeRotation::YPrime);
-    } else if keyboard_input.pressed(KeyCode::ArrowRight) || keyboard_input.pressed(KeyCode::KeyD) {
+    } else if keyboard_input.pressed(KeyCode::KeyD) {
         cube_rotation = Some(CubeRotation::Y);
-    } else if keyboard_input.pressed(KeyCode::ArrowUp) || keyboard_input.pressed(KeyCode::KeyW) {
+    } else if keyboard_input.pressed(KeyCode::KeyW) {
         cube_rotation = Some(CubeRotation::X);
-    } else if keyboard_input.pressed(KeyCode::ArrowDown) || keyboard_input.pressed(KeyCode::KeyS) {
+    } else if keyboard_input.pressed(KeyCode::KeyS) {
         cube_rotation = Some(CubeRotation::XPrime);
     } else if keyboard_input.pressed(KeyCode::KeyR) {
         cube_rotation = Some(CubeRotation::Z);
