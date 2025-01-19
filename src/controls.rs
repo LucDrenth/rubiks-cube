@@ -1,4 +1,4 @@
-use bevy::{input::mouse::MouseMotion, prelude::*};
+use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
 
 use crate::{
     cube::{Cube, CubeRotation, CubeRotationAnimation, CubeRotationEvent},
@@ -18,7 +18,7 @@ impl Plugin for ControlsPlugin {
 }
 
 fn rotate_cube_with_keys(
-    cube_query: Query<&mut Cube>,
+    cube_query: Query<&Cube>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut event_writer: EventWriter<CubeRotationEvent>,
 ) {
@@ -62,7 +62,7 @@ fn move_cube_with_mouse(
     mut cube_query: Query<&mut Transform, With<Cube>>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     ui_resource: Res<UiResource>,
-    mut moust_motion_event_reader: EventReader<MouseMotion>,
+    mouse_motion: Res<AccumulatedMouseMotion>,
 ) {
     let mut cube_transform = cube_query.get_single_mut().unwrap();
 
@@ -70,17 +70,11 @@ fn move_cube_with_mouse(
         return;
     }
 
-    let mut mouse_moved = Vec2::ZERO;
-
-    for mouse_motion in moust_motion_event_reader.read() {
-        mouse_moved += mouse_motion.delta;
-    }
-
-    mouse_moved /= 10.0;
+    let amount_to_move_cube = mouse_motion.delta / 10.0;
 
     cube_transform.translation += Vec3 {
-        x: mouse_moved.x,
+        x: amount_to_move_cube.x,
         y: 0.0,
-        z: mouse_moved.y,
+        z: amount_to_move_cube.y,
     };
 }
