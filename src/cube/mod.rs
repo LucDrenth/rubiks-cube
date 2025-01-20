@@ -1,6 +1,7 @@
 mod cube;
 pub use cube::Cube;
 pub use cube::CubePlugin;
+pub use cube::DEFAULT_CUBE_SIZE;
 
 mod cube_state;
 pub use cube_state::CubeState;

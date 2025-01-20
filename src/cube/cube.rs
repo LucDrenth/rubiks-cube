@@ -8,6 +8,8 @@ use super::{
     axis::Axis, controller::ControllerPlugin, cube_state::CubeState, rotation::CubeRotationPlugin,
 };
 
+pub const DEFAULT_CUBE_SIZE: i32 = 3;
+
 const COLOR_LEFT: Color = Color::srgb(0.99, 0.49, 0.05); // orange
 const COLOR_RIGHT: Color = Color::srgb(0.99, 0.0, 0.0); // red
 const COLOR_TOP: Color = Color::srgb(0.99, 0.99, 0.99); // white
@@ -102,7 +104,7 @@ fn spawn_cube(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let cube_size = 3;
+    let cube_size = DEFAULT_CUBE_SIZE;
 
     if cube_size < 2 {
         panic!("Invalid cube size {}", cube_size)

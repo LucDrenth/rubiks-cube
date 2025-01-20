@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{log, prelude::*};
 
 use crate::{
     cube::{
@@ -10,6 +10,8 @@ use crate::{
 };
 
 const COLOR_YELLOW: Color = Color::srgb(0.952, 0.784, 0.007);
+const COLOR_DARK_GREY: Color = Color::srgb(0.21875, 0.21875, 0.21875);
+const BUTTON_TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 
 #[derive(Resource)]
 pub struct UiResource {
@@ -35,6 +37,8 @@ impl Plugin for InterfacePlugin {
                 buttons_hover_effect,
                 scramble_button_action,
                 solve_button_action,
+                decrease_cube_size_button_action,
+                increase_cube_size_button_action,
             )
                 .in_set(CubeScheduleSet::HandleUserInput),
         );
@@ -65,8 +69,15 @@ fn update_ui_resource(
 pub struct ScrambleButton;
 #[derive(Component)]
 pub struct SolveButton;
+#[derive(Component)]
+pub struct CubeSizeDownButton;
+#[derive(Component)]
+pub struct CubeSizeUpButton;
 
 fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let chevron_right_image = asset_server.load("icons/chevron-right.png");
+
+    // background element
     commands
         .spawn((
             Node {
@@ -88,6 +99,7 @@ fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) 
             BorderColor(COLOR_YELLOW),
         ))
         .with_children(|parent| {
+            // scramble button
             parent
                 .spawn((
                     ScrambleButton,
@@ -107,7 +119,7 @@ fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) 
                     },
                     BorderColor(Color::srgb_u8(243, 200, 2)),
                     BorderRadius::px(4., 4., 4., 4.),
-                    BackgroundColor(Color::srgb_u8(56, 56, 56)),
+                    BackgroundColor(COLOR_DARK_GREY),
                     BoxShadow {
                         color: Color::BLACK,
                         x_offset: Val::Px(3.),
@@ -123,9 +135,10 @@ fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) 
                         font_size: 16.0,
                         ..default()
                     },
-                    TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                    TextColor(BUTTON_TEXT_COLOR),
                 ));
 
+            // solve button
             parent
                 .spawn((
                     SolveButton,
@@ -145,7 +158,7 @@ fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) 
                     },
                     BorderColor(Color::srgb_u8(243, 200, 2)),
                     BorderRadius::px(4., 4., 4., 4.),
-                    BackgroundColor(Color::srgb_u8(56, 56, 56)),
+                    BackgroundColor(COLOR_DARK_GREY),
                     BoxShadow {
                         color: Color::BLACK,
                         x_offset: Val::Px(3.),
@@ -161,8 +174,110 @@ fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) 
                         font_size: 16.0,
                         ..default()
                     },
-                    TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                    TextColor(BUTTON_TEXT_COLOR),
                 ));
+
+            // cube size controls
+            parent
+                .spawn((
+                    // TODO maximum margin-left
+                    Node {
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        margin: UiRect::ZERO.with_left(Val::Px(32.0)),
+                        position_type: PositionType::Absolute,
+                        right: Val::Px(8.0),
+                        ..default()
+                    },
+                ))
+                .with_children(|parent| {
+                    // size-down button
+                    parent
+                        .spawn((
+                            CubeSizeDownButton,
+                            CaptureClick,
+                            Button,
+                            Node {
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                padding: UiRect {
+                                    left: Val::Px(16.0),
+                                    right: Val::Px(16.),
+                                    top: Val::Px(8.),
+                                    bottom: Val::Px(8.),
+                                },
+                                border: UiRect::all(Val::Px(2.)),
+                                ..default()
+                            },
+                            BorderColor(Color::srgb_u8(243, 200, 2)),
+                            BorderRadius::px(4., 4., 4., 4.),
+                            BackgroundColor(COLOR_DARK_GREY),
+                        ))
+                        .with_child((
+                            ImageNode {
+                                image: chevron_right_image.clone(),
+                                color: BUTTON_TEXT_COLOR,
+                                flip_x: true,
+                                ..default()
+                            },
+                            Node {
+                                width: Val::Px(16.0),
+                                height: Val::Px(16.0),
+                                ..default()
+                            },
+                        ));
+
+                    // cube size indicator
+                    parent
+                        .spawn(Node {
+                            margin: UiRect::horizontal(Val::Px(8.0)),
+                            ..default()
+                        })
+                        .with_child((
+                            Text::new(cube::DEFAULT_CUBE_SIZE.to_string()),
+                            TextFont {
+                                font: asset_server.load("fonts/roboto-bold.ttf"),
+                                font_size: 20.0,
+                                ..default()
+                            },
+                            TextColor(COLOR_DARK_GREY),
+                        ));
+
+                    // size-up button
+                    parent
+                        .spawn((
+                            CubeSizeUpButton,
+                            CaptureClick,
+                            Button,
+                            Node {
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                padding: UiRect {
+                                    left: Val::Px(16.0),
+                                    right: Val::Px(16.),
+                                    top: Val::Px(8.),
+                                    bottom: Val::Px(8.),
+                                },
+                                border: UiRect::all(Val::Px(2.)),
+                                ..default()
+                            },
+                            BorderColor(Color::srgb_u8(243, 200, 2)),
+                            BorderRadius::px(4., 4., 4., 4.),
+                            BackgroundColor(COLOR_DARK_GREY),
+                        ))
+                        .with_child((
+                            ImageNode {
+                                image: chevron_right_image.clone(),
+                                color: BUTTON_TEXT_COLOR,
+                                ..default()
+                            },
+                            Node {
+                                width: Val::Px(16.0),
+                                height: Val::Px(16.0),
+                                ..default()
+                            },
+                        ));
+                });
         });
 }
 
@@ -246,4 +361,40 @@ fn solve_button_action(
     }
 
     sequence_resource.set(solve_sequence);
+}
+
+fn decrease_cube_size_button_action(
+    mut button_query: Query<&Interaction, (With<CubeSizeDownButton>, Changed<Interaction>)>,
+) {
+    let interaction = match button_query.get_single_mut() {
+        Ok(v) => v,
+        Err(_) => return,
+    };
+
+    if *interaction != Interaction::Pressed {
+        return;
+    }
+
+    log::info!("TODO decrease cube size");
+    // TODO despawn current cube
+    // TODO spawn new cube
+    // TODO update cube size label
+}
+
+fn increase_cube_size_button_action(
+    mut button_query: Query<&Interaction, (With<CubeSizeUpButton>, Changed<Interaction>)>,
+) {
+    let interaction = match button_query.get_single_mut() {
+        Ok(v) => v,
+        Err(_) => return,
+    };
+
+    if *interaction != Interaction::Pressed {
+        return;
+    }
+
+    log::info!("TODO increase cube size");
+    // TODO despawn current cube
+    // TODO spawn new cube
+    // TODO update cube size label
 }
