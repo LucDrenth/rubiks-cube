@@ -120,8 +120,15 @@ impl Piece {
 #[derive(Component)]
 pub struct PieceFace;
 
-fn despawn(mut commands: Commands, query: Single<Entity, With<Cube>>) {
-    let cube_entity = *query;
+fn despawn(mut commands: Commands, query: Query<Entity, With<Cube>>) {
+    let cube_entity = match query.get_single() {
+        Ok(entity) => entity,
+        Err(err) => {
+            log::warn!("failed to despawn cube: {err}");
+            return;
+        }
+    };
+
     commands.entity(cube_entity).despawn_recursive();
 }
 
