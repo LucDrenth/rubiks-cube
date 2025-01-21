@@ -103,15 +103,27 @@ impl Piece {
 pub struct PieceFace;
 
 fn spawn_default_cube(
-    commands: Commands,
+    mut commands: Commands,
     meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    spawn(commands, meshes, materials, DEFAULT_CUBE_SIZE);
+    spawn(&mut commands, meshes, materials, DEFAULT_CUBE_SIZE);
 }
 
-fn spawn(
-    mut commands: Commands,
+pub fn despawn(commands: &mut Commands, cube_query: Query<Entity, With<Cube>>) {
+    let entity = match cube_query.get_single() {
+        Ok(entity) => entity,
+        Err(err) => {
+            log::warn!("failed to despawn cube: {err}");
+            return;
+        }
+    };
+
+    commands.entity(entity).despawn_recursive();
+}
+
+pub fn spawn(
+    commands: &mut Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     cube_size: usize,

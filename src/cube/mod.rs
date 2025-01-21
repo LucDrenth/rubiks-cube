@@ -1,4 +1,6 @@
 mod cube;
+pub use cube::despawn;
+pub use cube::spawn;
 pub use cube::Cube;
 pub use cube::CubePlugin;
 pub use cube::DEFAULT_CUBE_SIZE;

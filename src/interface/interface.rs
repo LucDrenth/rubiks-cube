@@ -4,7 +4,7 @@ use crate::{
     cube::{
         self,
         solver::{self, SolveStrategy},
-        CubeRotationAnimation, CubeState, SequenceResource,
+        Cube, CubeRotationAnimation, CubeState, SequenceResource,
     },
     schedules::CubeScheduleSet,
 };
@@ -73,6 +73,8 @@ pub struct SolveButton;
 pub struct CubeSizeDownButton;
 #[derive(Component)]
 pub struct CubeSizeUpButton;
+#[derive(Component)]
+pub struct CubeSizeLabel;
 
 fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) {
     let chevron_right_image = asset_server.load("icons/chevron-right.png");
@@ -234,6 +236,7 @@ fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) 
                             ..default()
                         })
                         .with_child((
+                            CubeSizeLabel,
                             Text::new(cube::DEFAULT_CUBE_SIZE.to_string()),
                             TextFont {
                                 font: asset_server.load("fonts/roboto-bold.ttf"),
@@ -377,7 +380,12 @@ fn solve_button_action(
 }
 
 fn decrease_cube_size_button_action(
+    mut commands: Commands,
+    cube_query: Query<Entity, With<Cube>>,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<StandardMaterial>>,
     mut button_query: Query<&Interaction, (With<CubeSizeDownButton>, Changed<Interaction>)>,
+    mut cube_size_label_query: Query<&mut Text, With<CubeSizeLabel>>,
 ) {
     let interaction = match button_query.get_single_mut() {
         Ok(v) => v,
@@ -388,14 +396,26 @@ fn decrease_cube_size_button_action(
         return;
     }
 
-    log::info!("TODO decrease cube size");
-    // TODO despawn current cube
-    // TODO spawn new cube
-    // TODO update cube size label
+    let mut cube_size_label = cube_size_label_query.get_single_mut().unwrap();
+    let current_cube_size: usize = cube_size_label.0.clone().parse().unwrap();
+
+    if current_cube_size == 2 {
+        log::warn!("can not decrease cube size below 2");
+        return;
+    }
+
+    cube::despawn(&mut commands, cube_query);
+    cube::spawn(&mut commands, meshes, materials, current_cube_size - 1);
+    cube_size_label.0 = (current_cube_size - 1).to_string();
 }
 
 fn increase_cube_size_button_action(
+    mut commands: Commands,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<StandardMaterial>>,
+    cube_query: Query<Entity, With<Cube>>,
     mut button_query: Query<&Interaction, (With<CubeSizeUpButton>, Changed<Interaction>)>,
+    mut cube_size_label_query: Query<&mut Text, With<CubeSizeLabel>>,
 ) {
     let interaction = match button_query.get_single_mut() {
         Ok(v) => v,
@@ -406,8 +426,10 @@ fn increase_cube_size_button_action(
         return;
     }
 
-    log::info!("TODO increase cube size");
-    // TODO despawn current cube
-    // TODO spawn new cube
-    // TODO update cube size label
+    let mut cube_size_label = cube_size_label_query.get_single_mut().unwrap();
+    let current_cube_size: usize = cube_size_label.0.clone().parse().unwrap();
+
+    cube::despawn(&mut commands, cube_query);
+    cube::spawn(&mut commands, meshes, materials, current_cube_size + 1);
+    cube_size_label.0 = (current_cube_size + 1).to_string();
 }
