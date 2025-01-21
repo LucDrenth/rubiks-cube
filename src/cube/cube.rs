@@ -1,6 +1,6 @@
 use std::f32::consts::TAU;
 
-use bevy::{log, prelude::*};
+use bevy::{ecs::system::SystemId, log, prelude::*};
 
 use crate::schedules::CubeStartupSet;
 
@@ -21,14 +21,33 @@ pub struct CubePlugin;
 
 impl Plugin for CubePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(ControllerPlugin)
+        app.insert_resource(CurrentCubeSizeResource(DEFAULT_CUBE_SIZE))
+            .init_resource::<CubeCommandsResource>()
+            .add_plugins(ControllerPlugin)
             .add_plugins(CubeRotationPlugin)
-            .add_systems(
-                Startup,
-                spawn_default_cube.in_set(CubeStartupSet::SpawnCube),
-            );
+            .add_systems(Startup, spawn.in_set(CubeStartupSet::SpawnCube));
     }
 }
+
+/// For this simple example, we will just organize our systems
+/// using string keys in a hash map.
+#[derive(Resource)]
+pub struct CubeCommandsResource {
+    pub spawn: SystemId,
+    pub despawn: SystemId,
+}
+
+impl FromWorld for CubeCommandsResource {
+    fn from_world(world: &mut World) -> Self {
+        CubeCommandsResource {
+            spawn: world.register_system(spawn),
+            despawn: world.register_system(despawn),
+        }
+    }
+}
+
+#[derive(Resource)]
+pub struct CurrentCubeSizeResource(pub usize);
 
 /// A 3D representation of a cube
 #[derive(Component, Debug, Clone)]
@@ -101,32 +120,19 @@ impl Piece {
 #[derive(Component)]
 pub struct PieceFace;
 
-fn spawn_default_cube(
+fn despawn(mut commands: Commands, query: Single<Entity, With<Cube>>) {
+    let cube_entity = *query;
+    commands.entity(cube_entity).despawn_recursive();
+}
+
+fn spawn(
     mut commands: Commands,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<StandardMaterial>>,
-) {
-    spawn(&mut commands, meshes, materials, DEFAULT_CUBE_SIZE);
-}
-
-pub fn despawn(commands: &mut Commands, cube_query: Query<Entity, With<Cube>>) {
-    let entity = match cube_query.get_single() {
-        Ok(entity) => entity,
-        Err(err) => {
-            log::warn!("failed to despawn cube: {err}");
-            return;
-        }
-    };
-
-    commands.entity(entity).despawn_recursive();
-}
-
-pub fn spawn(
-    commands: &mut Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    cube_size: usize,
+    cube_size_resource: Res<CurrentCubeSizeResource>,
 ) {
+    let cube_size = cube_size_resource.0;
+
     if cube_size <= 1 {
         log::error!("can not spawn cube with invalid size: {cube_size}");
         return;
@@ -151,7 +157,7 @@ pub fn spawn(
 
     let mut cube_entity = commands.spawn((
         cube.clone(),
-        CubeState::new(cube_size as usize),
+        CubeState::new(cube_size),
         Transform::default(),
         Visibility::Visible,
     ));

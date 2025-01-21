@@ -1,8 +1,8 @@
 mod cube;
-pub use cube::despawn;
-pub use cube::spawn;
 pub use cube::Cube;
+pub use cube::CubeCommandsResource;
 pub use cube::CubePlugin;
+pub use cube::CurrentCubeSizeResource;
 pub use cube::DEFAULT_CUBE_SIZE;
 
 mod cube_state;
