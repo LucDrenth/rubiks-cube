@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{log, prelude::*};
 
 use crate::utils::console;
 
@@ -135,6 +135,10 @@ impl CubeState {
             && self.face_states.back.is_solved();
     }
 
+    fn can_rotate_slice(&self, slice: &i32) -> bool {
+        return slice_to_column_index(*slice, self.cube_size) < self.cube_size as usize;
+    }
+
     pub fn handle_rotate_event(&mut self, event: &CubeRotationEvent) {
         let iterations = if event.twice { 2 } else { 1 };
 
@@ -143,6 +147,11 @@ impl CubeState {
                 super::rotation::Rotation::Face(face_rotation) => match face_rotation {
                     super::rotation::FaceRotation::X(slices) => {
                         for slice in slices {
+                            if !self.can_rotate_slice(slice) {
+                                log::warn!("Can not rotate slice {} on cube size {}. Skipping this rotation event.", *slice, self.cube_size);
+                                continue;
+                            }
+
                             let mut new_face_states = self.face_states.clone();
 
                             for i in 0..self.cube_size {
@@ -216,6 +225,11 @@ impl CubeState {
                     }
                     super::rotation::FaceRotation::Y(slices) => {
                         for slice in slices {
+                            if !self.can_rotate_slice(slice) {
+                                log::warn!("Can not rotate slice {} on cube size {}. Skipping this rotation event.", *slice, self.cube_size);
+                                continue;
+                            }
+
                             let mut new_face_states = self.face_states.clone();
 
                             for i in 0..self.cube_size {
@@ -280,6 +294,11 @@ impl CubeState {
                     }
                     super::rotation::FaceRotation::Z(slices) => {
                         for slice in slices {
+                            if !self.can_rotate_slice(slice) {
+                                log::warn!("Can not rotate slice {} on cube size {}. Skipping this rotation event.", *slice, self.cube_size);
+                                continue;
+                            }
+
                             let mut new_face_states = self.face_states.clone();
 
                             for i in 0..self.cube_size {
