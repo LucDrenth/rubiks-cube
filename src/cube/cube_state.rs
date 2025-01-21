@@ -24,6 +24,7 @@ pub enum Face {
 }
 
 impl Face {
+    #[allow(dead_code)]
     pub fn as_colored_string(&self) -> String {
         return format!(
             "{}{:?}{}",
@@ -411,6 +412,7 @@ impl CubeState {
     }
 
     /// Prints the current state in an unfolded format for debugging. The formatting does not work well for cubes 4x4 cubes or bigger.
+    #[allow(dead_code)]
     fn print_indices(&self) {
         // top
         for y in 0..self.cube_size {

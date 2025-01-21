@@ -1,5 +1,6 @@
 use super::{cube::CubeSize, CubeRotationEvent};
 
+#[allow(dead_code)]
 pub fn create_scramble_sequence_from_algorithm<T>(algorithm: Vec<T>) -> Vec<CubeRotationEvent>
 where
     T: Into<CubeRotationEvent>,

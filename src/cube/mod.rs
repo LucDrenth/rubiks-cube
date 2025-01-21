@@ -11,6 +11,7 @@ pub use cube_state::CubeState;
 mod controller;
 pub use controller::SequenceResource;
 
+#[allow(dead_code)]
 mod cubing_notation_rotations;
 pub use cubing_notation_rotations::*;
 
@@ -22,8 +23,10 @@ mod axis;
 
 mod scramble;
 pub use scramble::create_random_scramble_sequence;
+#[allow(unused_imports)]
 pub use scramble::create_scramble_sequence_from_algorithm;
 
 pub mod solver;
 
+#[allow(dead_code)]
 pub mod algorithms;
