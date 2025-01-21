@@ -41,4 +41,9 @@ fn spawn_light(mut commands: Commands) {
         },
         Transform::from_xyz(15.0, 15.0, 15.0),
     ));
+
+    commands.insert_resource(AmbientLight {
+        color: Color::WHITE,
+        brightness: 150.0,
+    });
 }
