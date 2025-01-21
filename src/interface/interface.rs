@@ -386,6 +386,7 @@ fn decrease_cube_size_button_action(
     materials: ResMut<Assets<StandardMaterial>>,
     mut button_query: Query<&Interaction, (With<CubeSizeDownButton>, Changed<Interaction>)>,
     mut cube_size_label_query: Query<&mut Text, With<CubeSizeLabel>>,
+    mut sequence_resource: ResMut<SequenceResource>,
 ) {
     let interaction = match button_query.get_single_mut() {
         Ok(v) => v,
@@ -407,6 +408,7 @@ fn decrease_cube_size_button_action(
     cube::despawn(&mut commands, cube_query);
     cube::spawn(&mut commands, meshes, materials, current_cube_size - 1);
     cube_size_label.0 = (current_cube_size - 1).to_string();
+    sequence_resource.set(vec![]);
 }
 
 fn increase_cube_size_button_action(
@@ -416,6 +418,7 @@ fn increase_cube_size_button_action(
     cube_query: Query<Entity, With<Cube>>,
     mut button_query: Query<&Interaction, (With<CubeSizeUpButton>, Changed<Interaction>)>,
     mut cube_size_label_query: Query<&mut Text, With<CubeSizeLabel>>,
+    mut sequence_resource: ResMut<SequenceResource>,
 ) {
     let interaction = match button_query.get_single_mut() {
         Ok(v) => v,
@@ -432,4 +435,5 @@ fn increase_cube_size_button_action(
     cube::despawn(&mut commands, cube_query);
     cube::spawn(&mut commands, meshes, materials, current_cube_size + 1);
     cube_size_label.0 = (current_cube_size + 1).to_string();
+    sequence_resource.set(vec![]);
 }
