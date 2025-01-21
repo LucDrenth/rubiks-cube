@@ -67,9 +67,8 @@ impl CubeSize {
     }
 }
 
-/// TODO add orientation (matrix?) to easily check the current state (correct spot or not). The original_x etc. do not take the rotation in to account.
-/// Each piece has 24 possible states (you can look at each from 6 sides, rotating each side 4 times around the y axis).
 #[derive(Component, Clone, Debug)]
+#[require(InheritedVisibility)]
 pub struct Piece {
     pub current_x: i32,
     pub current_y: i32,
