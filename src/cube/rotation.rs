@@ -1,6 +1,6 @@
 use std::f32::consts::TAU;
 
-use bevy::prelude::*;
+use bevy::{log, prelude::*};
 use rand::Rng;
 
 use crate::schedules::CubeScheduleSet;
@@ -602,6 +602,14 @@ fn handle_rotation_animations(
     mut cube_query: Query<&mut Cube>,
     time: Res<Time>,
 ) {
+    let mut cube = match cube_query.get_single_mut() {
+        Ok(cube) => cube,
+        Err(err) => {
+            log::error!("failed to get cube: {err}");
+            return;
+        }
+    };
+
     for (entity, mut transform, mut animation) in query.iter_mut() {
         animation.progress += time.delta_secs() / animation.duration_in_seconds;
         animation.progress = animation.progress.clamp(0.0, 1.0);
@@ -625,7 +633,7 @@ fn handle_rotation_animations(
         // cleanup if animation is done
         if animation.progress >= 1.0 {
             commands.entity(entity).remove::<RotationAnimator>();
-            cube_query.get_single_mut().unwrap().is_animating_rotation = false;
+            cube.is_animating_rotation = false;
         }
     }
 }

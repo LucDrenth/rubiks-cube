@@ -1,6 +1,6 @@
 use std::f32::consts::TAU;
 
-use bevy::prelude::*;
+use bevy::{log, prelude::*};
 
 use crate::schedules::CubeStartupSet;
 
@@ -8,7 +8,7 @@ use super::{
     axis::Axis, controller::ControllerPlugin, cube_state::CubeState, rotation::CubeRotationPlugin,
 };
 
-pub const DEFAULT_CUBE_SIZE: i32 = 3;
+pub const DEFAULT_CUBE_SIZE: usize = 3;
 
 const COLOR_LEFT: Color = Color::srgb(0.99, 0.49, 0.05); // orange
 const COLOR_RIGHT: Color = Color::srgb(0.99, 0.0, 0.0); // red
@@ -23,7 +23,10 @@ impl Plugin for CubePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ControllerPlugin)
             .add_plugins(CubeRotationPlugin)
-            .add_systems(Startup, spawn_cube.in_set(CubeStartupSet::SpawnCube));
+            .add_systems(
+                Startup,
+                spawn_default_cube.in_set(CubeStartupSet::SpawnCube),
+            );
     }
 }
 
@@ -99,19 +102,27 @@ impl Piece {
 #[derive(Component)]
 pub struct PieceFace;
 
-fn spawn_cube(
+fn spawn_default_cube(
+    commands: Commands,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<StandardMaterial>>,
+) {
+    spawn(commands, meshes, materials, DEFAULT_CUBE_SIZE);
+}
+
+fn spawn(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    cube_size: usize,
 ) {
-    let cube_size = DEFAULT_CUBE_SIZE;
-
-    if cube_size < 2 {
-        panic!("Invalid cube size {}", cube_size)
+    if cube_size <= 1 {
+        log::error!("can not spawn cube with invalid size: {cube_size}");
+        return;
     }
 
     let cube = Cube {
-        cube_size: CubeSize(cube_size),
+        cube_size: CubeSize(cube_size as i32),
         piece_spread: 0.05,
         block_size: 1.0,
         inner_material: materials.add(Color::srgb(0.1, 0.1, 0.1)),

@@ -1,4 +1,4 @@
-use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*};
+use bevy::{input::mouse::AccumulatedMouseMotion, log, prelude::*};
 
 use crate::{
     cube::{Cube, CubeRotation, CubeRotationAnimation, CubeRotationEvent},
@@ -27,7 +27,13 @@ fn scale_cube_with_keys(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
-    let mut transform = cube_transform_query.get_single_mut().unwrap();
+    let mut transform = match cube_transform_query.get_single_mut() {
+        Ok(transform) => transform,
+        Err(err) => {
+            log::error!("failed to get cube transform: {err}");
+            return;
+        }
+    };
 
     let speed = 1.0;
 
@@ -47,7 +53,14 @@ fn rotate_cube_with_keys(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut event_writer: EventWriter<CubeRotationEvent>,
 ) {
-    let cube = cube_query.get_single().unwrap();
+    let cube = match cube_query.get_single() {
+        Ok(cube) => cube,
+        Err(err) => {
+            log::error!("failed to get cube: {err}");
+            return;
+        }
+    };
+
     if cube.is_animating_rotation {
         return;
     }
@@ -84,12 +97,18 @@ fn rotate_cube_with_keys(
 }
 
 fn move_cube_with_mouse(
-    mut cube_query: Query<&mut Transform, With<Cube>>,
+    mut cube_transform_query: Query<&mut Transform, With<Cube>>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     ui_resource: Res<UiResource>,
     mouse_motion: Res<AccumulatedMouseMotion>,
 ) {
-    let mut cube_transform = cube_query.get_single_mut().unwrap();
+    let mut cube_transform = match cube_transform_query.get_single_mut() {
+        Ok(cube_transform) => cube_transform,
+        Err(err) => {
+            log::error!("failed to get cube transform: {err}");
+            return;
+        }
+    };
 
     if !mouse_input.pressed(MouseButton::Left) || ui_resource.did_handle_click {
         return;

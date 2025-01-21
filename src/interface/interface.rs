@@ -309,7 +309,13 @@ fn scramble_button_action(
         return;
     }
 
-    let cube = cube_query.get_single().unwrap();
+    let cube = match cube_query.get_single() {
+        Ok(cube) => cube,
+        Err(err) => {
+            log::error!("failed to get cube: {err}");
+            return;
+        }
+    };
 
     let scramble_length = 20;
     let rotation_duration = 0.15;
@@ -351,7 +357,14 @@ fn solve_button_action(
         return;
     }
 
-    let cube_state = cube_state_query.get_single().unwrap();
+    let cube_state = match cube_state_query.get_single() {
+        Ok(cube_state) => cube_state,
+        Err(err) => {
+            log::error!("failed to get cube state: {err}");
+            return;
+        }
+    };
+
     let mut solve_sequence = solver::get_solve_sequence(SolveStrategy::Kociemba, cube_state);
     for cube_rotation in solve_sequence.iter_mut() {
         cube_rotation.animation = Some(CubeRotationAnimation {
