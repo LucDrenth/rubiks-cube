@@ -216,6 +216,16 @@ pub enum CubeRotation {
     Z,
 }
 
+impl Into<Axis> for &CubeRotation {
+    fn into(self) -> Axis {
+        match self {
+            CubeRotation::X => Axis::X,
+            CubeRotation::Y => Axis::Y,
+            CubeRotation::Z => Axis::Z,
+        }
+    }
+}
+
 fn rotation_events_handler(
     mut commands: Commands,
     mut cube_query: Query<&mut Cube>,
@@ -448,26 +458,10 @@ fn rotation_events_handler(
                 }
             }
             Rotation::Cube(cube_rotation) => {
-                let pivot_point = Vec3::ZERO;
-
+                // Update piece indices
                 match cube_rotation {
                     CubeRotation::X => {
                         for piece in &mut cube_pieces {
-                            // Rotate pieces
-                            for piece_index_to_rotate in 0..number_of_pieces {
-                                rotate_piece(
-                                    &mut commands,
-                                    cube_piece_entities[piece_index_to_rotate],
-                                    &mut cube_piece_transforms[piece_index_to_rotate],
-                                    &mut cube,
-                                    pivot_point,
-                                    &cube_rotation_event.animation,
-                                    Axis::X,
-                                    rotation_amount,
-                                );
-                            }
-
-                            // Update piece indices
                             let new_y: i32;
                             let new_z: i32;
 
@@ -488,21 +482,6 @@ fn rotation_events_handler(
                     }
                     CubeRotation::Y => {
                         for piece in &mut cube_pieces {
-                            // Rotate pieces
-                            for piece_index_to_rotate in 0..number_of_pieces {
-                                rotate_piece(
-                                    &mut commands,
-                                    cube_piece_entities[piece_index_to_rotate],
-                                    &mut cube_piece_transforms[piece_index_to_rotate],
-                                    &mut cube,
-                                    pivot_point,
-                                    &cube_rotation_event.animation,
-                                    Axis::Y,
-                                    rotation_amount,
-                                );
-                            }
-
-                            // Update piece indices
                             let new_x: i32;
                             let new_z: i32;
 
@@ -523,21 +502,6 @@ fn rotation_events_handler(
                     }
                     CubeRotation::Z => {
                         for piece in &mut cube_pieces {
-                            // Rotate pieces
-                            for piece_index_to_rotate in 0..number_of_pieces {
-                                rotate_piece(
-                                    &mut commands,
-                                    cube_piece_entities[piece_index_to_rotate],
-                                    &mut cube_piece_transforms[piece_index_to_rotate],
-                                    &mut cube,
-                                    pivot_point,
-                                    &cube_rotation_event.animation,
-                                    Axis::Z,
-                                    rotation_amount,
-                                );
-                            }
-
-                            // Update piece indices
                             let new_x: i32;
                             let new_y: i32;
 
@@ -556,6 +520,20 @@ fn rotation_events_handler(
                             piece.current_y = new_y;
                         }
                     }
+                };
+
+                // Rotate pieces
+                for piece_index_to_rotate in 0..number_of_pieces {
+                    rotate_piece(
+                        &mut commands,
+                        cube_piece_entities[piece_index_to_rotate],
+                        &mut cube_piece_transforms[piece_index_to_rotate],
+                        &mut cube,
+                        Vec3::ZERO,
+                        &cube_rotation_event.animation,
+                        cube_rotation.into(),
+                        rotation_amount,
+                    );
                 }
             }
         }

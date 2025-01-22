@@ -13,6 +13,3 @@
 - Sykbox
 - Some rectangle underneath so it is not just floating in the air
 - Algorithm with optimal solving strategy ('Gods algorithm'). This is expected to take about 10 seconds to calculate. To prevent lag it will have to be either done on a separate thread or spread out over multiple ticks.
-
-## Issues
-- Full cube rotation causes lag with cube siize >= 9. Slice rotation does not seem to cause any lag. Full cube rotation should not be that much harder to compute than clibe rotation, so this must be a bug.
