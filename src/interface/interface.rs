@@ -9,11 +9,25 @@ use super::{
 
 pub const COLOR_YELLOW: Color = Color::srgb(0.952, 0.784, 0.007);
 pub const COLOR_DARK_GREY: Color = Color::srgb(0.21875, 0.21875, 0.21875);
+pub const COLOR_GREY: Color = Color::srgb(0.5, 0.5, 0.5);
 pub const BUTTON_TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 
 #[derive(Resource)]
 pub struct UiResource {
     pub did_handle_click: bool,
+}
+
+#[derive(Component)]
+#[require(Button, ButtonDisabledHandler)]
+pub struct UiButton;
+
+#[derive(Component)]
+pub struct ButtonDisabledHandler(pub bool);
+
+impl Default for ButtonDisabledHandler {
+    fn default() -> Self {
+        Self(false)
+    }
 }
 
 /// Add this component to a ui element to not let a click event bubble up to the world
@@ -32,7 +46,12 @@ impl Plugin for InterfacePlugin {
         .add_systems(Startup, init_scramble_button)
         .add_systems(
             Update,
-            (update_ui_resource, buttons_hover_effect).in_set(CubeScheduleSet::HandleUserInput),
+            (
+                update_ui_resource,
+                buttons_hover_effect,
+                buttons_disable_handler,
+            )
+                .in_set(CubeScheduleSet::HandleUserInput),
         );
     }
 }
@@ -85,16 +104,45 @@ fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) 
         });
 }
 
-fn buttons_hover_effect(mut query: Query<(&Interaction, &mut BorderColor), Changed<Interaction>>) {
-    for (interaction, mut border_color) in query.iter_mut() {
+fn buttons_hover_effect(
+    mut query: Query<
+        (&Interaction, &ButtonDisabledHandler, &mut BorderColor),
+        Changed<Interaction>,
+    >,
+) {
+    for (interaction, is_disabled, mut border_color) in query.iter_mut() {
         match interaction {
             Interaction::Pressed => (),
             Interaction::Hovered => {
+                if is_disabled.0 {
+                    continue;
+                }
+
                 border_color.0 = COLOR_YELLOW;
             }
             Interaction::None => {
                 border_color.0 = Color::BLACK;
             }
         };
+    }
+}
+
+fn buttons_disable_handler(
+    mut query: Query<
+        (
+            &mut BackgroundColor,
+            &mut BorderColor,
+            &ButtonDisabledHandler,
+        ),
+        Changed<ButtonDisabledHandler>,
+    >,
+) {
+    for (mut background_color, mut border_color, is_disabled) in query.iter_mut() {
+        if is_disabled.0 {
+            background_color.0 = COLOR_GREY;
+            border_color.0 = Color::BLACK;
+        } else {
+            background_color.0 = COLOR_DARK_GREY;
+        }
     }
 }

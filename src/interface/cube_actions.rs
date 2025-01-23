@@ -9,7 +9,7 @@ use crate::{
     schedules::CubeScheduleSet,
 };
 
-use super::interface::{CaptureClick, BUTTON_TEXT_COLOR, COLOR_DARK_GREY};
+use super::interface::{CaptureClick, UiButton, BUTTON_TEXT_COLOR, COLOR_DARK_GREY};
 
 pub struct CubeActionsPlugin;
 
@@ -33,7 +33,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
         .spawn((
             ScrambleButton,
             CaptureClick,
-            Button,
+            UiButton,
             Node {
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
@@ -72,7 +72,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
         .spawn((
             SolveButton,
             CaptureClick,
-            Button,
+            UiButton,
             Node {
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,

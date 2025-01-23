@@ -5,7 +5,9 @@ use crate::{
     schedules::CubeScheduleSet,
 };
 
-use super::interface::{CaptureClick, BUTTON_TEXT_COLOR, COLOR_DARK_GREY};
+use super::interface::{
+    ButtonDisabledHandler, CaptureClick, UiButton, BUTTON_TEXT_COLOR, COLOR_DARK_GREY,
+};
 
 pub struct CubeSizePlugin;
 
@@ -47,7 +49,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                 .spawn((
                     CubeSizeDownButton,
                     CaptureClick,
-                    Button,
+                    UiButton,
                     Node {
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
@@ -100,7 +102,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                 .spawn((
                     CubeSizeUpButton,
                     CaptureClick,
-                    Button,
+                    UiButton,
                     Node {
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
@@ -134,16 +136,23 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
 
 fn decrease_cube_size_button_action(
     mut commands: Commands,
-    mut button_query: Query<&Interaction, (With<CubeSizeDownButton>, Changed<Interaction>)>,
+    mut button_query: Query<
+        (&Interaction, &mut ButtonDisabledHandler),
+        (With<CubeSizeDownButton>, Changed<Interaction>),
+    >,
     mut cube_size_label_query: Query<&mut Text, With<CubeSizeLabel>>,
     mut sequence_resource: ResMut<SequenceResource>,
     mut cube_size_resource: ResMut<CurrentCubeSizeResource>,
     cube_commands: Res<CubeCommandsResource>,
 ) {
-    let interaction = match button_query.get_single_mut() {
+    let (interaction, mut disable_button) = match button_query.get_single_mut() {
         Ok(v) => v,
         Err(_) => return,
     };
+
+    if disable_button.0 {
+        return;
+    }
 
     if *interaction != Interaction::Pressed {
         return;
@@ -162,17 +171,22 @@ fn decrease_cube_size_button_action(
     cube_size_resource.0 = current_cube_size - 1;
     commands.run_system(cube_commands.despawn);
     commands.run_system(cube_commands.spawn);
+
+    if cube_size_resource.0 == 2 {
+        disable_button.0 = true;
+    }
 }
 
 fn increase_cube_size_button_action(
     mut commands: Commands,
-    mut button_query: Query<&Interaction, (With<CubeSizeUpButton>, Changed<Interaction>)>,
+    increase_size_button_query: Query<&Interaction, (With<CubeSizeUpButton>, Changed<Interaction>)>,
+    mut decrease_size_button_query: Query<&mut ButtonDisabledHandler, With<CubeSizeDownButton>>,
     mut cube_size_label_query: Query<&mut Text, With<CubeSizeLabel>>,
     mut sequence_resource: ResMut<SequenceResource>,
     mut cube_size_resource: ResMut<CurrentCubeSizeResource>,
     cube_commands: Res<CubeCommandsResource>,
 ) {
-    let interaction = match button_query.get_single_mut() {
+    let interaction = match increase_size_button_query.get_single() {
         Ok(v) => v,
         Err(_) => return,
     };
@@ -189,4 +203,13 @@ fn increase_cube_size_button_action(
     cube_size_resource.0 = current_cube_size + 1;
     commands.run_system(cube_commands.despawn);
     commands.run_system(cube_commands.spawn);
+
+    match decrease_size_button_query.get_single_mut() {
+        Ok(mut disable_button) => {
+            disable_button.0 = false;
+        }
+        Err(err) => {
+            warn!("decrease cube size button not found: {}", err)
+        }
+    };
 }
