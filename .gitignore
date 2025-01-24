@@ -1,3 +1,8 @@
+# Rust
 /target
 
+# IDE
 .vscode/
+
+# Mac
+.DS_Store
