@@ -111,20 +111,24 @@ fn buttons_hover_effect(
     >,
 ) {
     for (interaction, is_disabled, mut border_color) in query.iter_mut() {
-        match interaction {
-            Interaction::Pressed => (),
-            Interaction::Hovered => {
-                if is_disabled.0 {
-                    continue;
-                }
+        if is_disabled.0 {
+            continue;
+        }
 
-                border_color.0 = COLOR_YELLOW;
-            }
-            Interaction::None => {
-                border_color.0 = Color::BLACK;
-            }
-        };
+        handle_button_interaction_state(interaction, &mut border_color);
     }
+}
+
+fn handle_button_interaction_state(interaction: &Interaction, border_color: &mut BorderColor) {
+    match interaction {
+        Interaction::Pressed => (),
+        Interaction::Hovered => {
+            border_color.0 = COLOR_YELLOW;
+        }
+        Interaction::None => {
+            border_color.0 = Color::BLACK;
+        }
+    };
 }
 
 fn buttons_disable_handler(
@@ -141,13 +145,10 @@ fn buttons_disable_handler(
     for (mut background_color, mut border_color, interaction, is_disabled) in query.iter_mut() {
         if is_disabled.0 {
             background_color.0 = Color::NONE;
-            border_color.0 = Color::BLACK;
+            handle_button_interaction_state(&Interaction::None, &mut border_color);
         } else {
             background_color.0 = COLOR_DARK_GREY;
-
-            if *interaction == Interaction::Hovered {
-                border_color.0 = COLOR_YELLOW;
-            }
+            handle_button_interaction_state(interaction, &mut border_color);
         }
     }
 }
