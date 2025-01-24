@@ -43,7 +43,7 @@ impl Plugin for InterfacePlugin {
         })
         .add_plugins(CubeSizePlugin)
         .add_plugins(CubeActionsPlugin)
-        .add_systems(Startup, init_scramble_button)
+        .add_systems(Startup, init)
         .add_systems(
             Update,
             (
@@ -76,8 +76,8 @@ fn update_ui_resource(
     }
 }
 
-fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // background element
+fn init(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // container element
     commands
         .spawn((
             Node {
