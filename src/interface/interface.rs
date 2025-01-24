@@ -9,7 +9,7 @@ use super::{
 
 pub const COLOR_YELLOW: Color = Color::srgb(0.952, 0.784, 0.007);
 pub const COLOR_DARK_GREY: Color = Color::srgb(0.21875, 0.21875, 0.21875);
-pub const COLOR_GREY: Color = Color::srgb(0.5, 0.5, 0.5);
+pub const COLOR_GREY: Color = Color::srgb(0.55, 0.55, 0.55);
 pub const BUTTON_TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 
 #[derive(Resource)]
@@ -95,7 +95,7 @@ fn init_scramble_button(mut commands: Commands, asset_server: Res<AssetServer>) 
                 },
                 ..default()
             },
-            BackgroundColor(Color::srgb_u8(155, 155, 155)),
+            BackgroundColor(COLOR_GREY),
             BorderColor(COLOR_YELLOW),
         ))
         .with_children(|parent| {
@@ -132,17 +132,22 @@ fn buttons_disable_handler(
         (
             &mut BackgroundColor,
             &mut BorderColor,
+            &Interaction,
             &ButtonDisabledHandler,
         ),
         Changed<ButtonDisabledHandler>,
     >,
 ) {
-    for (mut background_color, mut border_color, is_disabled) in query.iter_mut() {
+    for (mut background_color, mut border_color, interaction, is_disabled) in query.iter_mut() {
         if is_disabled.0 {
-            background_color.0 = COLOR_GREY;
+            background_color.0 = Color::NONE;
             border_color.0 = Color::BLACK;
         } else {
             background_color.0 = COLOR_DARK_GREY;
+
+            if *interaction == Interaction::Hovered {
+                border_color.0 = COLOR_YELLOW;
+            }
         }
     }
 }
