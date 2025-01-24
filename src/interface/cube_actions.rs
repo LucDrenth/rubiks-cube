@@ -9,7 +9,10 @@ use crate::{
     schedules::CubeScheduleSet,
 };
 
-use super::interface::{CaptureClick, UiButton, BUTTON_TEXT_COLOR, COLOR_DARK_GREY};
+use super::{
+    interface::{CaptureClick, BUTTON_TEXT_COLOR, COLOR_DARK_GREY},
+    widget::button::UiButton,
+};
 
 pub struct CubeActionsPlugin;
 

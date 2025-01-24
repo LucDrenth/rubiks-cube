@@ -5,8 +5,9 @@ use crate::{
     schedules::CubeScheduleSet,
 };
 
-use super::interface::{
-    ButtonDisabledHandler, CaptureClick, UiButton, BUTTON_TEXT_COLOR, COLOR_DARK_GREY,
+use super::{
+    interface::{CaptureClick, BUTTON_TEXT_COLOR, COLOR_DARK_GREY},
+    widget::button::{ButtonDisabledHandler, UiButton},
 };
 
 pub struct CubeSizePlugin;

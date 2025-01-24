@@ -5,6 +5,7 @@ use crate::schedules::CubeScheduleSet;
 use super::{
     cube_actions::{self, CubeActionsPlugin},
     cube_size::{self, CubeSizePlugin},
+    widget,
 };
 
 pub const COLOR_YELLOW: Color = Color::srgb(0.952, 0.784, 0.007);
@@ -15,19 +16,6 @@ pub const BUTTON_TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 #[derive(Resource)]
 pub struct UiResource {
     pub did_handle_click: bool,
-}
-
-#[derive(Component)]
-#[require(Button, ButtonDisabledHandler)]
-pub struct UiButton;
-
-#[derive(Component)]
-pub struct ButtonDisabledHandler(pub bool);
-
-impl Default for ButtonDisabledHandler {
-    fn default() -> Self {
-        Self(false)
-    }
 }
 
 /// Add this component to a ui element to not let a click event bubble up to the world
@@ -41,17 +29,13 @@ impl Plugin for InterfacePlugin {
         app.insert_resource(UiResource {
             did_handle_click: false,
         })
+        .add_plugins(widget::button::ButtonPlugin)
         .add_plugins(CubeSizePlugin)
         .add_plugins(CubeActionsPlugin)
         .add_systems(Startup, init)
         .add_systems(
             Update,
-            (
-                update_ui_resource,
-                buttons_hover_effect,
-                buttons_disable_handler,
-            )
-                .in_set(CubeScheduleSet::HandleUserInput),
+            update_ui_resource.in_set(CubeScheduleSet::HandleUserInput),
         );
     }
 }
@@ -102,53 +86,4 @@ fn init(mut commands: Commands, asset_server: Res<AssetServer>) {
             cube_actions::spawn(parent, &asset_server);
             cube_size::spawn(parent, &asset_server);
         });
-}
-
-fn buttons_hover_effect(
-    mut query: Query<
-        (&Interaction, &ButtonDisabledHandler, &mut BorderColor),
-        Changed<Interaction>,
-    >,
-) {
-    for (interaction, is_disabled, mut border_color) in query.iter_mut() {
-        if is_disabled.0 {
-            continue;
-        }
-
-        handle_button_interaction_state(interaction, &mut border_color);
-    }
-}
-
-fn handle_button_interaction_state(interaction: &Interaction, border_color: &mut BorderColor) {
-    match interaction {
-        Interaction::Pressed => (),
-        Interaction::Hovered => {
-            border_color.0 = COLOR_YELLOW;
-        }
-        Interaction::None => {
-            border_color.0 = Color::BLACK;
-        }
-    };
-}
-
-fn buttons_disable_handler(
-    mut query: Query<
-        (
-            &mut BackgroundColor,
-            &mut BorderColor,
-            &Interaction,
-            &ButtonDisabledHandler,
-        ),
-        Changed<ButtonDisabledHandler>,
-    >,
-) {
-    for (mut background_color, mut border_color, interaction, is_disabled) in query.iter_mut() {
-        if is_disabled.0 {
-            background_color.0 = Color::NONE;
-            handle_button_interaction_state(&Interaction::None, &mut border_color);
-        } else {
-            background_color.0 = COLOR_DARK_GREY;
-            handle_button_interaction_state(interaction, &mut border_color);
-        }
-    }
 }
