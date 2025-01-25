@@ -5,6 +5,7 @@
 - Implement solving algorithm(s).
 
 ### Nice to have
+- Base scramble sequence length on cube size
 - Animation for updating cube size (scale down to 0 before despawn, scale up from 0 to 1 at spawn)
 - UI button to scramble instantly (without animations)
 - Show full scramble sequence as text (make current move pop out)
