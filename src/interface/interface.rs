@@ -20,6 +20,7 @@ pub struct UiResource {
 
 /// Add this component to a ui element to not let a click event bubble up to the world
 #[derive(Component)]
+#[require(Button)]
 pub struct CaptureClick;
 
 pub struct InterfacePlugin;
@@ -82,6 +83,7 @@ fn init(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
             BackgroundColor(COLOR_GREY),
             BorderColor(COLOR_MAIN),
+            CaptureClick,
         ))
         .with_children(|parent| {
             cube_actions::spawn(parent, &asset_server);
