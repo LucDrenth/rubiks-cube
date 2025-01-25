@@ -203,7 +203,7 @@ fn scramble_button_action(
         }
     };
 
-    let scramble_length = 20;
+    let scramble_length = (cube.size().0 + 1) as usize * 6;
     let rotation_duration = 0.15;
 
     let mut scramble_sequence = cube::create_random_scramble_sequence(cube.size(), scramble_length);
