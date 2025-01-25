@@ -6,7 +6,7 @@ use crate::{
 };
 
 use super::{
-    cube_actions::ScrambleButtonProgressBar,
+    cube_actions::{ScrambleButton, ScrambleButtonProgressBar, SolveButton},
     interface::{CaptureClick, BUTTON_TEXT_COLOR, COLOR_DARK_GREY},
     widget::{
         button::{ButtonDisabledHandler, UiButton},
@@ -143,7 +143,11 @@ fn decrease_cube_size_button_action(
     mut commands: Commands,
     mut button_query: Query<
         (&Interaction, &mut ButtonDisabledHandler),
-        (With<CubeSizeDownButton>, Changed<Interaction>),
+        (
+            With<CubeSizeDownButton>,
+            Without<ScrambleButton>,
+            Changed<Interaction>,
+        ),
     >,
     mut cube_size_label_query: Query<&mut Text, With<CubeSizeLabel>>,
     mut sequence_resource: ResMut<SequenceResource>,
@@ -153,13 +157,23 @@ fn decrease_cube_size_button_action(
         (&mut ProgressBar, &mut Node),
         With<ScrambleButtonProgressBar>,
     >,
+    mut scramble_button_query: Query<&mut ButtonDisabledHandler, With<ScrambleButton>>,
+    mut solve_button_query: Query<
+        &mut ButtonDisabledHandler,
+        (
+            With<SolveButton>,
+            Without<CubeSizeUpButton>,
+            Without<CubeSizeDownButton>,
+            Without<ScrambleButton>,
+        ),
+    >,
 ) {
     let (interaction, mut disable_button) = match button_query.get_single_mut() {
         Ok(v) => v,
         Err(_) => return,
     };
 
-    if disable_button.0 {
+    if disable_button.disabled {
         return;
     }
 
@@ -182,17 +196,35 @@ fn decrease_cube_size_button_action(
     commands.run_system(cube_commands.spawn);
 
     if cube_size_resource.0 == 2 {
-        disable_button.0 = true;
+        disable_button.disabled = true;
     }
 
     let (mut progress_bar, mut node) = scramble_button_progress_bar_query.get_single_mut().unwrap();
     progress_bar.cancel(&mut node);
+    scramble_button_query.get_single_mut().unwrap().disabled = false;
+    solve_button_query.get_single_mut().unwrap().disabled = false;
 }
 
 fn increase_cube_size_button_action(
     mut commands: Commands,
-    increase_size_button_query: Query<&Interaction, (With<CubeSizeUpButton>, Changed<Interaction>)>,
-    mut decrease_size_button_query: Query<&mut ButtonDisabledHandler, With<CubeSizeDownButton>>,
+    increase_size_button_query: Query<
+        (&Interaction, &mut ButtonDisabledHandler),
+        (
+            With<CubeSizeUpButton>,
+            Without<ScrambleButton>,
+            Without<CubeSizeDownButton>,
+            Without<SolveButton>,
+            Changed<Interaction>,
+        ),
+    >,
+    mut decrease_size_button_query: Query<
+        &mut ButtonDisabledHandler,
+        (
+            With<CubeSizeDownButton>,
+            Without<ScrambleButton>,
+            Without<SolveButton>,
+        ),
+    >,
     mut cube_size_label_query: Query<&mut Text, With<CubeSizeLabel>>,
     mut sequence_resource: ResMut<SequenceResource>,
     mut cube_size_resource: ResMut<CurrentCubeSizeResource>,
@@ -201,11 +233,33 @@ fn increase_cube_size_button_action(
         (&mut ProgressBar, &mut Node),
         With<ScrambleButtonProgressBar>,
     >,
+    mut scramble_button_query: Query<
+        &mut ButtonDisabledHandler,
+        (
+            With<ScrambleButton>,
+            Without<CubeSizeUpButton>,
+            Without<CubeSizeDownButton>,
+            Without<SolveButton>,
+        ),
+    >,
+    mut solve_button_query: Query<
+        &mut ButtonDisabledHandler,
+        (
+            With<SolveButton>,
+            Without<CubeSizeUpButton>,
+            Without<CubeSizeDownButton>,
+            Without<ScrambleButton>,
+        ),
+    >,
 ) {
-    let interaction = match increase_size_button_query.get_single() {
+    let (interaction, disable_button) = match increase_size_button_query.get_single() {
         Ok(v) => v,
         Err(_) => return,
     };
+
+    if disable_button.disabled {
+        return;
+    }
 
     if *interaction != Interaction::Pressed {
         return;
@@ -222,7 +276,7 @@ fn increase_cube_size_button_action(
 
     match decrease_size_button_query.get_single_mut() {
         Ok(mut disable_button) => {
-            disable_button.0 = false;
+            disable_button.disabled = false;
         }
         Err(err) => {
             warn!("decrease cube size button not found: {}", err)
@@ -231,4 +285,6 @@ fn increase_cube_size_button_action(
 
     let (mut progress_bar, mut node) = scramble_button_progress_bar_query.get_single_mut().unwrap();
     progress_bar.cancel(&mut node);
+    scramble_button_query.get_single_mut().unwrap().disabled = false;
+    solve_button_query.get_single_mut().unwrap().disabled = false;
 }

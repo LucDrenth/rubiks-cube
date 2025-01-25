@@ -11,7 +11,10 @@ use crate::{
 
 use super::{
     interface::{CaptureClick, BUTTON_TEXT_COLOR, COLOR_DARK_GREY},
-    widget::{button::UiButton, progress_bar::ProgressBar},
+    widget::{
+        button::{ButtonDisabledHandler, ButtonDisabledHandlerTimer, UiButton},
+        progress_bar::ProgressBar,
+    },
 };
 
 pub struct CubeActionsPlugin;
@@ -32,6 +35,8 @@ pub struct ScrambleButtonProgressBar;
 
 #[derive(Component)]
 pub struct SolveButton;
+#[derive(Component)]
+pub struct SolveButtonProgressBar;
 
 pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
     // scramble button
@@ -124,19 +129,51 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                 blur_radius: Val::Px(1.),
             },
         ))
-        .with_child((
-            Text::new("solve"),
-            TextFont {
-                font: asset_server.load("fonts/roboto.ttf"),
-                font_size: 16.0,
-                ..default()
-            },
-            TextColor(BUTTON_TEXT_COLOR),
-        ));
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("solve"),
+                TextFont {
+                    font: asset_server.load("fonts/roboto.ttf"),
+                    font_size: 16.0,
+                    ..default()
+                },
+                TextColor(BUTTON_TEXT_COLOR),
+            ));
+
+            parent.spawn((
+                SolveButtonProgressBar,
+                ProgressBar::default(),
+                Node {
+                    width: Val::Percent(0.),
+                    height: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    left: Val::ZERO,
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(1.0, 1.0, 1.0, 0.5)),
+                BorderRadius::all(Val::Px(4.)),
+            ));
+        });
 }
 
 fn scramble_button_action(
     mut scramble_button_query: Query<&Interaction, (With<ScrambleButton>, Changed<Interaction>)>,
+    mut scramble_button_disable_handler_query: Query<
+        &mut ButtonDisabledHandler,
+        (With<ScrambleButton>, Without<SolveButton>),
+    >,
+    mut scramble_button_disable_handler_timer: Query<
+        &mut ButtonDisabledHandlerTimer,
+        (With<ScrambleButton>, Without<SolveButton>),
+    >,
+    mut solve_button_disable_handler_query: Query<
+        &mut ButtonDisabledHandler,
+        (With<SolveButton>, Without<ScrambleButton>),
+    >,
+    mut solve_button_disable_handler_timer: Query<
+        &mut ButtonDisabledHandlerTimer,
+        (With<SolveButton>, Without<ScrambleButton>),
+    >,
     cube_query: Query<&cube::Cube>,
     mut sequence_resource: ResMut<SequenceResource>,
     mut progress_bar_query: Query<&mut ProgressBar, With<ScrambleButtonProgressBar>>,
@@ -147,6 +184,14 @@ fn scramble_button_action(
     };
 
     if *interaction != Interaction::Pressed {
+        return;
+    }
+
+    let mut disable_button = scramble_button_disable_handler_query
+        .get_single_mut()
+        .unwrap();
+
+    if disable_button.disabled {
         return;
     }
 
@@ -205,12 +250,44 @@ fn scramble_button_action(
     // but for now we'll just add 0.3 seconds to the scramble_duration to fix this.
     let progress_bar_duration = scramble_duration + 0.3;
     progress_bar.set_timer(Timer::from_seconds(progress_bar_duration, TimerMode::Once));
+
+    let mut solve_button_disable_handler =
+        solve_button_disable_handler_query.get_single_mut().unwrap();
+
+    solve_button_disable_handler.disabled = true;
+    disable_button.disabled = true;
+
+    solve_button_disable_handler_timer
+        .get_single_mut()
+        .unwrap()
+        .enable_after(progress_bar_duration);
+    scramble_button_disable_handler_timer
+        .get_single_mut()
+        .unwrap()
+        .enable_after(progress_bar_duration);
 }
 
 fn solve_button_action(
     mut solve_button_query: Query<&Interaction, (With<SolveButton>, Changed<Interaction>)>,
+    mut solve_button_disable_handler_query: Query<
+        &mut ButtonDisabledHandler,
+        (With<SolveButton>, Without<ScrambleButton>),
+    >,
+    mut solve_button_disable_handler_timer: Query<
+        &mut ButtonDisabledHandlerTimer,
+        (With<SolveButton>, Without<ScrambleButton>),
+    >,
+    mut scramble_button_disable_handler_query: Query<
+        &mut ButtonDisabledHandler,
+        (With<ScrambleButton>, Without<SolveButton>),
+    >,
+    mut scramble_button_disable_handler_timer: Query<
+        &mut ButtonDisabledHandlerTimer,
+        (With<ScrambleButton>, Without<SolveButton>),
+    >,
     cube_state_query: Query<&CubeState>,
     mut sequence_resource: ResMut<SequenceResource>,
+    mut progress_bar_query: Query<&mut ProgressBar, With<SolveButtonProgressBar>>,
 ) {
     let interaction = match solve_button_query.get_single_mut() {
         Ok(v) => v,
@@ -218,6 +295,12 @@ fn solve_button_action(
     };
 
     if *interaction != Interaction::Pressed {
+        return;
+    }
+
+    let mut disable_button = solve_button_disable_handler_query.get_single_mut().unwrap();
+
+    if disable_button.disabled {
         return;
     }
 
@@ -237,5 +320,46 @@ fn solve_button_action(
         });
     }
 
+    let mut solve_duration: f32 = 0.0;
+    for rotation in &solve_sequence {
+        match &rotation.animation {
+            Some(animation) => solve_duration += animation.duration_in_seconds,
+            None => (),
+        }
+    }
+
     sequence_resource.set(solve_sequence);
+
+    let mut progress_bar = match progress_bar_query.get_single_mut() {
+        Ok(progress_bar) => progress_bar,
+        Err(err) => {
+            error!("failed to get solve button progress bar: {err}");
+            return;
+        }
+    };
+
+    // solve_duration is not exact because a rotation is measured in seconds, not in ticks.
+    // For example, if a tick is 0.1 seconds and the rotation duration is 0.35, it takes 4
+    // ticks (0.4 seconds) before the next rotation starts. We could calculate a more precise version,
+    // but for now we'll just add 0.3 seconds to the solve_duration to fix this.
+    let progress_bar_duration = solve_duration + 0.3;
+    progress_bar.set_timer(Timer::from_seconds(progress_bar_duration, TimerMode::Once));
+
+    let mut scramble_button_disable_handler = scramble_button_disable_handler_query
+        .get_single_mut()
+        .unwrap();
+
+    scramble_button_disable_handler.disabled = true;
+    disable_button.disabled = true;
+
+    solve_button_disable_handler_timer
+        .get_single_mut()
+        .unwrap()
+        .enable_after(progress_bar_duration);
+    scramble_button_disable_handler_timer
+        .get_single_mut()
+        .unwrap()
+        .enable_after(progress_bar_duration);
+
+    // TODO enable scramble/solve buttons again after progress bar is done.
 }
