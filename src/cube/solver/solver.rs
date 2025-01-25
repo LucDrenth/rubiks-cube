@@ -25,6 +25,6 @@ pub fn get_solve_sequence(
 }
 
 pub fn get_solve_sequence_with_gods_algorithm(_cube_state: &CubeState) -> Vec<CubeRotationEvent> {
-    log::info!("TODO implement");
+    log::info!("TODO implement get_solve_sequence_with_gods_algorithm");
     return vec![];
 }

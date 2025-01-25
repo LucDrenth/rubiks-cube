@@ -11,6 +11,6 @@ use crate::cube::{CubeRotationEvent, CubeState};
 /// We do this by running an algorithm a couple of times and stop once we find a short enough
 /// set of moves to reach this sate.
 pub fn get_solve_sequence_with_kociemba(_cube_state: &CubeState) -> Vec<CubeRotationEvent> {
-    log::info!("TODO implement");
+    log::info!("TODO implement get_solve_sequence_with_kociemba");
     return vec![];
 }
