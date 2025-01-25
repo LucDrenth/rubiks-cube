@@ -5,9 +5,12 @@
 - Implement solving algorithm(s).
 
 ### Nice to have
-- Base scramble sequence length on cube size
-- Animation for updating cube size (scale down to 0 before despawn, scale up from 0 to 1 at spawn)
-- UI button to scramble instantly (without animations)
+- Base scramble sequence length on cube size: (size + 1) * 6
+- Dropdown to change rotation speed of sequences (scramble/solve): x0.25, x0.5, x1.0 (default), x2.0, x5.0, instant
+- Change yellow border of interface to a gradiant of the cube colours
+- Buttons to do full cube rotations
+- Drag slices to do a rotation
+- Animation for updating cube size (scale down to 0 before despawn, scale up from 0 to 1 at spawn). Then remove scaling functinoality with arrow keys, which is just an example
 - Show full scramble sequence as text (make current move pop out)
 - Automatically move the camera so the cube takes up the same amount of space on the screen, no matter the cube size.
 - Better lighting
