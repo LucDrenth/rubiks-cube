@@ -360,6 +360,4 @@ fn solve_button_action(
         .get_single_mut()
         .unwrap()
         .enable_after(progress_bar_duration);
-
-    // TODO enable scramble/solve buttons again after progress bar is done.
 }
