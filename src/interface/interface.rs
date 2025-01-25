@@ -8,7 +8,7 @@ use super::{
     widget,
 };
 
-pub const COLOR_YELLOW: Color = Color::srgb(0.952, 0.784, 0.007);
+pub const COLOR_MAIN: Color = Color::srgb(0.952, 0.784, 0.007); // yellow
 pub const COLOR_DARK_GREY: Color = Color::srgb(0.21875, 0.21875, 0.21875);
 pub const COLOR_GREY: Color = Color::srgb(0.55, 0.55, 0.55);
 pub const BUTTON_TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
@@ -81,7 +81,7 @@ fn init(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
             BackgroundColor(COLOR_GREY),
-            BorderColor(COLOR_YELLOW),
+            BorderColor(COLOR_MAIN),
         ))
         .with_children(|parent| {
             cube_actions::spawn(parent, &asset_server);

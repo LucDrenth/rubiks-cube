@@ -1,7 +1,7 @@
 pub use bevy::prelude::*;
 
 use crate::{
-    interface::interface::{COLOR_DARK_GREY, COLOR_YELLOW},
+    interface::interface::{COLOR_DARK_GREY, COLOR_MAIN},
     schedules::CubeScheduleSet,
 };
 
@@ -76,7 +76,7 @@ fn handle_button_interaction_state(interaction: &Interaction, border_color: &mut
     match interaction {
         Interaction::Pressed => (),
         Interaction::Hovered => {
-            border_color.0 = COLOR_YELLOW;
+            border_color.0 = COLOR_MAIN;
         }
         Interaction::None => {
             border_color.0 = Color::BLACK;
