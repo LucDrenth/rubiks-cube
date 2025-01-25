@@ -204,7 +204,7 @@ fn scramble_button_action(
     // ticks (0.4 seconds) before the next rotation starts. We could calculate a more precise version,
     // but for now we'll just add 0.3 seconds to the scramble_duration to fix this.
     let progress_bar_duration = scramble_duration + 0.3;
-    progress_bar.timer = Some(Timer::from_seconds(progress_bar_duration, TimerMode::Once));
+    progress_bar.set_timer(Timer::from_seconds(progress_bar_duration, TimerMode::Once));
 }
 
 fn solve_button_action(

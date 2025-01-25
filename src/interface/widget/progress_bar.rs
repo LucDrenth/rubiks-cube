@@ -10,7 +10,18 @@ impl Plugin for ProgressBarPlugin {
 
 #[derive(Component)]
 pub struct ProgressBar {
-    pub timer: Option<Timer>,
+    timer: Option<Timer>,
+}
+
+impl ProgressBar {
+    pub fn set_timer(&mut self, timer: Timer) {
+        self.timer = Some(timer);
+    }
+
+    pub fn cancel(&mut self, node: &mut Node) {
+        self.timer = None;
+        node.width = Val::ZERO;
+    }
 }
 
 impl Default for ProgressBar {

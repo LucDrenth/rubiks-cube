@@ -6,8 +6,12 @@ use crate::{
 };
 
 use super::{
+    cube_actions::ScrambleButtonProgressBar,
     interface::{CaptureClick, BUTTON_TEXT_COLOR, COLOR_DARK_GREY},
-    widget::button::{ButtonDisabledHandler, UiButton},
+    widget::{
+        button::{ButtonDisabledHandler, UiButton},
+        progress_bar::ProgressBar,
+    },
 };
 
 pub struct CubeSizePlugin;
@@ -145,6 +149,10 @@ fn decrease_cube_size_button_action(
     mut sequence_resource: ResMut<SequenceResource>,
     mut cube_size_resource: ResMut<CurrentCubeSizeResource>,
     cube_commands: Res<CubeCommandsResource>,
+    mut scramble_button_progress_bar_query: Query<
+        (&mut ProgressBar, &mut Node),
+        With<ScrambleButtonProgressBar>,
+    >,
 ) {
     let (interaction, mut disable_button) = match button_query.get_single_mut() {
         Ok(v) => v,
@@ -176,6 +184,9 @@ fn decrease_cube_size_button_action(
     if cube_size_resource.0 == 2 {
         disable_button.0 = true;
     }
+
+    let (mut progress_bar, mut node) = scramble_button_progress_bar_query.get_single_mut().unwrap();
+    progress_bar.cancel(&mut node);
 }
 
 fn increase_cube_size_button_action(
@@ -186,6 +197,10 @@ fn increase_cube_size_button_action(
     mut sequence_resource: ResMut<SequenceResource>,
     mut cube_size_resource: ResMut<CurrentCubeSizeResource>,
     cube_commands: Res<CubeCommandsResource>,
+    mut scramble_button_progress_bar_query: Query<
+        (&mut ProgressBar, &mut Node),
+        With<ScrambleButtonProgressBar>,
+    >,
 ) {
     let interaction = match increase_size_button_query.get_single() {
         Ok(v) => v,
@@ -213,4 +228,7 @@ fn increase_cube_size_button_action(
             warn!("decrease cube size button not found: {}", err)
         }
     };
+
+    let (mut progress_bar, mut node) = scramble_button_progress_bar_query.get_single_mut().unwrap();
+    progress_bar.cancel(&mut node);
 }
