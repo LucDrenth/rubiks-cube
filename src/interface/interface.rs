@@ -30,6 +30,7 @@ impl Plugin for InterfacePlugin {
             did_handle_click: false,
         })
         .add_plugins(widget::button::ButtonPlugin)
+        .add_plugins(widget::progress_bar::ProgressBarPlugin)
         .add_plugins(CubeSizePlugin)
         .add_plugins(CubeActionsPlugin)
         .add_systems(Startup, init)

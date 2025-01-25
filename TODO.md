@@ -7,8 +7,7 @@
 ### Nice to have
 - Animation for updating cube size (scale down to 0 before despawn, scale up from 0 to 1 at spawn)
 - UI button to scramble instantly (without animations)
-- Disable scramble button while sequence is ongoing
-- Show progress bar while scrambling
+- Disable scramble and solve button while a sequence is being performed
 - Show full scramble sequence as text (make current move pop out)
 - Automatically move the camera so the cube takes up the same amount of space on the screen, no matter the cube size.
 - Better lighting
