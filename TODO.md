@@ -6,6 +6,7 @@
 
 ### Nice to have
 - Support updating sequence speed while sequence is ongoing. Keep in mind to update the progress bar accordingly.
+- Fix calculation of sequence length being slightly off. This gets increasingly noticable when changing sequence speed.
 - Change yellow border of interface to a gradiant of the cube colours
 - Buttons to do full cube rotations
 - Drag slices to do a rotation
