@@ -7,7 +7,10 @@ use crate::{
 
 use super::{
     cube_actions::{ScrambleButton, ScrambleButtonProgressBar, SolveButton},
-    interface::{CaptureClick, BUTTON_TEXT_COLOR, COLOR_DARK_GREY},
+    interface::{
+        CaptureClick, BUTTON_BORDER, BUTTON_BORDER_RADIUS, BUTTON_TEXT_COLOR, COLOR_DARK_GREY,
+        COLOR_MAIN,
+    },
     widget::{
         button::{ButtonDisabledHandler, UiButton},
         progress_bar::ProgressBar,
@@ -64,11 +67,11 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                             top: Val::Px(8.),
                             bottom: Val::Px(8.),
                         },
-                        border: UiRect::all(Val::Px(2.)),
+                        border: BUTTON_BORDER,
                         ..default()
                     },
-                    BorderColor(Color::srgb_u8(243, 200, 2)),
-                    BorderRadius::px(4., 4., 4., 4.),
+                    BorderColor(COLOR_MAIN),
+                    BUTTON_BORDER_RADIUS,
                     BackgroundColor(COLOR_DARK_GREY),
                 ))
                 .with_child((
@@ -117,11 +120,11 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                             top: Val::Px(8.),
                             bottom: Val::Px(8.),
                         },
-                        border: UiRect::all(Val::Px(2.)),
+                        border: BUTTON_BORDER,
                         ..default()
                     },
-                    BorderColor(Color::srgb_u8(243, 200, 2)),
-                    BorderRadius::px(4., 4., 4., 4.),
+                    BorderColor(COLOR_MAIN),
+                    BUTTON_BORDER_RADIUS,
                     BackgroundColor(COLOR_DARK_GREY),
                 ))
                 .with_child((

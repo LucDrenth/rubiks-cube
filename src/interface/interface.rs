@@ -12,6 +12,8 @@ pub const COLOR_MAIN: Color = Color::srgb(0.952, 0.784, 0.007); // yellow
 pub const COLOR_DARK_GREY: Color = Color::srgb(0.21875, 0.21875, 0.21875);
 pub const COLOR_GREY: Color = Color::srgb(0.55, 0.55, 0.55);
 pub const BUTTON_TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
+pub const BUTTON_BORDER: UiRect = UiRect::all(Val::Px(2.));
+pub const BUTTON_BORDER_RADIUS: BorderRadius = BorderRadius::all(Val::Px(4.));
 
 #[derive(Resource)]
 pub struct UiResource {
@@ -32,6 +34,7 @@ impl Plugin for InterfacePlugin {
         })
         .add_plugins(widget::button::ButtonPlugin)
         .add_plugins(widget::progress_bar::ProgressBarPlugin)
+        .add_plugins(widget::dropdown::DropdownPlugin)
         .add_plugins(CubeSizePlugin)
         .add_plugins(CubeActionsPlugin)
         .add_systems(Startup, init)

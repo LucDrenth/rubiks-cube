@@ -5,7 +5,7 @@
 - Implement solving algorithm(s).
 
 ### Nice to have
-- Dropdown to change rotation speed of sequences (scramble/solve): x0.25, x0.5, x1.0 (default), x2.0, x5.0, instant
+- Support updating sequence speed while sequence is ongoing. Keep in mind to update the progress bar accordingly.
 - Change yellow border of interface to a gradiant of the cube colours
 - Buttons to do full cube rotations
 - Drag slices to do a rotation

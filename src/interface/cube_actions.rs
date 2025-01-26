@@ -10,9 +10,14 @@ use crate::{
 };
 
 use super::{
-    interface::{CaptureClick, BUTTON_TEXT_COLOR, COLOR_DARK_GREY},
+    interface::{
+        CaptureClick, BUTTON_BORDER, BUTTON_BORDER_RADIUS, BUTTON_TEXT_COLOR, COLOR_DARK_GREY,
+        COLOR_MAIN,
+    },
     widget::{
+        self,
         button::{ButtonDisabledHandler, ButtonDisabledHandlerTimer, UiButton},
+        dropdown::{Dropdown, DropdownOption},
         progress_bar::ProgressBar,
     },
 };
@@ -21,10 +26,17 @@ pub struct CubeActionsPlugin;
 
 impl Plugin for CubeActionsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (scramble_button_action, solve_button_action).in_set(CubeScheduleSet::HandleUserInput),
-        );
+        app.insert_resource(SequenceSpeedResource(SequenceSpeed::Multiplier(1.0)))
+            .add_systems(
+                Update,
+                (
+                    handle_sequence_speed_dropdown,
+                    scramble_button_action,
+                    solve_button_action,
+                )
+                    .chain()
+                    .in_set(CubeScheduleSet::HandleUserInput),
+            );
     }
 }
 
@@ -38,7 +50,53 @@ pub struct SolveButton;
 #[derive(Component)]
 pub struct SolveButtonProgressBar;
 
+#[derive(Component, Clone, Debug)]
+enum SequenceSpeed {
+    Multiplier(f32),
+    Instant,
+}
+
+#[derive(Resource)]
+struct SequenceSpeedResource(SequenceSpeed);
+
 pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
+    // sequence speed dropdown
+    widget::dropdown::spawn::<SequenceSpeed>(
+        Dropdown::new(vec![
+            DropdownOption {
+                label: "instant".to_string(),
+                value: SequenceSpeed::Instant,
+            },
+            DropdownOption {
+                label: "x2.5".to_string(),
+                value: SequenceSpeed::Multiplier(2.5),
+            },
+            DropdownOption {
+                label: "x2.0".to_string(),
+                value: SequenceSpeed::Multiplier(2.),
+            },
+            DropdownOption {
+                label: "x1.5".to_string(),
+                value: SequenceSpeed::Multiplier(1.5),
+            },
+            DropdownOption {
+                label: "x1.0".to_string(),
+                value: SequenceSpeed::Multiplier(1.),
+            },
+            DropdownOption {
+                label: "x0.5".to_string(),
+                value: SequenceSpeed::Multiplier(0.5),
+            },
+            DropdownOption {
+                label: "x0.25".to_string(),
+                value: SequenceSpeed::Multiplier(0.25),
+            },
+        ]),
+        4, // x1.0
+        parent,
+        asset_server,
+    );
+
     // scramble button
     parent
         .spawn((
@@ -48,12 +106,12 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
             Node {
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                border: UiRect::all(Val::Px(2.)),
+                border: BUTTON_BORDER,
                 overflow: Overflow::clip(),
                 ..default()
             },
-            BorderColor(Color::srgb_u8(243, 200, 2)),
-            BorderRadius::all(Val::Px(4.)),
+            BorderColor(COLOR_MAIN),
+            BUTTON_BORDER_RADIUS,
             BackgroundColor(COLOR_DARK_GREY),
             BoxShadow {
                 color: Color::BLACK,
@@ -96,7 +154,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                     ..default()
                 },
                 BackgroundColor(Color::srgba(1.0, 1.0, 1.0, 0.5)),
-                BorderRadius::all(Val::Px(4.)),
+                BUTTON_BORDER_RADIUS,
             ));
         });
 
@@ -115,7 +173,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                     top: Val::Px(8.),
                     bottom: Val::Px(8.),
                 },
-                border: UiRect::all(Val::Px(2.)),
+                border: BUTTON_BORDER,
                 ..default()
             },
             BorderColor(Color::srgb_u8(243, 200, 2)),
@@ -177,6 +235,7 @@ fn scramble_button_action(
     cube_query: Query<&cube::Cube>,
     mut sequence_resource: ResMut<SequenceResource>,
     mut progress_bar_query: Query<&mut ProgressBar, With<ScrambleButtonProgressBar>>,
+    sequence_speed: Res<SequenceSpeedResource>,
 ) {
     let interaction = match scramble_button_query.get_single_mut() {
         Ok(v) => v,
@@ -207,23 +266,32 @@ fn scramble_button_action(
     let rotation_duration = 0.15;
 
     let mut scramble_sequence = cube::create_random_scramble_sequence(cube.size(), scramble_length);
-    for cube_rotation in scramble_sequence.iter_mut() {
-        cube_rotation.animation = Some(CubeRotationAnimation {
-            duration_in_seconds: rotation_duration,
-            ease_function: Some(EaseFunction::Linear),
-        });
-    }
+    let mut scramble_speed_multiplier = 1.0;
 
-    if scramble_length > 2 {
-        // ease out last rotations
-        scramble_sequence[scramble_length - 2].animation = Some(CubeRotationAnimation {
-            duration_in_seconds: rotation_duration * 1.3,
-            ease_function: Some(EaseFunction::Linear),
-        });
-        scramble_sequence[scramble_length - 1].animation = Some(CubeRotationAnimation {
-            duration_in_seconds: rotation_duration * 2.0,
-            ease_function: Some(EaseFunction::CubicOut),
-        });
+    match sequence_speed.0 {
+        SequenceSpeed::Multiplier(multiplier) => {
+            for cube_rotation in scramble_sequence.iter_mut() {
+                cube_rotation.animation = Some(CubeRotationAnimation {
+                    duration_in_seconds: rotation_duration / multiplier,
+                    ease_function: Some(EaseFunction::Linear),
+                });
+            }
+
+            if scramble_length > 2 {
+                // ease out last rotations
+                scramble_sequence[scramble_length - 2].animation = Some(CubeRotationAnimation {
+                    duration_in_seconds: rotation_duration * 1.3 / multiplier,
+                    ease_function: Some(EaseFunction::Linear),
+                });
+                scramble_sequence[scramble_length - 1].animation = Some(CubeRotationAnimation {
+                    duration_in_seconds: rotation_duration * 2.0 / multiplier,
+                    ease_function: Some(EaseFunction::CubicOut),
+                });
+            }
+
+            scramble_speed_multiplier = multiplier;
+        }
+        SequenceSpeed::Instant => (),
     }
 
     let mut scramble_duration: f32 = 0.0;
@@ -235,6 +303,10 @@ fn scramble_button_action(
     }
 
     sequence_resource.set(scramble_sequence);
+
+    if scramble_duration == 0.0 {
+        return;
+    }
 
     let mut progress_bar = match progress_bar_query.get_single_mut() {
         Ok(progress_bar) => progress_bar,
@@ -248,7 +320,7 @@ fn scramble_button_action(
     // For example, if a tick is 0.1 seconds and the rotation duration is 0.35, it takes 4
     // ticks (0.4 seconds) before the next rotation starts. We could calculate a more precise version,
     // but for now we'll just add 0.3 seconds to the scramble_duration to fix this.
-    let progress_bar_duration = scramble_duration + 0.3;
+    let progress_bar_duration = scramble_duration + (0.3 / scramble_speed_multiplier);
     progress_bar.set_timer(Timer::from_seconds(progress_bar_duration, TimerMode::Once));
 
     let mut solve_button_disable_handler =
@@ -288,6 +360,7 @@ fn solve_button_action(
     cube_state_query: Query<&CubeState>,
     mut sequence_resource: ResMut<SequenceResource>,
     mut progress_bar_query: Query<&mut ProgressBar, With<SolveButtonProgressBar>>,
+    sequence_speed: Res<SequenceSpeedResource>,
 ) {
     let interaction = match solve_button_query.get_single_mut() {
         Ok(v) => v,
@@ -313,11 +386,20 @@ fn solve_button_action(
     };
 
     let mut solve_sequence = solver::get_solve_sequence(SolveStrategy::Kociemba, cube_state);
-    for cube_rotation in solve_sequence.iter_mut() {
-        cube_rotation.animation = Some(CubeRotationAnimation {
-            duration_in_seconds: 0.35,
-            ease_function: Some(EaseFunction::CubicOut),
-        });
+
+    let mut rotation_speed_multiplier = 1.0;
+    match sequence_speed.0 {
+        SequenceSpeed::Multiplier(multiplier) => {
+            for cube_rotation in solve_sequence.iter_mut() {
+                cube_rotation.animation = Some(CubeRotationAnimation {
+                    duration_in_seconds: 0.35 / multiplier,
+                    ease_function: Some(EaseFunction::CubicOut),
+                });
+            }
+
+            rotation_speed_multiplier = multiplier;
+        }
+        SequenceSpeed::Instant => (),
     }
 
     let mut solve_duration: f32 = 0.0;
@@ -338,11 +420,15 @@ fn solve_button_action(
         }
     };
 
+    if solve_duration == 0.0 {
+        return;
+    }
+
     // solve_duration is not exact because a rotation is measured in seconds, not in ticks.
     // For example, if a tick is 0.1 seconds and the rotation duration is 0.35, it takes 4
     // ticks (0.4 seconds) before the next rotation starts. We could calculate a more precise version,
     // but for now we'll just add 0.3 seconds to the solve_duration to fix this.
-    let progress_bar_duration = solve_duration + 0.3;
+    let progress_bar_duration = solve_duration + (0.3 / rotation_speed_multiplier);
     progress_bar.set_timer(Timer::from_seconds(progress_bar_duration, TimerMode::Once));
 
     let mut scramble_button_disable_handler = scramble_button_disable_handler_query
@@ -360,4 +446,22 @@ fn solve_button_action(
         .get_single_mut()
         .unwrap()
         .enable_after(progress_bar_duration);
+}
+
+fn handle_sequence_speed_dropdown(
+    query: Query<(&SequenceSpeed, &Interaction), Changed<Interaction>>,
+    mut sequence_speed_resource: ResMut<SequenceSpeedResource>,
+) {
+    let (new_sequence_speed, interaction) = match query.get_single() {
+        Ok(v) => v,
+        Err(_) => {
+            return;
+        }
+    };
+
+    if *interaction != Interaction::Pressed {
+        return;
+    }
+
+    sequence_speed_resource.0 = new_sequence_speed.clone();
 }
