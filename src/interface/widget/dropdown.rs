@@ -66,12 +66,14 @@ struct DropdownOptionButtonLabel;
 
 pub fn spawn<T: Component + Clone>(
     dropdown: Dropdown<T>,
+    main_button_marker: impl Bundle,
     parent: &mut ChildBuilder<'_>,
     asset_server: &Res<AssetServer>,
 ) {
     // main button
     parent
         .spawn((
+            main_button_marker,
             Button,
             CaptureClick,
             DropdownMainButton,

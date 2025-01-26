@@ -49,6 +49,8 @@ pub struct ScrambleButtonProgressBar;
 pub struct SolveButton;
 #[derive(Component)]
 pub struct SolveButtonProgressBar;
+#[derive(Component)]
+struct SequenceSpeedDropdown;
 
 #[derive(Component, Clone, Debug)]
 enum SequenceSpeed {
@@ -95,6 +97,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
             ],
             4, // x1.0
         ),
+        SequenceSpeedDropdown,
         parent,
         asset_server,
     );
