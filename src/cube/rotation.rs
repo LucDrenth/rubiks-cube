@@ -170,7 +170,7 @@ impl FaceRotation {
             let mut result = if cube_size.0 == 2 {
                 1
             } else {
-                rng.gen_range(1..(cube_size.0 / 2))
+                rng.gen_range(1..=(cube_size.0 / 2))
             };
             let negative = rng.gen_range(0..=1);
 
