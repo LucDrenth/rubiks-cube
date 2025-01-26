@@ -36,10 +36,19 @@ pub struct Dropdown<T: Clone> {
 }
 
 impl<T: Clone> Dropdown<T> {
-    pub fn new(options: Vec<DropdownOption<T>>) -> Self {
+    pub fn new(options: Vec<DropdownOption<T>>, mut selected_option_index: usize) -> Self {
+        if selected_option_index >= options.len() {
+            warn!(
+                "dropdown - selected_option_index {} is invalid. Defaulting to 0 (\"{}\")",
+                selected_option_index,
+                options[0].label.clone()
+            );
+            selected_option_index = 0;
+        }
+
         return Self {
             options,
-            selected_option_index: 0,
+            selected_option_index: selected_option_index,
         };
     }
 }
@@ -56,22 +65,10 @@ pub struct DropdownOptionButton;
 struct DropdownOptionButtonLabel;
 
 pub fn spawn<T: Component + Clone>(
-    mut dropdown: Dropdown<T>,
-    mut selected_option_index: usize,
+    dropdown: Dropdown<T>,
     parent: &mut ChildBuilder<'_>,
     asset_server: &Res<AssetServer>,
 ) {
-    if selected_option_index >= dropdown.options.len() {
-        warn!(
-            "selected_option_index {} is invalid. Defaulting to 0 (\"{}\")",
-            selected_option_index,
-            dropdown.options[0].label.clone()
-        );
-        selected_option_index = 0;
-    }
-
-    dropdown.selected_option_index = selected_option_index;
-
     // main button
     parent
         .spawn((
@@ -99,7 +96,11 @@ pub fn spawn<T: Component + Clone>(
             // label
             parent.spawn((
                 DropdownMainButtonLabel,
-                Text::new(dropdown.options[selected_option_index].label.clone()),
+                Text::new(
+                    dropdown.options[dropdown.selected_option_index]
+                        .label
+                        .clone(),
+                ),
                 TextFont {
                     font: asset_server.load("fonts/roboto.ttf"),
                     font_size: 14.0,

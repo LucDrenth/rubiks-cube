@@ -62,37 +62,39 @@ struct SequenceSpeedResource(SequenceSpeed);
 pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
     // sequence speed dropdown
     widget::dropdown::spawn::<SequenceSpeed>(
-        Dropdown::new(vec![
-            DropdownOption {
-                label: "instant".to_string(),
-                value: SequenceSpeed::Instant,
-            },
-            DropdownOption {
-                label: "x2.5".to_string(),
-                value: SequenceSpeed::Multiplier(2.5),
-            },
-            DropdownOption {
-                label: "x2.0".to_string(),
-                value: SequenceSpeed::Multiplier(2.),
-            },
-            DropdownOption {
-                label: "x1.5".to_string(),
-                value: SequenceSpeed::Multiplier(1.5),
-            },
-            DropdownOption {
-                label: "x1.0".to_string(),
-                value: SequenceSpeed::Multiplier(1.),
-            },
-            DropdownOption {
-                label: "x0.5".to_string(),
-                value: SequenceSpeed::Multiplier(0.5),
-            },
-            DropdownOption {
-                label: "x0.25".to_string(),
-                value: SequenceSpeed::Multiplier(0.25),
-            },
-        ]),
-        4, // x1.0
+        Dropdown::new(
+            vec![
+                DropdownOption {
+                    label: "instant".to_string(),
+                    value: SequenceSpeed::Instant,
+                },
+                DropdownOption {
+                    label: "x2.5".to_string(),
+                    value: SequenceSpeed::Multiplier(2.5),
+                },
+                DropdownOption {
+                    label: "x2.0".to_string(),
+                    value: SequenceSpeed::Multiplier(2.),
+                },
+                DropdownOption {
+                    label: "x1.5".to_string(),
+                    value: SequenceSpeed::Multiplier(1.5),
+                },
+                DropdownOption {
+                    label: "x1.0".to_string(),
+                    value: SequenceSpeed::Multiplier(1.),
+                },
+                DropdownOption {
+                    label: "x0.5".to_string(),
+                    value: SequenceSpeed::Multiplier(0.5),
+                },
+                DropdownOption {
+                    label: "x0.25".to_string(),
+                    value: SequenceSpeed::Multiplier(0.25),
+                },
+            ],
+            4, // x1.0
+        ),
         parent,
         asset_server,
     );
