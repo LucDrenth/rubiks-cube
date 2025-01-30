@@ -8,7 +8,7 @@ pub enum CubeStartupSet {
 
 #[derive(SystemSet, Hash, PartialEq, Eq, Clone, Debug)]
 pub enum CubeScheduleSet {
-    InterfaceTimer,
+    Timers,
     HandleUserInput,
     HandleEvents,
     UpdateAnimations,
@@ -25,7 +25,7 @@ impl Plugin for SchedulesPlugin {
         .configure_sets(
             Update,
             (
-                CubeScheduleSet::InterfaceTimer,
+                CubeScheduleSet::Timers,
                 CubeScheduleSet::HandleUserInput,
                 CubeScheduleSet::HandleEvents,
                 CubeScheduleSet::UpdateAnimations,

@@ -11,7 +11,7 @@ impl Plugin for ButtonPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            buttons_disable_timer_handler.in_set(CubeScheduleSet::InterfaceTimer),
+            buttons_disable_timer_handler.in_set(CubeScheduleSet::Timers),
         )
         .add_systems(
             Update,
