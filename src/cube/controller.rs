@@ -8,20 +8,21 @@ pub struct ControllerPlugin;
 
 impl Plugin for ControllerPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(SequenceResource {
-            steps: vec![],
-            current_step: 0,
-        })
-        .add_systems(
-            Update,
-            (
-                check_solved_on_enter,
-                sequence_handler,
-                random_face_rotation_on_tab,
+        app.insert_resource(SequenceResource::default())
+            .add_systems(
+                Update,
+                (update_sequence_resouce_timer).in_set(CubeScheduleSet::Timers),
             )
-                .chain()
-                .in_set(CubeScheduleSet::HandleUserInput),
-        );
+            .add_systems(
+                Update,
+                (
+                    check_solved_on_enter,
+                    sequence_handler,
+                    random_face_rotation_on_tab,
+                )
+                    .chain()
+                    .in_set(CubeScheduleSet::HandleUserInput),
+            );
     }
 }
 
@@ -29,6 +30,17 @@ impl Plugin for ControllerPlugin {
 pub struct SequenceResource {
     pub steps: Vec<CubeRotationEvent>,
     current_step: usize,
+    current_step_timer: Option<Timer>,
+}
+
+impl Default for SequenceResource {
+    fn default() -> Self {
+        Self {
+            steps: vec![],
+            current_step: 0,
+            current_step_timer: None,
+        }
+    }
 }
 
 impl SequenceResource {
@@ -38,8 +50,7 @@ impl SequenceResource {
     }
 
     pub fn is_done(&self) -> bool {
-        // TODO this will be true while still animating the last rotation
-        self.current_step >= self.steps.len()
+        self.current_step >= self.steps.len() && self.current_step_timer == None
     }
 
     pub fn seconds_until_complete(&self) -> f32 {
@@ -47,9 +58,8 @@ impl SequenceResource {
             return 0.0;
         }
 
-        let seconds_until_current_step_is_complete = match &self.steps[self.current_step].animation
-        {
-            Some(animation) => animation.duration_in_seconds, // TODO account for when animation is already ongoing
+        let seconds_until_current_step_is_complete = match &self.current_step_timer {
+            Some(timer) => timer.remaining_secs(),
             None => 0.0,
         };
 
@@ -63,6 +73,18 @@ impl SequenceResource {
 
         return result;
     }
+}
+
+fn update_sequence_resouce_timer(mut sequence_resource: ResMut<SequenceResource>, time: Res<Time>) {
+    match &mut sequence_resource.current_step_timer {
+        Some(timer) => {
+            timer.tick(time.delta());
+            if timer.finished() {
+                sequence_resource.current_step_timer = None;
+            }
+        }
+        None => (),
+    };
 }
 
 fn sequence_handler(
@@ -88,12 +110,17 @@ fn sequence_handler(
         event_writer.send(rotation_event);
         sequence_resource.current_step += 1;
 
-        if sequence_resource.steps[sequence_resource.current_step - 1]
-            .animation
-            .is_some()
+        if let Some(animation) =
+            &sequence_resource.steps[sequence_resource.current_step - 1].animation
         {
+            sequence_resource.current_step_timer = Some(Timer::from_seconds(
+                animation.duration_in_seconds,
+                TimerMode::Once,
+            ));
             return;
         }
+
+        sequence_resource.current_step_timer = None;
     }
 }
 
