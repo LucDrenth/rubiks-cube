@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 
 pub struct ProgressBarPlugin;
@@ -16,6 +18,21 @@ pub struct ProgressBar {
 impl ProgressBar {
     pub fn set_timer(&mut self, timer: Timer) {
         self.timer = Some(timer);
+    }
+
+    pub fn update_timer(&mut self, time_until_done: f32) {
+        let timer = match &mut self.timer {
+            Some(timer) => timer,
+            None => {
+                warn!("tried to update ProgressBar timer while timer is None");
+                return;
+            }
+        };
+
+        let total = timer.elapsed_secs() + time_until_done;
+        let mut new_timer = Timer::from_seconds(total, timer.mode());
+        new_timer.tick(Duration::from_secs_f32(timer.elapsed_secs()));
+        self.timer = Some(new_timer);
     }
 
     pub fn cancel(&mut self, node: &mut Node) {

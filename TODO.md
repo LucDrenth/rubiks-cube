@@ -5,7 +5,6 @@
 - Implement solving algorithm(s).
 
 ### Nice to have
-- Support updating sequence speed while sequence is ongoing. Keep in mind to update the progress bar accordingly
 - Fix calculation of sequence length being slightly off. This gets increasingly noticable when changing sequence speed
 - Change yellow border of interface to a gradiant of the cube colors. This can be done with a custom UiMaterial: see bevy example `ui_material`
 - Buttons to do full cube rotations

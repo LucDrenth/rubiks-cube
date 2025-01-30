@@ -4,7 +4,7 @@ use crate::{
     cube::{
         self,
         solver::{self, SolveStrategy},
-        CubeRotationAnimation, CubeState, SequenceResource,
+        CubeRotationAnimation, CubeRotationEvent, CubeState, SequenceResource,
     },
     schedules::CubeScheduleSet,
 };
@@ -22,11 +22,15 @@ use super::{
     },
 };
 
+const SCRAMBLING_ROTATION_SPEED: f32 = 0.15; // in seconds
+const SOLVING_ROTATION_SPEED: f32 = 0.35; // in seconds
+
 pub struct CubeActionsPlugin;
 
 impl Plugin for CubeActionsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(SequenceSpeedResource(SequenceSpeed::Multiplier(1.0)))
+            .insert_resource(CurrentSequenceTypeResource(None))
             .add_systems(
                 Update,
                 (
@@ -60,6 +64,14 @@ enum SequenceSpeed {
 
 #[derive(Resource)]
 struct SequenceSpeedResource(SequenceSpeed);
+
+enum SequenceType {
+    Scramble,
+    Solve,
+}
+
+#[derive(Resource)]
+struct CurrentSequenceTypeResource(Option<SequenceType>);
 
 pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
     // sequence speed dropdown
@@ -241,6 +253,7 @@ fn scramble_button_action(
     mut sequence_resource: ResMut<SequenceResource>,
     mut progress_bar_query: Query<&mut ProgressBar, With<ScrambleButtonProgressBar>>,
     sequence_speed: Res<SequenceSpeedResource>,
+    mut sequence_type: ResMut<CurrentSequenceTypeResource>,
 ) {
     let interaction = match scramble_button_query.get_single_mut() {
         Ok(v) => v,
@@ -268,7 +281,6 @@ fn scramble_button_action(
     };
 
     let scramble_length = (cube.size().0 + 1) as usize * 6;
-    let rotation_duration = 0.15;
 
     let mut scramble_sequence = cube::create_random_scramble_sequence(cube.size(), scramble_length);
     let mut scramble_speed_multiplier = 1.0;
@@ -277,23 +289,12 @@ fn scramble_button_action(
         SequenceSpeed::Multiplier(multiplier) => {
             for cube_rotation in scramble_sequence.iter_mut() {
                 cube_rotation.animation = Some(CubeRotationAnimation {
-                    duration_in_seconds: rotation_duration / multiplier,
+                    duration_in_seconds: SCRAMBLING_ROTATION_SPEED / multiplier,
                     ease_function: Some(EaseFunction::Linear),
                 });
             }
 
-            if scramble_length > 2 {
-                // ease out last rotations
-                scramble_sequence[scramble_length - 2].animation = Some(CubeRotationAnimation {
-                    duration_in_seconds: rotation_duration * 1.3 / multiplier,
-                    ease_function: Some(EaseFunction::Linear),
-                });
-                scramble_sequence[scramble_length - 1].animation = Some(CubeRotationAnimation {
-                    duration_in_seconds: rotation_duration * 2.0 / multiplier,
-                    ease_function: Some(EaseFunction::CubicOut),
-                });
-            }
-
+            ease_out_scramble_sequence(&mut scramble_sequence);
             scramble_speed_multiplier = multiplier;
         }
         SequenceSpeed::Instant => (),
@@ -342,6 +343,8 @@ fn scramble_button_action(
         .get_single_mut()
         .unwrap()
         .enable_after(progress_bar_duration);
+
+    sequence_type.0 = Some(SequenceType::Scramble);
 }
 
 fn solve_button_action(
@@ -366,6 +369,7 @@ fn solve_button_action(
     mut sequence_resource: ResMut<SequenceResource>,
     mut progress_bar_query: Query<&mut ProgressBar, With<SolveButtonProgressBar>>,
     sequence_speed: Res<SequenceSpeedResource>,
+    mut sequence_type: ResMut<CurrentSequenceTypeResource>,
 ) {
     let interaction = match solve_button_query.get_single_mut() {
         Ok(v) => v,
@@ -397,7 +401,7 @@ fn solve_button_action(
         SequenceSpeed::Multiplier(multiplier) => {
             for cube_rotation in solve_sequence.iter_mut() {
                 cube_rotation.animation = Some(CubeRotationAnimation {
-                    duration_in_seconds: 0.35 / multiplier,
+                    duration_in_seconds: SOLVING_ROTATION_SPEED / multiplier,
                     ease_function: Some(EaseFunction::CubicOut),
                 });
             }
@@ -451,11 +455,37 @@ fn solve_button_action(
         .get_single_mut()
         .unwrap()
         .enable_after(progress_bar_duration);
+
+    sequence_type.0 = Some(SequenceType::Solve);
 }
 
 fn handle_sequence_speed_dropdown(
     query: Query<(&SequenceSpeed, &Interaction), Changed<Interaction>>,
     mut sequence_speed_resource: ResMut<SequenceSpeedResource>,
+    mut sequence_resource: ResMut<SequenceResource>,
+    mut scramble_button_progress_bar_query: Query<
+        &mut ProgressBar,
+        (
+            With<ScrambleButtonProgressBar>,
+            Without<SolveButtonProgressBar>,
+        ),
+    >,
+    mut solve_button_progress_bar_query: Query<
+        &mut ProgressBar,
+        (
+            With<SolveButtonProgressBar>,
+            Without<ScrambleButtonProgressBar>,
+        ),
+    >,
+    mut scramble_button_disable_handler_timer: Query<
+        &mut ButtonDisabledHandlerTimer,
+        (With<ScrambleButton>, Without<SolveButton>),
+    >,
+    mut solve_button_disable_handler_timer: Query<
+        &mut ButtonDisabledHandlerTimer,
+        (With<SolveButton>, Without<ScrambleButton>),
+    >,
+    sequence_type_resource: Res<CurrentSequenceTypeResource>,
 ) {
     let (new_sequence_speed, interaction) = match query.get_single() {
         Ok(v) => v,
@@ -469,4 +499,85 @@ fn handle_sequence_speed_dropdown(
     }
 
     sequence_speed_resource.0 = new_sequence_speed.clone();
+
+    if sequence_resource.is_done() {
+        return;
+    }
+
+    let sequence_type = match &sequence_type_resource.0 {
+        Some(sequence_type) => sequence_type,
+        None => return,
+    };
+
+    // update sequence
+    {
+        let rotation_speed = match sequence_type {
+            SequenceType::Scramble => SCRAMBLING_ROTATION_SPEED,
+            SequenceType::Solve => SOLVING_ROTATION_SPEED,
+        };
+        let ease_function = EaseFunction::Linear;
+
+        for sequence_step in &mut sequence_resource.steps {
+            match sequence_speed_resource.0 {
+                SequenceSpeed::Multiplier(multipler) => {
+                    sequence_step.animation = Some(CubeRotationAnimation {
+                        duration_in_seconds: rotation_speed / multipler,
+                        ease_function: Some(ease_function),
+                    })
+                }
+                SequenceSpeed::Instant => {
+                    sequence_step.animation = None;
+                }
+            }
+        }
+
+        ease_out_scramble_sequence(&mut sequence_resource.steps);
+    }
+
+    // update progress bar
+    {
+        let mut progress_bar = match sequence_type {
+            SequenceType::Scramble => scramble_button_progress_bar_query.get_single_mut().unwrap(),
+            SequenceType::Solve => solve_button_progress_bar_query.get_single_mut().unwrap(),
+        };
+
+        let progress_bar_duration = match sequence_speed_resource.0 {
+            SequenceSpeed::Multiplier(_) => sequence_resource.seconds_until_complete(),
+            SequenceSpeed::Instant => 0.0,
+        };
+
+        progress_bar.update_timer(progress_bar_duration);
+
+        solve_button_disable_handler_timer
+            .get_single_mut()
+            .unwrap()
+            .enable_after(progress_bar_duration);
+        scramble_button_disable_handler_timer
+            .get_single_mut()
+            .unwrap()
+            .enable_after(progress_bar_duration);
+    }
+}
+
+fn ease_out_scramble_sequence(sequence: &mut Vec<CubeRotationEvent>) {
+    if sequence.len() < 2 {
+        return;
+    }
+
+    let sequence_len = sequence.len();
+
+    match &mut sequence[sequence_len - 2].animation {
+        Some(animation) => {
+            animation.duration_in_seconds *= 1.3;
+        }
+        None => (),
+    }
+
+    match &mut sequence[sequence_len - 1].animation {
+        Some(animation) => {
+            animation.duration_in_seconds *= 2.0;
+            animation.ease_function = Some(EaseFunction::CubicOut);
+        }
+        None => (),
+    }
 }

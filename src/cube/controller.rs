@@ -27,7 +27,7 @@ impl Plugin for ControllerPlugin {
 
 #[derive(Resource)]
 pub struct SequenceResource {
-    steps: Vec<CubeRotationEvent>,
+    pub steps: Vec<CubeRotationEvent>,
     current_step: usize,
 }
 
@@ -35,6 +35,33 @@ impl SequenceResource {
     pub fn set(&mut self, steps: Vec<CubeRotationEvent>) {
         self.steps = steps;
         self.current_step = 0;
+    }
+
+    pub fn is_done(&self) -> bool {
+        // TODO this will be true while still animating the last rotation
+        self.current_step >= self.steps.len()
+    }
+
+    pub fn seconds_until_complete(&self) -> f32 {
+        if self.is_done() {
+            return 0.0;
+        }
+
+        let seconds_until_current_step_is_complete = match &self.steps[self.current_step].animation
+        {
+            Some(animation) => animation.duration_in_seconds, // TODO account for when animation is already ongoing
+            None => 0.0,
+        };
+
+        let mut result = seconds_until_current_step_is_complete;
+
+        for i in (self.current_step + 1)..self.steps.len() {
+            if let Some(animation) = &self.steps[i].animation {
+                result += animation.duration_in_seconds;
+            }
+        }
+
+        return result;
     }
 }
 
