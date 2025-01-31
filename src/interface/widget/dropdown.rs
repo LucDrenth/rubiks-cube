@@ -117,7 +117,7 @@ pub fn spawn<T: Component + Clone>(
                 TextColor(BUTTON_TEXT_COLOR),
             ));
 
-            // option container
+            // options container
             parent
                 .spawn((
                     DropdownOptionsContainer,
