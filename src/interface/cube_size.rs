@@ -9,7 +9,7 @@ use super::{
     cube_actions::{ScrambleButton, ScrambleButtonProgressBar, SolveButton},
     interface::{
         CaptureClick, BUTTON_BORDER, BUTTON_BORDER_RADIUS, BUTTON_TEXT_COLOR, COLOR_DARK_GREY,
-        COLOR_MAIN,
+        COLOR_MAIN, DEFAULT_FONT_BOLD,
     },
     widget::{
         button::{ButtonDisabledHandler, UiButton},
@@ -98,7 +98,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                     CubeSizeLabel,
                     Text::new(cube::DEFAULT_CUBE_SIZE.to_string()),
                     TextFont {
-                        font: asset_server.load("fonts/roboto-bold.ttf"),
+                        font: asset_server.load(DEFAULT_FONT_BOLD),
                         font_size: 20.0,
                         ..default()
                     },

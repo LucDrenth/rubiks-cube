@@ -12,7 +12,7 @@ use crate::{
 use super::{
     interface::{
         CaptureClick, BUTTON_BORDER, BUTTON_BORDER_RADIUS, BUTTON_TEXT_COLOR, COLOR_DARK_GREY,
-        COLOR_MAIN,
+        COLOR_MAIN, DEFAULT_FONT,
     },
     widget::{
         self,
@@ -143,7 +143,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
             parent.spawn((
                 Text::new("scramble"),
                 TextFont {
-                    font: asset_server.load("fonts/roboto.ttf"),
+                    font: asset_server.load(DEFAULT_FONT),
                     font_size: 16.0,
                     ..default()
                 },
@@ -208,7 +208,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
             parent.spawn((
                 Text::new("solve"),
                 TextFont {
-                    font: asset_server.load("fonts/roboto.ttf"),
+                    font: asset_server.load(DEFAULT_FONT),
                     font_size: 16.0,
                     ..default()
                 },

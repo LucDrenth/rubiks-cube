@@ -3,7 +3,7 @@ use bevy::{prelude::*, ui::FocusPolicy};
 use crate::{
     interface::interface::{
         CaptureClick, BUTTON_BORDER, BUTTON_BORDER_RADIUS, BUTTON_TEXT_COLOR, COLOR_DARK_GREY,
-        COLOR_GREY,
+        COLOR_GREY, DEFAULT_FONT,
     },
     schedules::CubeScheduleSet,
 };
@@ -104,7 +104,7 @@ pub fn spawn<T: Component + Clone>(
                         .clone(),
                 ),
                 TextFont {
-                    font: asset_server.load("fonts/roboto.ttf"),
+                    font: asset_server.load(DEFAULT_FONT),
                     font_size: 14.0,
                     ..default()
                 },
@@ -171,7 +171,7 @@ pub fn spawn<T: Component + Clone>(
                                 DropdownOptionButtonLabel,
                                 Text::new(dropdown_option.label.clone()),
                                 TextFont {
-                                    font: asset_server.load("fonts/roboto.ttf"),
+                                    font: asset_server.load(DEFAULT_FONT),
                                     font_size: 14.0,
                                     ..default()
                                 },

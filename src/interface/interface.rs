@@ -15,6 +15,9 @@ pub const BUTTON_TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 pub const BUTTON_BORDER: UiRect = UiRect::all(Val::Px(2.));
 pub const BUTTON_BORDER_RADIUS: BorderRadius = BorderRadius::all(Val::Px(4.));
 
+pub const DEFAULT_FONT: &str = "fonts/roboto.ttf";
+pub const DEFAULT_FONT_BOLD: &str = "fonts/roboto-bold.ttf";
+
 #[derive(Resource)]
 pub struct UiResource {
     pub did_handle_click: bool,
