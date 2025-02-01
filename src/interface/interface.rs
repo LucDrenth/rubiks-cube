@@ -115,7 +115,8 @@ fn init(
                             ])
                             .unwrap()
                             .with_scroll_speed(0.05)
-                            .with_gradient_type(GradientType::Block),
+                            .with_gradient_type(GradientType::Block)
+                            .with_width_per_color(0.03),
                     ),
                 ),
             ));

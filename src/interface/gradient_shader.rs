@@ -36,6 +36,7 @@ pub struct BackgroundGradientMaterialBuilder {
     offset: f32,
     scroll_speed: f32,
     gradient_type: GradientType,
+    width_per_color: Option<f32>,
 }
 
 impl BackgroundGradientMaterialBuilder {
@@ -61,6 +62,10 @@ impl BackgroundGradientMaterialBuilder {
         self.gradient_type = gradient_type;
         self
     }
+    pub fn with_width_per_color(mut self, width_per_color: f32) -> Self {
+        self.width_per_color = Some(width_per_color);
+        self
+    }
 }
 
 impl Into<BackgroundGradientMaterial> for BackgroundGradientMaterialBuilder {
@@ -70,12 +75,18 @@ impl Into<BackgroundGradientMaterial> for BackgroundGradientMaterialBuilder {
             colors[i] = *color;
         }
 
+        let width_per_color = match self.width_per_color {
+            Some(width_per_color) => width_per_color,
+            None => 1.0 / self.colors.len() as f32,
+        };
+
         BackgroundGradientMaterial {
             colors: colors.map(|c| c.to_linear().to_f32_array().into()),
             number_of_colors: self.colors.len() as u32,
             offset: self.offset,
             scroll_speed: self.scroll_speed,
             gradient_type: self.gradient_type.into(),
+            width_per_color,
         }
     }
 }
@@ -91,6 +102,8 @@ pub struct BackgroundGradientMaterial {
     pub scroll_speed: f32,
     #[uniform(3)]
     gradient_type: u32,
+    #[uniform(4)]
+    width_per_color: f32,
 }
 
 impl UiMaterial for BackgroundGradientMaterial {

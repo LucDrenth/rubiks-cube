@@ -8,6 +8,7 @@ const GRADIENT_TYPE_BLOCKS: u32 = 1;
 @group(1) @binding(1) var<uniform> number_of_colors: u32;
 @group(1) @binding(2) var<uniform> offset: f32;
 @group(1) @binding(3) var<uniform> gradient_type: u32;
+@group(1) @binding(4) var<uniform> width_per_color: f32;
 
 struct ColorRange {
     left: vec4<f32>,
@@ -26,9 +27,7 @@ fn fragment(in: UiVertexOutput) -> @location(0) vec4<f32> {
 }
 
 fn blocks(in: UiVertexOutput) -> vec4<f32> {
-    // TODO define this as a uniform `width_per_color` 
-    let block_width: f32 = 0.03;
-    let range = block_width * f32(number_of_colors);
+    let range = width_per_color * f32(number_of_colors);
 
     var position = in.uv.x + offset;
     if position < 0.0 {
@@ -37,10 +36,11 @@ fn blocks(in: UiVertexOutput) -> vec4<f32> {
     }
 
     let value: f32 = position % range;
-    let color_index = i32(floor(value / block_width));
+    let color_index = i32(floor(value / width_per_color));
     return colors[color_index];
 }
 
+// TODO implement `width_per_color`
 fn linear(in: UiVertexOutput) -> vec4<f32> {
     var progress = fract(in.uv.x + offset);
     progress *= f32(number_of_colors);
