@@ -36,7 +36,12 @@ pub struct BackgroundGradientMaterialBuilder {
     offset: f32,
     scroll_speed: f32,
     gradient_type: GradientType,
-    width_per_color: Option<f32>,
+    color_size: Option<ColorSize>,
+}
+
+pub enum ColorSize {
+    Repeat(f32),
+    WidthPerColor(f32),
 }
 
 impl BackgroundGradientMaterialBuilder {
@@ -62,8 +67,8 @@ impl BackgroundGradientMaterialBuilder {
         self.gradient_type = gradient_type;
         self
     }
-    pub fn with_width_per_color(mut self, width_per_color: f32) -> Self {
-        self.width_per_color = Some(width_per_color);
+    pub fn with_color_size(mut self, color_size: ColorSize) -> Self {
+        self.color_size = Some(color_size);
         self
     }
 }
@@ -75,9 +80,10 @@ impl Into<BackgroundGradientMaterial> for BackgroundGradientMaterialBuilder {
             colors[i] = *color;
         }
 
-        let width_per_color = match self.width_per_color {
-            Some(width_per_color) => width_per_color,
-            None => 1.0 / self.colors.len() as f32,
+        let color_width = self.color_size.unwrap_or(ColorSize::Repeat(1.0));
+        let width_per_color = match color_width {
+            ColorSize::Repeat(repeat) => 1.0 / self.colors.len() as f32 / repeat,
+            ColorSize::WidthPerColor(w) => w,
         };
 
         BackgroundGradientMaterial {

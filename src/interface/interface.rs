@@ -9,8 +9,8 @@ use super::{
     cube_actions::{self, CubeActionsPlugin},
     cube_size::{self, CubeSizePlugin},
     gradient_shader::{
-        BackgroundGradientMaterial, BackgroundGradientMaterialBuilder, GradientShaderPlugin,
-        GradientType,
+        BackgroundGradientMaterial, BackgroundGradientMaterialBuilder, ColorSize,
+        GradientShaderPlugin, GradientType,
     },
     widget,
 };
@@ -116,7 +116,7 @@ fn init(
                             .unwrap()
                             .with_scroll_speed(0.05)
                             .with_gradient_type(GradientType::Block)
-                            .with_width_per_color(0.03),
+                            .with_color_size(ColorSize::Repeat(10.0)),
                     ),
                 ),
             ));
