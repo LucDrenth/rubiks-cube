@@ -41,7 +41,9 @@ pub struct BackgroundGradientMaterialBuilder {
 impl BackgroundGradientMaterialBuilder {
     pub fn with_colors(mut self, colors: Vec<Color>) -> Result<Self, String> {
         if colors.len() > MAX_NUMBER_OF_COLORS {
-            return Err("".to_string());
+            return Err(format!(
+                "number of colors may not exceed {MAX_NUMBER_OF_COLORS}",
+            ));
         }
 
         self.colors = colors;
