@@ -6,7 +6,6 @@
 
 ### Nice to have
 - Fix calculation of sequence length being slightly off. This gets increasingly noticable when changing sequence speed
-- Change yellow border of interface to a gradiant of the cube colors. This can be done with a custom UiMaterial: see bevy example `ui_material`
 - Buttons to do full cube rotations
 - Drag slices to do a rotation
 - Animation for updating cube size (scale down to 0 before despawn, scale up from 0 to 1 at spawn). Then remove scaling functinoality with arrow keys, which is just an example

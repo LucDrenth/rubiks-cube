@@ -5,3 +5,6 @@ mod cube_size;
 
 #[allow(dead_code)]
 mod widget;
+
+#[allow(dead_code)]
+mod gradient_shader;

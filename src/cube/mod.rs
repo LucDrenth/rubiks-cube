@@ -1,9 +1,5 @@
 mod cube;
-pub use cube::Cube;
-pub use cube::CubeCommandsResource;
-pub use cube::CubePlugin;
-pub use cube::CurrentCubeSizeResource;
-pub use cube::DEFAULT_CUBE_SIZE;
+pub use cube::*;
 
 mod cube_state;
 pub use cube_state::CubeState;

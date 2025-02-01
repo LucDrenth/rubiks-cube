@@ -10,12 +10,18 @@ use super::{
 
 pub const DEFAULT_CUBE_SIZE: usize = 3;
 
-const COLOR_LEFT: Color = Color::srgb(0.99, 0.49, 0.05); // orange
-const COLOR_RIGHT: Color = Color::srgb(0.99, 0.0, 0.0); // red
-const COLOR_TOP: Color = Color::srgb(0.99, 0.99, 0.99); // white
-const COLOR_BOTTOM: Color = Color::srgb(0.99, 0.99, 0.0); // yellow
-const COLOR_FRONT: Color = Color::srgb(0.027, 0.89, 0.215); // green
-const COLOR_BACK: Color = Color::srgb(0.0, 0.0, 0.99); // blue
+/// orange
+pub const COLOR_LEFT: Color = Color::srgb(0.99, 0.49, 0.05);
+/// red
+pub const COLOR_RIGHT: Color = Color::srgb(0.99, 0.0, 0.0);
+/// white
+pub const COLOR_TOP: Color = Color::srgb(0.99, 0.99, 0.99);
+/// yellow
+pub const COLOR_BOTTOM: Color = Color::srgb(0.99, 0.99, 0.0);
+/// green
+pub const COLOR_FRONT: Color = Color::srgb(0.027, 0.89, 0.215);
+/// blue
+pub const COLOR_BACK: Color = Color::srgb(0.0, 0.0, 0.99);
 
 pub struct CubePlugin;
 
