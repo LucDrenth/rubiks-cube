@@ -27,12 +27,10 @@ fn fragment(in: UiVertexOutput) -> @location(0) vec4<f32> {
 
 fn blocks(in: UiVertexOutput) -> vec4<f32> {
     // TODO define this as a uniform `width_per_color` 
-    // TODO use normalised value (0.0 - 1.0) with in.uv
-    let block_width: f32 = 32.0;
+    let block_width: f32 = 0.03;
     let range = block_width * f32(number_of_colors);
 
-    // TODO do not multiple with 500.0 once we have normalised value for block_width
-    var position = in.position.x + offset * 500.0;
+    var position = in.uv.x + offset;
     if position < 0.0 {
         // loop back around
         position += ceil(abs(position) / range) * range;
