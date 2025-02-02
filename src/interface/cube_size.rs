@@ -8,7 +8,7 @@ use crate::{
 use super::{
     cube_actions::{ScrambleButton, ScrambleButtonProgressBar, SolveButton},
     interface::{
-        CaptureClick, BUTTON_BORDER, BUTTON_BORDER_RADIUS, BUTTON_TEXT_COLOR, COLOR_DARK_GREY,
+        CaptureClick, BUTTON_BACKGROUND_COLOR, BUTTON_BORDER, BUTTON_BORDER_RADIUS, COLOR_BLUE,
         COLOR_MAIN, DEFAULT_FONT_BOLD,
     },
     widget::{
@@ -72,12 +72,12 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                     },
                     BorderColor(COLOR_MAIN),
                     BUTTON_BORDER_RADIUS,
-                    BackgroundColor(COLOR_DARK_GREY),
+                    BackgroundColor(BUTTON_BACKGROUND_COLOR),
                 ))
                 .with_child((
                     ImageNode {
                         image: chevron_right_image.clone(),
-                        color: BUTTON_TEXT_COLOR,
+                        color: COLOR_BLUE,
                         flip_x: true,
                         ..default()
                     },
@@ -102,7 +102,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                         font_size: 20.0,
                         ..default()
                     },
-                    TextColor(COLOR_DARK_GREY),
+                    TextColor(BUTTON_BACKGROUND_COLOR),
                 ));
 
             // size-up button
@@ -125,12 +125,12 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                     },
                     BorderColor(COLOR_MAIN),
                     BUTTON_BORDER_RADIUS,
-                    BackgroundColor(COLOR_DARK_GREY),
+                    BackgroundColor(BUTTON_BACKGROUND_COLOR),
                 ))
                 .with_child((
                     ImageNode {
                         image: chevron_right_image.clone(),
-                        color: BUTTON_TEXT_COLOR,
+                        color: COLOR_BLUE,
                         ..default()
                     },
                     Node {

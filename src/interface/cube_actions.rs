@@ -11,8 +11,8 @@ use crate::{
 
 use super::{
     interface::{
-        CaptureClick, BUTTON_BORDER, BUTTON_BORDER_RADIUS, BUTTON_TEXT_COLOR, COLOR_DARK_GREY,
-        COLOR_MAIN, DEFAULT_FONT,
+        CaptureClick, BUTTON_BACKGROUND_COLOR, BUTTON_BORDER, BUTTON_BORDER_RADIUS,
+        BUTTON_TEXT_COLOR, COLOR_MAIN, DEFAULT_FONT_BOLD,
     },
     widget::{
         self,
@@ -129,7 +129,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
             },
             BorderColor(COLOR_MAIN),
             BUTTON_BORDER_RADIUS,
-            BackgroundColor(COLOR_DARK_GREY),
+            BackgroundColor(BUTTON_BACKGROUND_COLOR),
             BoxShadow {
                 color: Color::BLACK,
                 x_offset: Val::Px(3.),
@@ -139,11 +139,26 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
             },
         ))
         .with_children(|parent| {
+            // progress bar
+            parent.spawn((
+                ScrambleButtonProgressBar,
+                ProgressBar::default(),
+                Node {
+                    width: Val::Percent(0.),
+                    height: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    left: Val::ZERO,
+                    ..default()
+                },
+                BackgroundColor(BUTTON_BACKGROUND_COLOR),
+                BUTTON_BORDER_RADIUS,
+            ));
+
             // label
             parent.spawn((
                 Text::new("scramble"),
                 TextFont {
-                    font: asset_server.load(DEFAULT_FONT),
+                    font: asset_server.load(DEFAULT_FONT_BOLD),
                     font_size: 16.0,
                     ..default()
                 },
@@ -157,21 +172,6 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                     ..default()
                 },
                 TextColor(BUTTON_TEXT_COLOR),
-            ));
-
-            // progress bar
-            parent.spawn((
-                ScrambleButtonProgressBar,
-                ProgressBar::default(),
-                Node {
-                    width: Val::Percent(0.),
-                    height: Val::Percent(100.0),
-                    position_type: PositionType::Absolute,
-                    left: Val::ZERO,
-                    ..default()
-                },
-                BackgroundColor(Color::srgba(1.0, 1.0, 1.0, 0.5)),
-                BUTTON_BORDER_RADIUS,
             ));
         });
 
@@ -195,7 +195,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
             },
             BorderColor(Color::srgb_u8(243, 200, 2)),
             BorderRadius::px(4., 4., 4., 4.),
-            BackgroundColor(COLOR_DARK_GREY),
+            BackgroundColor(BUTTON_BACKGROUND_COLOR),
             BoxShadow {
                 color: Color::BLACK,
                 x_offset: Val::Px(3.),
@@ -205,16 +205,7 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
             },
         ))
         .with_children(|parent| {
-            parent.spawn((
-                Text::new("solve"),
-                TextFont {
-                    font: asset_server.load(DEFAULT_FONT),
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(BUTTON_TEXT_COLOR),
-            ));
-
+            // progress bar
             parent.spawn((
                 SolveButtonProgressBar,
                 ProgressBar::default(),
@@ -225,8 +216,19 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
                     left: Val::ZERO,
                     ..default()
                 },
-                BackgroundColor(Color::srgba(1.0, 1.0, 1.0, 0.5)),
+                BackgroundColor(BUTTON_BACKGROUND_COLOR),
                 BorderRadius::all(Val::Px(4.)),
+            ));
+
+            // label
+            parent.spawn((
+                Text::new("solve"),
+                TextFont {
+                    font: asset_server.load(DEFAULT_FONT_BOLD),
+                    font_size: 16.0,
+                    ..default()
+                },
+                TextColor(BUTTON_TEXT_COLOR),
             ));
         });
 }

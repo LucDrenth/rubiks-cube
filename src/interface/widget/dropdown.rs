@@ -2,8 +2,8 @@ use bevy::{prelude::*, ui::FocusPolicy};
 
 use crate::{
     interface::interface::{
-        CaptureClick, BUTTON_BORDER, BUTTON_BORDER_RADIUS, BUTTON_TEXT_COLOR, COLOR_DARK_GREY,
-        COLOR_GREY, DEFAULT_FONT,
+        CaptureClick, BUTTON_BACKGROUND_COLOR, BUTTON_BORDER, BUTTON_BORDER_RADIUS,
+        BUTTON_TEXT_COLOR, COLOR_GREY, DEFAULT_FONT, DEFAULT_FONT_BOLD,
     },
     schedules::CubeScheduleSet,
 };
@@ -92,7 +92,7 @@ pub fn spawn<T: Component + Clone>(
             },
             BorderColor(Color::BLACK),
             BUTTON_BORDER_RADIUS,
-            BackgroundColor(COLOR_DARK_GREY),
+            BackgroundColor(BUTTON_BACKGROUND_COLOR),
         ))
         .with_children(|parent| {
             // label
@@ -104,7 +104,7 @@ pub fn spawn<T: Component + Clone>(
                         .clone(),
                 ),
                 TextFont {
-                    font: asset_server.load(DEFAULT_FONT),
+                    font: asset_server.load(DEFAULT_FONT_BOLD),
                     font_size: 14.0,
                     ..default()
                 },
@@ -163,7 +163,7 @@ pub fn spawn<T: Component + Clone>(
                                     border: BUTTON_BORDER,
                                     ..default()
                                 },
-                                BackgroundColor(COLOR_DARK_GREY),
+                                BackgroundColor(BUTTON_BACKGROUND_COLOR),
                                 BorderColor(Color::BLACK),
                                 BUTTON_BORDER_RADIUS,
                             ))

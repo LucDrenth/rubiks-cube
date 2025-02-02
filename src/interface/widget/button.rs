@@ -1,7 +1,7 @@
 pub use bevy::prelude::*;
 
 use crate::{
-    interface::interface::{COLOR_DARK_GREY, COLOR_MAIN},
+    interface::interface::{BUTTON_BACKGROUND_COLOR, BUTTON_TEXT_COLOR, COLOR_BLUE, COLOR_MAIN},
     schedules::CubeScheduleSet,
 };
 
@@ -104,8 +104,9 @@ fn buttons_disable_timer_handler(
 }
 
 fn buttons_disable_handler(
-    mut query: Query<
+    mut button_query: Query<
         (
+            Entity,
             &mut BackgroundColor,
             &mut BorderColor,
             &Interaction,
@@ -114,12 +115,28 @@ fn buttons_disable_handler(
         ),
         Changed<ButtonDisabledHandler>,
     >,
+    mut text_query: Query<(&Parent, &mut TextColor)>,
+    mut icon_query: Query<(&Parent, &mut ImageNode)>,
 ) {
-    for (mut background_color, mut border_color, interaction, is_disabled, box_shadow) in
-        query.iter_mut()
+    for (entity, mut background_color, mut border_color, interaction, is_disabled, box_shadow) in
+        button_query.iter_mut()
     {
+        let maybe_text = text_query
+            .iter_mut()
+            .find(|(parent, _)| parent.get() == entity);
+        let maybe_icon = icon_query
+            .iter_mut()
+            .find(|(parent, _)| parent.get() == entity);
+
         if is_disabled.disabled {
             background_color.0 = Color::NONE;
+
+            if let Some((_, mut text_color)) = maybe_text {
+                text_color.0 = Color::BLACK;
+            }
+            if let Some((_, mut icon)) = maybe_icon {
+                icon.color = Color::BLACK;
+            }
 
             match box_shadow {
                 Some(mut box_shadow) => {
@@ -131,7 +148,14 @@ fn buttons_disable_handler(
             handle_button_interaction_state(&Interaction::None, &mut border_color);
         } else {
             // TODO get this color from element
-            background_color.0 = COLOR_DARK_GREY;
+            background_color.0 = BUTTON_BACKGROUND_COLOR;
+
+            if let Some((_, mut text_color)) = maybe_text {
+                text_color.0 = BUTTON_TEXT_COLOR;
+            }
+            if let Some((_, mut icon)) = maybe_icon {
+                icon.color = COLOR_BLUE;
+            }
 
             match box_shadow {
                 Some(mut box_shadow) => {

@@ -17,11 +17,13 @@ use super::{
 
 /// yellow
 pub const COLOR_MAIN: Color = Color::srgb(0.952, 0.784, 0.007);
-pub const COLOR_DARK_GREY: Color = Color::srgb(0.21875, 0.21875, 0.21875);
+pub const COLOR_RED: Color = Color::srgb(99.0 / 255.0, 28.0 / 255.0, 35.0 / 255.0);
+pub const COLOR_BLUE: Color = Color::srgb(10.0 / 255.0, 30.0 / 255.0, 74.0 / 255.0);
 pub const COLOR_GREY: Color = Color::srgb(0.55, 0.55, 0.55);
-pub const BUTTON_TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
+pub const BUTTON_TEXT_COLOR: Color = COLOR_RED;
 pub const BUTTON_BORDER: UiRect = UiRect::all(Val::Px(2.));
 pub const BUTTON_BORDER_RADIUS: BorderRadius = BorderRadius::all(Val::Px(4.));
+pub const BUTTON_BACKGROUND_COLOR: Color = Color::srgb(240.0 / 255.0, 235.0 / 255.0, 220.0 / 255.0);
 
 /// roboto
 pub const DEFAULT_FONT: &str = "fonts/roboto.ttf";
@@ -82,6 +84,8 @@ fn init(
     asset_server: Res<AssetServer>,
     mut ui_materials: ResMut<Assets<BackgroundGradientMaterial>>,
 ) {
+    let colored_border_alpha = 0.7;
+
     // container element
     commands
         .spawn((
@@ -91,7 +95,13 @@ fn init(
                 flex_direction: FlexDirection::ColumnReverse,
                 ..default()
             },
-            BackgroundColor(COLOR_GREY),
+            MaterialNode(
+                ui_materials.add(
+                    BackgroundGradientMaterialBuilder::default()
+                        .with_colors(vec![COLOR_BLUE, COLOR_RED, COLOR_BLUE])
+                        .unwrap(),
+                ),
+            ),
             CaptureClick,
         ))
         .with_children(|parent| {
@@ -106,12 +116,12 @@ fn init(
                     ui_materials.add(
                         BackgroundGradientMaterialBuilder::default()
                             .with_colors(vec![
-                                cube::COLOR_LEFT,
-                                cube::COLOR_TOP,
-                                cube::COLOR_BACK,
-                                cube::COLOR_RIGHT,
-                                cube::COLOR_FRONT,
-                                cube::COLOR_BOTTOM,
+                                cube::COLOR_LEFT.with_alpha(colored_border_alpha),
+                                cube::COLOR_TOP.with_alpha(colored_border_alpha),
+                                cube::COLOR_BACK.with_alpha(colored_border_alpha),
+                                cube::COLOR_RIGHT.with_alpha(colored_border_alpha),
+                                cube::COLOR_FRONT.with_alpha(colored_border_alpha),
+                                cube::COLOR_BOTTOM.with_alpha(colored_border_alpha),
                             ])
                             .unwrap()
                             .with_gradient_type(GradientType::Block)
