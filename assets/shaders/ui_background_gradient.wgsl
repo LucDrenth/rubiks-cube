@@ -43,7 +43,7 @@ fn blocks(in: UiVertexOutput) -> vec4<f32> {
 // TODO implement `width_per_color`
 fn linear(in: UiVertexOutput) -> vec4<f32> {
     var progress = fract(in.uv.x + offset);
-    progress *= f32(number_of_colors);
+    progress *= f32(number_of_colors - 1);
 
     let amount_low = ceil(progress) - progress;
     let amount_high = progress - floor(progress);
