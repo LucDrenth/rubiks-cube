@@ -114,7 +114,6 @@ fn init(
                                 cube::COLOR_BOTTOM,
                             ])
                             .unwrap()
-                            .with_scroll_speed(0.05)
                             .with_gradient_type(GradientType::Block)
                             .with_color_size(ColorSize::Repeat(10.0)),
                     ),
