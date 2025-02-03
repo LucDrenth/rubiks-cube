@@ -12,7 +12,7 @@ use super::{
         COLOR_MAIN, DEFAULT_FONT_BOLD,
     },
     widget::{
-        button::{ButtonDisabledHandler, UiButton},
+        button::{ButtonDisabledHandler, DisableButtonEvent, EnableButtonEvent, UiButton},
         progress_bar::ProgressBar,
     },
 };
@@ -144,13 +144,9 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
 
 fn decrease_cube_size_button_action(
     mut commands: Commands,
-    mut button_query: Query<
-        (&Interaction, &mut ButtonDisabledHandler),
-        (
-            With<CubeSizeDownButton>,
-            Without<ScrambleButton>,
-            Changed<Interaction>,
-        ),
+    button_query: Query<
+        (Entity, &Interaction, &ButtonDisabledHandler),
+        (With<CubeSizeDownButton>, Changed<Interaction>),
     >,
     mut cube_size_label_query: Query<&mut Text, With<CubeSizeLabel>>,
     mut sequence_resource: ResMut<SequenceResource>,
@@ -160,23 +156,17 @@ fn decrease_cube_size_button_action(
         (&mut ProgressBar, &mut Node),
         With<ScrambleButtonProgressBar>,
     >,
-    mut scramble_button_query: Query<&mut ButtonDisabledHandler, With<ScrambleButton>>,
-    mut solve_button_query: Query<
-        &mut ButtonDisabledHandler,
-        (
-            With<SolveButton>,
-            Without<CubeSizeUpButton>,
-            Without<CubeSizeDownButton>,
-            Without<ScrambleButton>,
-        ),
-    >,
+    scramble_button_query: Query<Entity, With<ScrambleButton>>,
+    solve_button_query: Query<Entity, With<SolveButton>>,
+    mut enable_button_event_writer: EventWriter<EnableButtonEvent>,
+    mut disable_button_event_writer: EventWriter<DisableButtonEvent>,
 ) {
-    let (interaction, mut disable_button) = match button_query.get_single_mut() {
+    let (button_entity, interaction, disable_button) = match button_query.get_single() {
         Ok(v) => v,
         Err(_) => return,
     };
 
-    if disable_button.disabled {
+    if disable_button.is_disabled() {
         return;
     }
 
@@ -199,35 +189,23 @@ fn decrease_cube_size_button_action(
     commands.run_system(cube_commands.spawn);
 
     if cube_size_resource.0 == 2 {
-        disable_button.disabled = true;
+        disable_button_event_writer.send(DisableButtonEvent::new(button_entity));
     }
 
     let (mut progress_bar, mut node) = scramble_button_progress_bar_query.get_single_mut().unwrap();
     progress_bar.cancel(&mut node);
-    scramble_button_query.get_single_mut().unwrap().disabled = false;
-    solve_button_query.get_single_mut().unwrap().disabled = false;
+
+    enable_button_event_writer.send(EnableButtonEvent::new(scramble_button_query.single()));
+    enable_button_event_writer.send(EnableButtonEvent::new(solve_button_query.single()));
 }
 
 fn increase_cube_size_button_action(
     mut commands: Commands,
     increase_size_button_query: Query<
-        (&Interaction, &mut ButtonDisabledHandler),
-        (
-            With<CubeSizeUpButton>,
-            Without<ScrambleButton>,
-            Without<CubeSizeDownButton>,
-            Without<SolveButton>,
-            Changed<Interaction>,
-        ),
+        (&Interaction, &ButtonDisabledHandler),
+        (With<CubeSizeUpButton>, Changed<Interaction>),
     >,
-    mut decrease_size_button_query: Query<
-        &mut ButtonDisabledHandler,
-        (
-            With<CubeSizeDownButton>,
-            Without<ScrambleButton>,
-            Without<SolveButton>,
-        ),
-    >,
+    decrease_size_button_query: Query<Entity, With<CubeSizeDownButton>>,
     mut cube_size_label_query: Query<&mut Text, With<CubeSizeLabel>>,
     mut sequence_resource: ResMut<SequenceResource>,
     mut cube_size_resource: ResMut<CurrentCubeSizeResource>,
@@ -236,31 +214,16 @@ fn increase_cube_size_button_action(
         (&mut ProgressBar, &mut Node),
         With<ScrambleButtonProgressBar>,
     >,
-    mut scramble_button_query: Query<
-        &mut ButtonDisabledHandler,
-        (
-            With<ScrambleButton>,
-            Without<CubeSizeUpButton>,
-            Without<CubeSizeDownButton>,
-            Without<SolveButton>,
-        ),
-    >,
-    mut solve_button_query: Query<
-        &mut ButtonDisabledHandler,
-        (
-            With<SolveButton>,
-            Without<CubeSizeUpButton>,
-            Without<CubeSizeDownButton>,
-            Without<ScrambleButton>,
-        ),
-    >,
+    scramble_button_query: Query<Entity, With<ScrambleButton>>,
+    solve_button_query: Query<Entity, With<SolveButton>>,
+    mut enable_button_event_writer: EventWriter<EnableButtonEvent>,
 ) {
     let (interaction, disable_button) = match increase_size_button_query.get_single() {
         Ok(v) => v,
         Err(_) => return,
     };
 
-    if disable_button.disabled {
+    if disable_button.is_disabled() {
         return;
     }
 
@@ -277,17 +240,10 @@ fn increase_cube_size_button_action(
     commands.run_system(cube_commands.despawn);
     commands.run_system(cube_commands.spawn);
 
-    match decrease_size_button_query.get_single_mut() {
-        Ok(mut disable_button) => {
-            disable_button.disabled = false;
-        }
-        Err(err) => {
-            warn!("decrease cube size button not found: {}", err)
-        }
-    };
-
     let (mut progress_bar, mut node) = scramble_button_progress_bar_query.get_single_mut().unwrap();
     progress_bar.cancel(&mut node);
-    scramble_button_query.get_single_mut().unwrap().disabled = false;
-    solve_button_query.get_single_mut().unwrap().disabled = false;
+
+    enable_button_event_writer.send(EnableButtonEvent::new(decrease_size_button_query.single()));
+    enable_button_event_writer.send(EnableButtonEvent::new(scramble_button_query.single()));
+    enable_button_event_writer.send(EnableButtonEvent::new(solve_button_query.single()));
 }

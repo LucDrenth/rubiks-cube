@@ -9,16 +9,55 @@ pub struct ButtonPlugin;
 
 impl Plugin for ButtonPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            buttons_disable_timer_handler.in_set(CubeScheduleSet::Timers),
-        )
-        .add_systems(
-            Update,
-            (buttons_hover_effect, buttons_disable_handler)
-                .chain()
-                .in_set(CubeScheduleSet::HandleUserInput),
-        );
+        app.add_event::<DisableButtonEvent>()
+            .add_event::<EnableButtonEvent>()
+            .add_systems(
+                Update,
+                buttons_disable_timer_handler.in_set(CubeScheduleSet::Timers),
+            )
+            .add_systems(
+                Update,
+                (handle_disable_button_event, handle_enable_button_event)
+                    .in_set(CubeScheduleSet::HandleEvents),
+            )
+            .add_systems(
+                Update,
+                (buttons_hover_effect, buttons_disable_handler)
+                    .chain()
+                    .in_set(CubeScheduleSet::HandleUserInput),
+            );
+    }
+}
+
+#[derive(Event)]
+pub struct DisableButtonEvent {
+    pub entity: Entity,
+    /// in seconds
+    pub enable_after: Option<f32>,
+}
+
+impl DisableButtonEvent {
+    pub fn new(entity: Entity) -> Self {
+        Self {
+            entity,
+            enable_after: None,
+        }
+    }
+}
+
+#[derive(Event)]
+pub struct EnableButtonEvent {
+    pub entity: Entity,
+    /// in seconds
+    pub disable_after: Option<f32>,
+}
+
+impl EnableButtonEvent {
+    pub fn new(entity: Entity) -> Self {
+        Self {
+            entity,
+            disable_after: None,
+        }
     }
 }
 
@@ -28,8 +67,15 @@ pub struct UiButton;
 
 #[derive(Component)]
 #[require(ButtonDisabledHandlerTimer)]
+/// Button can be enabled and disabled through `EnableButtonEvent` and `DisableButtonEvent`
 pub struct ButtonDisabledHandler {
-    pub disabled: bool,
+    disabled: bool,
+}
+
+impl ButtonDisabledHandler {
+    pub fn is_disabled(&self) -> bool {
+        self.disabled
+    }
 }
 
 #[derive(Component)]
@@ -166,6 +212,50 @@ fn buttons_disable_handler(
             }
 
             handle_button_interaction_state(interaction, &mut border_color);
+        }
+    }
+}
+
+fn handle_disable_button_event(
+    mut event_reader: EventReader<DisableButtonEvent>,
+    mut button_query: Query<(&mut ButtonDisabledHandler, &mut ButtonDisabledHandlerTimer)>,
+) {
+    for event in event_reader.read() {
+        let Ok((mut disabled_handler, mut disabled_handler_timer)) =
+            button_query.get_mut(event.entity)
+        else {
+            error!(
+                "received handle_disable_button_event with invalid entity: {}",
+                event.entity
+            );
+            continue;
+        };
+
+        disabled_handler.disabled = true;
+        if let Some(seconds) = event.enable_after {
+            disabled_handler_timer.enable_after(seconds);
+        }
+    }
+}
+
+fn handle_enable_button_event(
+    mut event_reader: EventReader<EnableButtonEvent>,
+    mut button_query: Query<(&mut ButtonDisabledHandler, &mut ButtonDisabledHandlerTimer)>,
+) {
+    for event in event_reader.read() {
+        let Ok((mut disabled_handler, mut disabled_handler_timer)) =
+            button_query.get_mut(event.entity)
+        else {
+            error!(
+                "received handle_enable_button_event with invalid entity: {}",
+                event.entity
+            );
+            continue;
+        };
+
+        disabled_handler.disabled = false;
+        if let Some(seconds) = event.disable_after {
+            disabled_handler_timer.disable_after(seconds);
         }
     }
 }
