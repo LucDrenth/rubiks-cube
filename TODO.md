@@ -5,7 +5,6 @@
 - Implement solving algorithm(s).
 
 ### Nice to have
-- Fix calculation of sequence length being slightly off. This gets increasingly noticable when changing sequence speed
 - Buttons to do full cube rotations
 - Drag slices to do a rotation
 - Animation for updating cube size (scale down to 0 before despawn, scale up from 0 to 1 at spawn). Then remove scaling functinoality with arrow keys, which is just an example

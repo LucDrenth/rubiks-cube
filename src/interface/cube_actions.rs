@@ -245,6 +245,7 @@ fn scramble_button_action(
     sequence_speed: Res<SequenceSpeedResource>,
     mut sequence_type: ResMut<CurrentSequenceTypeResource>,
     mut disable_button_event_writer: EventWriter<DisableButtonEvent>,
+    time: Res<Time>,
 ) {
     let Ok((scramble_button_entity, interaction, disabled_handler)) =
         scramble_button_query.get_single()
@@ -268,7 +269,6 @@ fn scramble_button_action(
     let scramble_length = (cube.size().0 + 1) as usize * 6;
 
     let mut scramble_sequence = cube::create_random_scramble_sequence(cube.size(), scramble_length);
-    let mut scramble_speed_multiplier = 1.0;
 
     match sequence_speed.0 {
         SequenceSpeed::Multiplier(multiplier) => {
@@ -280,7 +280,6 @@ fn scramble_button_action(
             }
 
             ease_out_scramble_sequence(&mut scramble_sequence);
-            scramble_speed_multiplier = multiplier;
         }
         SequenceSpeed::Instant => (),
     }
@@ -303,11 +302,8 @@ fn scramble_button_action(
         return;
     };
 
-    // scramble_duration is not exact because a rotation is measured in seconds, not in ticks.
-    // For example, if a tick is 0.1 seconds and the rotation duration is 0.35, it takes 4
-    // ticks (0.4 seconds) before the next rotation starts. We could calculate a more precise version,
-    // but for now we'll just add 0.3 seconds to the scramble_duration to fix this.
-    let progress_bar_duration = scramble_duration + (0.3 / scramble_speed_multiplier);
+    // we subtract one tick because the first tick of the cube rotation animation will already be performed in the current frame.
+    let progress_bar_duration = scramble_duration - time.delta_secs();
     progress_bar.set_timer(Timer::from_seconds(progress_bar_duration, TimerMode::Once));
 
     disable_button_event_writer.send(DisableButtonEvent {
@@ -334,6 +330,7 @@ fn solve_button_action(
     sequence_speed: Res<SequenceSpeedResource>,
     mut sequence_type: ResMut<CurrentSequenceTypeResource>,
     mut disable_button_event_writer: EventWriter<DisableButtonEvent>,
+    time: Res<Time>,
 ) {
     let Ok((solve_button_entity, interaction, disabled_handler)) = solve_button_query.get_single()
     else {
@@ -355,7 +352,6 @@ fn solve_button_action(
 
     let mut solve_sequence = solver::get_solve_sequence(SolveStrategy::Kociemba, cube_state);
 
-    let mut rotation_speed_multiplier = 1.0;
     match sequence_speed.0 {
         SequenceSpeed::Multiplier(multiplier) => {
             for cube_rotation in solve_sequence.iter_mut() {
@@ -364,8 +360,6 @@ fn solve_button_action(
                     ease_function: Some(EaseFunction::CubicOut),
                 });
             }
-
-            rotation_speed_multiplier = multiplier;
         }
         SequenceSpeed::Instant => (),
     }
@@ -389,11 +383,8 @@ fn solve_button_action(
         return;
     };
 
-    // solve_duration is not exact because a rotation is measured in seconds, not in ticks.
-    // For example, if a tick is 0.1 seconds and the rotation duration is 0.35, it takes 4
-    // ticks (0.4 seconds) before the next rotation starts. We could calculate a more precise version,
-    // but for now we'll just add 0.3 seconds to the solve_duration to fix this.
-    let progress_bar_duration = solve_duration + (0.3 / rotation_speed_multiplier);
+    // we subtract one tick because the first tick of the cube rotation animation will already be performed in the current frame.
+    let progress_bar_duration = solve_duration - time.delta_secs();
     progress_bar.set_timer(Timer::from_seconds(progress_bar_duration, TimerMode::Once));
 
     disable_button_event_writer.send(DisableButtonEvent {

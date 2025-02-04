@@ -1,6 +1,6 @@
-use std::f32::consts::TAU;
+use std::{f32::consts::TAU, time::Duration};
 
-use bevy::{log, prelude::*};
+use bevy::{log, prelude::*, time::Stopwatch};
 use rand::Rng;
 
 use crate::schedules::CubeScheduleSet;
@@ -16,6 +16,8 @@ pub struct CubeRotationPlugin;
 impl Plugin for CubeRotationPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<CubeRotationEvent>()
+            .add_event::<CubeRotationEventFinished>()
+            .insert_resource(CurrentRotationResource::new())
             .add_systems(
                 Update,
                 rotation_events_handler.in_set(CubeScheduleSet::HandleEvents),
@@ -24,6 +26,72 @@ impl Plugin for CubeRotationPlugin {
                 Update,
                 handle_rotation_animations.in_set(CubeScheduleSet::UpdateAnimations),
             );
+    }
+}
+
+#[derive(Resource)]
+/// is very similar to a timer but keeps the overflowed duration
+struct CurrentRotationResource {
+    timer: Option<Stopwatch>,
+    duration: Duration,
+}
+
+impl CurrentRotationResource {
+    fn new() -> Self {
+        Self {
+            timer: None,
+            duration: Duration::ZERO,
+        }
+    }
+
+    fn start_timer(&mut self, seconds: f32) {
+        self.timer = Some(Stopwatch::new());
+        self.duration = Duration::from_secs_f32(seconds);
+    }
+
+    fn stop(&mut self) {
+        self.timer = None;
+        self.duration = Duration::ZERO;
+    }
+
+    fn is_finished(&self) -> bool {
+        match &self.timer {
+            Some(stopwatch) => stopwatch.elapsed_secs() >= self.duration.as_secs_f32(),
+            None => true,
+        }
+    }
+
+    /// returns a value between 0.0 and 1.0
+    fn fraction(&self) -> f32 {
+        match &self.timer {
+            Some(stopwatch) => {
+                let fraction = stopwatch.elapsed_secs() / self.duration.as_secs_f32();
+                return fraction.clamp(0.0, 1.0);
+            }
+            None => 1.0,
+        }
+    }
+
+    fn tick(&mut self, delta: Duration) {
+        match &mut self.timer {
+            Some(timer) => {
+                timer.tick(delta);
+            }
+            None => (),
+        }
+    }
+
+    fn overflowed_secs(&self) -> f32 {
+        match &self.timer {
+            Some(timer) => {
+                if !self.is_finished() {
+                    return 0.0;
+                }
+
+                return timer.elapsed_secs() - self.duration.as_secs_f32();
+            }
+            None => 0.0,
+        }
     }
 }
 
@@ -36,8 +104,6 @@ pub struct RotationAnimation {
 #[derive(Component)]
 struct RotationAnimator {
     start: Transform,
-    progress: f32, // between 0.0 and 1.0
-    duration_in_seconds: f32,
     ease_function: EaseFunction,
     amount_to_rotate: f32, // in radians
     axis: Axis,
@@ -54,8 +120,6 @@ impl RotationAnimator {
     ) -> Self {
         Self {
             start,
-            progress: 0.0,
-            duration_in_seconds: animation.duration_in_seconds,
             ease_function: animation.ease_function.unwrap_or(EaseFunction::Linear),
             amount_to_rotate,
             axis,
@@ -70,6 +134,11 @@ pub struct CubeRotationEvent {
     pub negative_direction: bool,
     pub twice: bool,
     pub animation: Option<RotationAnimation>,
+}
+
+#[derive(Event)]
+pub struct CubeRotationEventFinished {
+    pub overflowing_secs: f32,
 }
 
 impl CubeRotationEvent {
@@ -232,6 +301,7 @@ fn rotation_events_handler(
     mut cube_state_query: Query<&mut CubeState>,
     mut cube_pieces_query: Query<(Entity, &mut Piece, &mut Transform)>,
     mut event_reader: EventReader<CubeRotationEvent>,
+    mut current_rotation_resource: ResMut<CurrentRotationResource>,
 ) {
     let Ok(mut cube) = cube_query.get_single_mut() else {
         error!("expected exactly 1 Cube entity");
@@ -255,9 +325,13 @@ fn rotation_events_handler(
     }
 
     for cube_rotation_event in event_reader.read() {
-        if cube.is_animating_rotation {
+        if current_rotation_resource.timer.is_some() {
             warn!("Skipping cube rotation event because cube is already rotating");
             continue;
+        }
+
+        if let Some(animation) = &cube_rotation_event.animation {
+            current_rotation_resource.start_timer(animation.duration_in_seconds);
         }
 
         cube_state.handle_rotate_event(cube_rotation_event);
@@ -576,24 +650,23 @@ fn rotate_piece(
 
 fn handle_rotation_animations(
     mut commands: Commands,
-    mut query: Query<(Entity, &mut Transform, &mut RotationAnimator)>,
+    mut query: Query<(Entity, &mut Transform, &RotationAnimator)>,
     mut cube_query: Query<&mut Cube>,
     time: Res<Time>,
+    mut current_rotation: ResMut<CurrentRotationResource>,
+    mut event_writer_cube_rotation_event_finished: EventWriter<CubeRotationEventFinished>,
 ) {
-    let mut cube = match cube_query.get_single_mut() {
-        Ok(cube) => cube,
-        Err(err) => {
-            log::error!("failed to get cube: {err}");
-            return;
-        }
-    };
+    if current_rotation.is_finished() {
+        return;
+    }
 
-    for (entity, mut transform, mut animation) in query.iter_mut() {
-        animation.progress += time.delta_secs() / animation.duration_in_seconds;
-        animation.progress = animation.progress.clamp(0.0, 1.0);
+    current_rotation.tick(time.delta());
+
+    for (entity, mut transform, animation) in query.iter_mut() {
+        let animation_progress = current_rotation.fraction();
 
         let eased_progress = EasingCurve::new(0.0, 1.0, animation.ease_function)
-            .sample(animation.progress)
+            .sample(animation_progress)
             .unwrap();
 
         let angle = eased_progress * animation.amount_to_rotate;
@@ -609,10 +682,26 @@ fn handle_rotation_animations(
         transform.translation = new_transform.translation;
 
         // cleanup if animation is done
-        if animation.progress >= 1.0 {
+        if current_rotation.is_finished() {
             commands.entity(entity).remove::<RotationAnimator>();
-            cube.is_animating_rotation = false;
         }
+    }
+
+    if current_rotation.is_finished() {
+        event_writer_cube_rotation_event_finished.send(CubeRotationEventFinished {
+            overflowing_secs: current_rotation.overflowed_secs(),
+        });
+        current_rotation.stop();
+
+        match cube_query.get_single_mut() {
+            Ok(mut cube) => {
+                cube.is_animating_rotation = false;
+            }
+            Err(err) => {
+                log::error!("failed to get cube: {err}");
+                return;
+            }
+        };
     }
 }
 

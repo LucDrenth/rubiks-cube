@@ -2,7 +2,12 @@ use bevy::prelude::*;
 
 use crate::schedules::CubeScheduleSet;
 
-use super::{cube::Cube, cube_state::CubeState, rotation::RotationAnimation, CubeRotationEvent};
+use super::{
+    cube::Cube,
+    cube_state::CubeState,
+    rotation::{CubeRotationEventFinished, RotationAnimation},
+    CubeRotationEvent,
+};
 
 pub struct ControllerPlugin;
 
@@ -18,6 +23,7 @@ impl Plugin for ControllerPlugin {
                 (
                     check_solved_on_enter,
                     sequence_handler,
+                    rotation_event_finished_event_handler,
                     random_face_rotation_on_tab,
                 )
                     .chain()
@@ -121,6 +127,38 @@ fn sequence_handler(
         }
 
         sequence_resource.current_step_timer = None;
+    }
+}
+
+fn rotation_event_finished_event_handler(
+    mut event_reader: EventReader<CubeRotationEventFinished>,
+    mut sequence_resource: ResMut<SequenceResource>,
+) {
+    for event in event_reader.read() {
+        // we can not rely on sequence_resource.is_done because sequence_resource.current_step has not been updated yet
+        if sequence_resource.current_step >= sequence_resource.steps.len() {
+            return;
+        }
+
+        let current_step = sequence_resource.current_step;
+        match &mut sequence_resource.steps[current_step].animation {
+            Some(animation) => {
+                // TODO
+                //
+                // To be more accurate, we'd start the timer of the next animation with event.overflowing_secs
+                // already on the timer, instead of subtracting from animation.duration_in_seconds.
+                //
+                // In other words we want to start the next animation a little bit further in instead of shortening the duration
+                // of that animation. This way the speed of the rotations will be consistent.
+                //
+                // This issue is not very noticable, so will leave it for the next time I come across this comment :)
+                animation.duration_in_seconds -= event.overflowing_secs;
+            }
+            None => (),
+        }
+
+        // we only ever expect 1 of these events at a time
+        return;
     }
 }
 
