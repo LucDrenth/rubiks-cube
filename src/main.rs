@@ -7,6 +7,7 @@ use schedules::SchedulesPlugin;
 
 mod camera;
 mod controls;
+#[allow(dead_code)]
 mod cube;
 mod interface;
 mod schedules;

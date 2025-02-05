@@ -32,24 +32,45 @@ pub struct DropdownOption<T> {
 #[derive(Component, Clone)]
 pub struct Dropdown<T: Clone> {
     pub options: Vec<DropdownOption<T>>,
-    selected_option_index: usize,
+    dropdown_type: DropdownType,
+    close_on_button_click: bool,
+}
+
+#[derive(Clone)]
+pub enum DropdownType {
+    /// Selected options will be displayed in the main button.
+    /// Parameter is default selected option index.
+    Select(usize),
+    /// Selecting options does not affect the main button.
+    Menu(String),
 }
 
 impl<T: Clone> Dropdown<T> {
-    pub fn new(options: Vec<DropdownOption<T>>, mut selected_option_index: usize) -> Self {
-        if selected_option_index >= options.len() {
-            warn!(
-                "dropdown - selected_option_index {} is invalid. Defaulting to 0 (\"{}\")",
-                selected_option_index,
-                options[0].label.clone()
-            );
-            selected_option_index = 0;
+    pub fn new(options: Vec<DropdownOption<T>>, mut dropdown_type: DropdownType) -> Self {
+        match &mut dropdown_type {
+            DropdownType::Select(selected_option_index) => {
+                if *selected_option_index >= options.len() {
+                    warn!(
+                        "dropdown - selected_option_index {} is invalid. Defaulting to 0 (\"{}\")",
+                        selected_option_index,
+                        options[0].label.clone()
+                    );
+                    *selected_option_index = 0;
+                }
+            }
+            DropdownType::Menu(_) => (),
         }
 
         return Self {
             options,
-            selected_option_index: selected_option_index,
+            dropdown_type,
+            close_on_button_click: true,
         };
+    }
+
+    pub fn without_close_on_button_click(mut self) -> Self {
+        self.close_on_button_click = false;
+        self
     }
 }
 
@@ -58,7 +79,11 @@ struct DropdownMainButton;
 #[derive(Component)]
 struct DropdownMainButtonLabel;
 #[derive(Component)]
-struct DropdownOptionsContainer;
+struct DropdownOptionsContainer {
+    close_on_button_click: bool,
+    /// If true, set the text of the main button to be the label of the selected option on clicking an option
+    set_option_label_on_button_click: bool,
+}
 #[derive(Component)]
 pub struct DropdownOptionButton;
 #[derive(Component)]
@@ -96,13 +121,16 @@ pub fn spawn<T: Component + Clone>(
         ))
         .with_children(|parent| {
             // label
+            let text = match &dropdown.dropdown_type {
+                DropdownType::Select(selected_option_index) => {
+                    dropdown.options[*selected_option_index].label.clone()
+                }
+                DropdownType::Menu(text) => text.clone(),
+            };
+
             parent.spawn((
                 DropdownMainButtonLabel,
-                Text::new(
-                    dropdown.options[dropdown.selected_option_index]
-                        .label
-                        .clone(),
-                ),
+                Text::new(text),
                 TextFont {
                     font: asset_server.load(DEFAULT_FONT_BOLD),
                     font_size: 14.0,
@@ -120,7 +148,13 @@ pub fn spawn<T: Component + Clone>(
             // options container
             parent
                 .spawn((
-                    DropdownOptionsContainer,
+                    DropdownOptionsContainer {
+                        close_on_button_click: dropdown.close_on_button_click,
+                        set_option_label_on_button_click: match dropdown.dropdown_type {
+                            DropdownType::Select(_) => true,
+                            DropdownType::Menu(_) => false,
+                        },
+                    },
                     CaptureClick,
                     Node {
                         width: Val::Percent(100.),
@@ -229,10 +263,12 @@ fn handle_dropdown_options_button_click(
             Without<DropdownMainButtonLabel>,
         ),
     >,
-    mut option_button_containers_query: Query<
-        (Entity, &Parent, &mut Visibility),
-        With<DropdownOptionsContainer>,
-    >,
+    mut option_button_containers_query: Query<(
+        Entity,
+        &Parent,
+        &DropdownOptionsContainer,
+        &mut Visibility,
+    )>,
     mut main_dropdown_button_query: Query<
         (&mut Text, &Parent),
         (
@@ -253,6 +289,7 @@ fn handle_dropdown_options_button_click(
         for (
             option_button_container_entity,
             option_button_container_parent,
+            dropdown_options_container,
             mut option_button_container_visibility,
         ) in option_button_containers_query.iter_mut()
         {
@@ -262,29 +299,34 @@ fn handle_dropdown_options_button_click(
 
             handled = true;
 
-            // hide options
-            *option_button_container_visibility = Visibility::Hidden;
+            if dropdown_options_container.close_on_button_click {
+                // hide options
+                *option_button_container_visibility = Visibility::Hidden;
+            }
 
-            // update dropdown label
-            for (option_button_label_parent, option_button_label_text) in
-                option_button_labels_query.iter()
-            {
-                if option_button_label_parent.get() != option_button_entity {
-                    continue;
-                }
-
-                for (mut main_dropdown_button_label, main_dropdown_button_parent) in
-                    main_dropdown_button_query.iter_mut()
+            if dropdown_options_container.set_option_label_on_button_click {
+                // update dropdown label
+                for (option_button_label_parent, option_button_label_text) in
+                    option_button_labels_query.iter()
                 {
-                    if main_dropdown_button_parent.get() != option_button_container_parent.get() {
+                    if option_button_label_parent.get() != option_button_entity {
                         continue;
                     }
 
-                    main_dropdown_button_label.0 = option_button_label_text.0.clone();
+                    for (mut main_dropdown_button_label, main_dropdown_button_parent) in
+                        main_dropdown_button_query.iter_mut()
+                    {
+                        if main_dropdown_button_parent.get() != option_button_container_parent.get()
+                        {
+                            continue;
+                        }
+
+                        main_dropdown_button_label.0 = option_button_label_text.0.clone();
+                        break;
+                    }
+
                     break;
                 }
-
-                break;
             }
 
             break;

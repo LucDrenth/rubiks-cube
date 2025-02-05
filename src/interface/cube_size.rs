@@ -47,8 +47,6 @@ pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
             margin: UiRect::ZERO.with_left(Val::Px(32.0)),
-            position_type: PositionType::Absolute,
-            right: Val::Px(8.0),
             ..default()
         },))
         .with_children(|parent| {

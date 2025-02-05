@@ -13,6 +13,7 @@ pub use cubing_notation_rotations::*;
 
 mod rotation;
 pub use rotation::CubeRotationEvent;
+pub use rotation::Rotation;
 pub use rotation::RotationAnimation as CubeRotationAnimation;
 
 mod axis;

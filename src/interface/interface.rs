@@ -7,6 +7,7 @@ use crate::{
 
 use super::{
     cube_actions::{self, CubeActionsPlugin},
+    cube_rotations::{self, CubeRotationsPlugin},
     cube_size::{self, CubeSizePlugin},
     gradient_shader::{
         BackgroundGradientMaterial, BackgroundGradientMaterialBuilder, ColorSize,
@@ -51,6 +52,7 @@ impl Plugin for InterfacePlugin {
         .add_plugins(widget::WidgetPlugin)
         .add_plugins(CubeSizePlugin)
         .add_plugins(CubeActionsPlugin)
+        .add_plugins(CubeRotationsPlugin)
         .add_systems(Startup, init)
         .add_systems(
             Update,
@@ -134,13 +136,15 @@ fn init(
             parent
                 .spawn(Node {
                     width: Val::Percent(100.),
-                    justify_content: JustifyContent::Center,
+                    height: Val::Percent(100.),
+                    justify_content: JustifyContent::SpaceBetween,
                     align_items: AlignItems::Center,
-                    padding: UiRect::px(16.0, 16.0, 8.0, 8.0),
+                    padding: UiRect::px(12.0, 12.0, 8.0, 8.0),
                     column_gap: Val::Px(8.),
                     ..default()
                 })
                 .with_children(|parent| {
+                    cube_rotations::spawn(parent, &asset_server);
                     cube_actions::spawn(parent, &asset_server);
                     cube_size::spawn(parent, &asset_server);
                 });

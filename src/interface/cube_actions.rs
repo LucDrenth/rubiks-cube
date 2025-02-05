@@ -33,13 +33,13 @@ impl Plugin for CubeActionsPlugin {
             .insert_resource(CurrentSequenceTypeResource(None))
             .add_systems(
                 Update,
-                (
-                    handle_sequence_speed_dropdown,
-                    scramble_button_action,
-                    solve_button_action,
-                )
+                (scramble_button_action, solve_button_action)
                     .chain()
                     .in_set(CubeScheduleSet::HandleUserInput),
+            )
+            .add_systems(
+                Update,
+                handle_sequence_speed_dropdown.in_set(CubeScheduleSet::HandleEvents),
             );
     }
 }
@@ -74,162 +74,169 @@ enum SequenceType {
 struct CurrentSequenceTypeResource(Option<SequenceType>);
 
 pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
-    // sequence speed dropdown
-    widget::dropdown::spawn::<SequenceSpeed>(
-        Dropdown::new(
-            vec![
-                DropdownOption {
-                    label: "instant".to_string(),
-                    value: SequenceSpeed::Instant,
-                },
-                DropdownOption {
-                    label: "x2.5".to_string(),
-                    value: SequenceSpeed::Multiplier(2.5),
-                },
-                DropdownOption {
-                    label: "x2.0".to_string(),
-                    value: SequenceSpeed::Multiplier(2.),
-                },
-                DropdownOption {
-                    label: "x1.5".to_string(),
-                    value: SequenceSpeed::Multiplier(1.5),
-                },
-                DropdownOption {
-                    label: "x1.0".to_string(),
-                    value: SequenceSpeed::Multiplier(1.),
-                },
-                DropdownOption {
-                    label: "x0.5".to_string(),
-                    value: SequenceSpeed::Multiplier(0.5),
-                },
-                DropdownOption {
-                    label: "x0.25".to_string(),
-                    value: SequenceSpeed::Multiplier(0.25),
-                },
-            ],
-            4, // x1.0
-        ),
-        SequenceSpeedDropdown,
-        parent,
-        asset_server,
-    );
-
-    // scramble button
     parent
-        .spawn((
-            ScrambleButton,
-            CaptureClick,
-            UiButton,
-            Node {
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                border: BUTTON_BORDER,
-                overflow: Overflow::clip(),
-                ..default()
-            },
-            BorderColor(COLOR_MAIN),
-            BUTTON_BORDER_RADIUS,
-            BackgroundColor(BUTTON_BACKGROUND_COLOR),
-            BoxShadow {
-                color: Color::BLACK,
-                x_offset: Val::Px(3.),
-                y_offset: Val::Px(3.),
-                spread_radius: Val::Px(3.),
-                blur_radius: Val::Px(1.),
-            },
-        ))
+        .spawn(Node {
+            column_gap: Val::Px(8.),
+            ..default()
+        })
         .with_children(|parent| {
-            // progress bar
-            parent.spawn((
-                ScrambleButtonProgressBar,
-                ProgressBar::default(),
-                Node {
-                    width: Val::Percent(0.),
-                    height: Val::Percent(100.0),
-                    position_type: PositionType::Absolute,
-                    left: Val::ZERO,
-                    ..default()
-                },
-                BackgroundColor(BUTTON_BACKGROUND_COLOR),
-                BUTTON_BORDER_RADIUS,
-            ));
+            // sequence speed dropdown
+            widget::dropdown::spawn::<SequenceSpeed>(
+                Dropdown::new(
+                    vec![
+                        DropdownOption {
+                            label: "instant".to_string(),
+                            value: SequenceSpeed::Instant,
+                        },
+                        DropdownOption {
+                            label: "x2.5".to_string(),
+                            value: SequenceSpeed::Multiplier(2.5),
+                        },
+                        DropdownOption {
+                            label: "x2.0".to_string(),
+                            value: SequenceSpeed::Multiplier(2.),
+                        },
+                        DropdownOption {
+                            label: "x1.5".to_string(),
+                            value: SequenceSpeed::Multiplier(1.5),
+                        },
+                        DropdownOption {
+                            label: "x1.0".to_string(),
+                            value: SequenceSpeed::Multiplier(1.),
+                        },
+                        DropdownOption {
+                            label: "x0.5".to_string(),
+                            value: SequenceSpeed::Multiplier(0.5),
+                        },
+                        DropdownOption {
+                            label: "x0.25".to_string(),
+                            value: SequenceSpeed::Multiplier(0.25),
+                        },
+                    ],
+                    widget::dropdown::DropdownType::Select(4), // selected x1.0 by default
+                ),
+                SequenceSpeedDropdown,
+                parent,
+                asset_server,
+            );
 
-            // label
-            parent.spawn((
-                Text::new("scramble"),
-                TextFont {
-                    font: asset_server.load(DEFAULT_FONT_BOLD),
-                    font_size: 16.0,
-                    ..default()
-                },
-                Node {
-                    margin: UiRect {
-                        left: Val::Px(16.0),
-                        right: Val::Px(16.),
-                        top: Val::Px(8.),
-                        bottom: Val::Px(8.),
+            // scramble button
+            parent
+                .spawn((
+                    ScrambleButton,
+                    CaptureClick,
+                    UiButton,
+                    Node {
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        border: BUTTON_BORDER,
+                        overflow: Overflow::clip(),
+                        ..default()
                     },
-                    ..default()
-                },
-                TextColor(BUTTON_TEXT_COLOR),
-            ));
-        });
+                    BorderColor(COLOR_MAIN),
+                    BUTTON_BORDER_RADIUS,
+                    BackgroundColor(BUTTON_BACKGROUND_COLOR),
+                    BoxShadow {
+                        color: Color::BLACK,
+                        x_offset: Val::Px(3.),
+                        y_offset: Val::Px(3.),
+                        spread_radius: Val::Px(3.),
+                        blur_radius: Val::Px(1.),
+                    },
+                ))
+                .with_children(|parent| {
+                    // progress bar
+                    parent.spawn((
+                        ScrambleButtonProgressBar,
+                        ProgressBar::default(),
+                        Node {
+                            width: Val::Percent(0.),
+                            height: Val::Percent(100.0),
+                            position_type: PositionType::Absolute,
+                            left: Val::ZERO,
+                            ..default()
+                        },
+                        BackgroundColor(BUTTON_BACKGROUND_COLOR),
+                        BUTTON_BORDER_RADIUS,
+                    ));
 
-    // solve button
-    parent
-        .spawn((
-            SolveButton,
-            CaptureClick,
-            UiButton,
-            Node {
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                padding: UiRect {
-                    left: Val::Px(16.0),
-                    right: Val::Px(16.),
-                    top: Val::Px(8.),
-                    bottom: Val::Px(8.),
-                },
-                border: BUTTON_BORDER,
-                ..default()
-            },
-            BorderColor(Color::srgb_u8(243, 200, 2)),
-            BorderRadius::px(4., 4., 4., 4.),
-            BackgroundColor(BUTTON_BACKGROUND_COLOR),
-            BoxShadow {
-                color: Color::BLACK,
-                x_offset: Val::Px(3.),
-                y_offset: Val::Px(3.),
-                spread_radius: Val::Px(3.),
-                blur_radius: Val::Px(1.),
-            },
-        ))
-        .with_children(|parent| {
-            // progress bar
-            parent.spawn((
-                SolveButtonProgressBar,
-                ProgressBar::default(),
-                Node {
-                    width: Val::Percent(0.),
-                    height: Val::Percent(100.0),
-                    position_type: PositionType::Absolute,
-                    left: Val::ZERO,
-                    ..default()
-                },
-                BackgroundColor(BUTTON_BACKGROUND_COLOR),
-                BorderRadius::all(Val::Px(4.)),
-            ));
+                    // label
+                    parent.spawn((
+                        Text::new("scramble"),
+                        TextFont {
+                            font: asset_server.load(DEFAULT_FONT_BOLD),
+                            font_size: 16.0,
+                            ..default()
+                        },
+                        Node {
+                            margin: UiRect {
+                                left: Val::Px(16.0),
+                                right: Val::Px(16.),
+                                top: Val::Px(8.),
+                                bottom: Val::Px(8.),
+                            },
+                            ..default()
+                        },
+                        TextColor(BUTTON_TEXT_COLOR),
+                    ));
+                });
 
-            // label
-            parent.spawn((
-                Text::new("solve"),
-                TextFont {
-                    font: asset_server.load(DEFAULT_FONT_BOLD),
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(BUTTON_TEXT_COLOR),
-            ));
+            // solve button
+            parent
+                .spawn((
+                    SolveButton,
+                    CaptureClick,
+                    UiButton,
+                    Node {
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        padding: UiRect {
+                            left: Val::Px(16.0),
+                            right: Val::Px(16.),
+                            top: Val::Px(8.),
+                            bottom: Val::Px(8.),
+                        },
+                        border: BUTTON_BORDER,
+                        ..default()
+                    },
+                    BorderColor(Color::srgb_u8(243, 200, 2)),
+                    BorderRadius::px(4., 4., 4., 4.),
+                    BackgroundColor(BUTTON_BACKGROUND_COLOR),
+                    BoxShadow {
+                        color: Color::BLACK,
+                        x_offset: Val::Px(3.),
+                        y_offset: Val::Px(3.),
+                        spread_radius: Val::Px(3.),
+                        blur_radius: Val::Px(1.),
+                    },
+                ))
+                .with_children(|parent| {
+                    // progress bar
+                    parent.spawn((
+                        SolveButtonProgressBar,
+                        ProgressBar::default(),
+                        Node {
+                            width: Val::Percent(0.),
+                            height: Val::Percent(100.0),
+                            position_type: PositionType::Absolute,
+                            left: Val::ZERO,
+                            ..default()
+                        },
+                        BackgroundColor(BUTTON_BACKGROUND_COLOR),
+                        BorderRadius::all(Val::Px(4.)),
+                    ));
+
+                    // label
+                    parent.spawn((
+                        Text::new("solve"),
+                        TextFont {
+                            font: asset_server.load(DEFAULT_FONT_BOLD),
+                            font_size: 16.0,
+                            ..default()
+                        },
+                        TextColor(BUTTON_TEXT_COLOR),
+                    ));
+                });
         });
 }
 
