@@ -5,7 +5,6 @@
 - Implement solving algorithm(s).
 
 ### Nice to have
-- Add icons to rotation dropdown
 - Drag slices to do a rotation
 - Animation for updating cube size (scale down to 0 before despawn, scale up from 0 to 1 at spawn). Then remove scaling functinoality with arrow keys, which is just an example
 - Show full scramble sequence as text (make current move pop out)

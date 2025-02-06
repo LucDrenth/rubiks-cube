@@ -29,55 +29,12 @@ pub struct DropdownOption<T> {
     pub value: T,
 }
 
-#[derive(Component, Clone)]
-pub struct Dropdown<T: Clone> {
-    pub options: Vec<DropdownOption<T>>,
-    dropdown_type: DropdownType,
-    close_on_button_click: bool,
-}
-
-#[derive(Clone)]
-pub enum DropdownType {
-    /// Selected options will be displayed in the main button.
-    /// Parameter is default selected option index.
-    Select(usize),
-    /// Selecting options does not affect the main button.
-    Menu(String),
-}
-
-impl<T: Clone> Dropdown<T> {
-    pub fn new(options: Vec<DropdownOption<T>>, mut dropdown_type: DropdownType) -> Self {
-        match &mut dropdown_type {
-            DropdownType::Select(selected_option_index) => {
-                if *selected_option_index >= options.len() {
-                    warn!(
-                        "dropdown - selected_option_index {} is invalid. Defaulting to 0 (\"{}\")",
-                        selected_option_index,
-                        options[0].label.clone()
-                    );
-                    *selected_option_index = 0;
-                }
-            }
-            DropdownType::Menu(_) => (),
-        }
-
-        return Self {
-            options,
-            dropdown_type,
-            close_on_button_click: true,
-        };
-    }
-
-    pub fn without_close_on_button_click(mut self) -> Self {
-        self.close_on_button_click = false;
-        self
-    }
-}
-
 #[derive(Component)]
 struct DropdownMainButton;
 #[derive(Component)]
 struct DropdownMainButtonLabel;
+#[derive(Component)]
+struct DropdownMainButtonContent;
 #[derive(Component)]
 struct DropdownOptionsContainer {
     close_on_button_click: bool,
@@ -89,12 +46,24 @@ pub struct DropdownOptionButton;
 #[derive(Component)]
 struct DropdownOptionButtonLabel;
 
-pub fn spawn<T: Component + Clone>(
-    dropdown: Dropdown<T>,
+/// Selected options will be displayed as the main button label.
+pub fn spawn_type_select<T: Component + Clone>(
+    options: Vec<DropdownOption<T>>,
+    mut selected_option_index: usize,
+    close_on_button_click: bool,
     main_button_marker: impl Bundle,
     parent: &mut ChildBuilder<'_>,
     asset_server: &Res<AssetServer>,
 ) {
+    if selected_option_index >= options.len() {
+        warn!(
+            "spawn_type_select: selected_option_index {} is invalid. Defaulting to 0 (\"{}\")",
+            selected_option_index,
+            options[0].label.clone()
+        );
+        selected_option_index = 0;
+    }
+
     // main button
     parent
         .spawn((
@@ -102,7 +71,6 @@ pub fn spawn<T: Component + Clone>(
             Button,
             CaptureClick,
             DropdownMainButton,
-            dropdown.clone(),
             Node {
                 justify_content: JustifyContent::Center,
                 padding: UiRect {
@@ -121,12 +89,7 @@ pub fn spawn<T: Component + Clone>(
         ))
         .with_children(|parent| {
             // label
-            let text = match &dropdown.dropdown_type {
-                DropdownType::Select(selected_option_index) => {
-                    dropdown.options[*selected_option_index].label.clone()
-                }
-                DropdownType::Menu(text) => text.clone(),
-            };
+            let text = options[selected_option_index].label.clone();
 
             parent.spawn((
                 DropdownMainButtonLabel,
@@ -136,12 +99,7 @@ pub fn spawn<T: Component + Clone>(
                     font_size: 14.0,
                     ..default()
                 },
-                Node {
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    border: BUTTON_BORDER,
-                    ..default()
-                },
+                Node { ..default() },
                 TextColor(BUTTON_TEXT_COLOR),
             ));
 
@@ -149,11 +107,8 @@ pub fn spawn<T: Component + Clone>(
             parent
                 .spawn((
                     DropdownOptionsContainer {
-                        close_on_button_click: dropdown.close_on_button_click,
-                        set_option_label_on_button_click: match dropdown.dropdown_type {
-                            DropdownType::Select(_) => true,
-                            DropdownType::Menu(_) => false,
-                        },
+                        close_on_button_click: close_on_button_click,
+                        set_option_label_on_button_click: true,
                     },
                     CaptureClick,
                     Node {
@@ -176,7 +131,111 @@ pub fn spawn<T: Component + Clone>(
                 ))
                 .with_children(|parent| {
                     // option buttons
-                    for dropdown_option in dropdown.options {
+                    for dropdown_option in options {
+                        parent
+                            .spawn((
+                                dropdown_option.value,
+                                DropdownOptionButton,
+                                UiButton,
+                                FocusPolicy::Pass,
+                                Node {
+                                    margin: UiRect::bottom(Val::Px(4.0)),
+                                    padding: UiRect {
+                                        left: Val::Px(16.0),
+                                        right: Val::Px(16.),
+                                        top: Val::Px(8.),
+                                        bottom: Val::Px(8.),
+                                    },
+                                    align_items: AlignItems::Center,
+                                    justify_content: JustifyContent::Center,
+                                    width: Val::Percent(100.),
+                                    border: BUTTON_BORDER,
+                                    ..default()
+                                },
+                                BackgroundColor(BUTTON_BACKGROUND_COLOR),
+                                BorderColor(Color::BLACK),
+                                BUTTON_BORDER_RADIUS,
+                            ))
+                            .with_child((
+                                DropdownOptionButtonLabel,
+                                Text::new(dropdown_option.label.clone()),
+                                TextFont {
+                                    font: asset_server.load(DEFAULT_FONT),
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(BUTTON_TEXT_COLOR),
+                            ));
+                    }
+                });
+        });
+}
+
+/// Selecting options does not affect the main button.
+pub fn spawn_type_menu<T: Component + Clone>(
+    options: Vec<DropdownOption<T>>,
+    close_on_button_click: bool,
+    main_button_marker: impl Bundle,
+    main_button_content: impl Bundle,
+    parent: &mut ChildBuilder<'_>,
+    asset_server: &Res<AssetServer>,
+) {
+    // main button
+    parent
+        .spawn((
+            main_button_marker,
+            Button,
+            CaptureClick,
+            DropdownMainButton,
+            Node {
+                justify_content: JustifyContent::Center,
+                padding: UiRect {
+                    left: Val::Px(16.0),
+                    right: Val::Px(16.),
+                    top: Val::Px(9.5),
+                    bottom: Val::Px(9.5),
+                },
+                min_width: Val::Px(80.), // account for longest label, "instant"
+                border: BUTTON_BORDER,
+                ..default()
+            },
+            BorderColor(Color::BLACK),
+            BUTTON_BORDER_RADIUS,
+            BackgroundColor(BUTTON_BACKGROUND_COLOR),
+        ))
+        .with_children(|parent| {
+            // label
+            parent.spawn((main_button_content, DropdownMainButtonContent));
+
+            // options container
+            parent
+                .spawn((
+                    DropdownOptionsContainer {
+                        close_on_button_click: close_on_button_click,
+                        set_option_label_on_button_click: false,
+                    },
+                    CaptureClick,
+                    Node {
+                        width: Val::Percent(100.),
+                        position_type: PositionType::Absolute,
+                        top: Val::Percent(93.),
+                        border: BUTTON_BORDER,
+                        padding: UiRect {
+                            left: Val::Px(2.0),
+                            right: Val::Px(2.0),
+                            top: Val::Px(4.0),
+                            bottom: Val::ZERO,
+                        },
+                        flex_direction: FlexDirection::Column,
+                        ..default()
+                    },
+                    BackgroundColor(COLOR_GREY),
+                    BorderColor(Color::BLACK),
+                    BUTTON_BORDER_RADIUS,
+                ))
+                .with_children(|parent| {
+                    // option buttons
+                    for dropdown_option in options {
                         parent
                             .spawn((
                                 dropdown_option.value,

@@ -6,15 +6,8 @@ use crate::{
 };
 
 use super::{
-    interface::{
-        CaptureClick, BUTTON_BACKGROUND_COLOR, BUTTON_BORDER, BUTTON_BORDER_RADIUS, COLOR_BLUE,
-        COLOR_MAIN,
-    },
-    widget::{
-        self,
-        button::UiButton,
-        dropdown::{Dropdown, DropdownOption},
-    },
+    interface::COLOR_BLUE,
+    widget::{self, dropdown::DropdownOption},
 };
 
 pub struct CubeRotationsPlugin;
@@ -42,41 +35,50 @@ enum CubeRotation {
 }
 
 pub fn spawn(parent: &mut ChildBuilder<'_>, asset_server: &Res<AssetServer>) {
-    // let cube_rotation_image = asset_server.load("icons/cube-rotation.png");
+    let cube_rotation_image = asset_server.load("icons/cube-rotation.png");
 
     parent.spawn(Node { ..default() }).with_children(|parent| {
-        widget::dropdown::spawn(
-            Dropdown::new(
-                vec![
-                    DropdownOption {
-                        label: "X".to_string(),
-                        value: CubeRotation::X,
-                    },
-                    DropdownOption {
-                        label: "X'".to_string(),
-                        value: CubeRotation::XPrime,
-                    },
-                    DropdownOption {
-                        label: "Y".to_string(),
-                        value: CubeRotation::Y,
-                    },
-                    DropdownOption {
-                        label: "Y'".to_string(),
-                        value: CubeRotation::YPrime,
-                    },
-                    DropdownOption {
-                        label: "Z".to_string(),
-                        value: CubeRotation::Z,
-                    },
-                    DropdownOption {
-                        label: "Z'".to_string(),
-                        value: CubeRotation::ZPrime,
-                    },
-                ],
-                widget::dropdown::DropdownType::Menu("rotate".to_string()),
-            )
-            .without_close_on_button_click(),
+        widget::dropdown::spawn_type_menu(
+            vec![
+                DropdownOption {
+                    label: "X".to_string(),
+                    value: CubeRotation::X,
+                },
+                DropdownOption {
+                    label: "X'".to_string(),
+                    value: CubeRotation::XPrime,
+                },
+                DropdownOption {
+                    label: "Y".to_string(),
+                    value: CubeRotation::Y,
+                },
+                DropdownOption {
+                    label: "Y'".to_string(),
+                    value: CubeRotation::YPrime,
+                },
+                DropdownOption {
+                    label: "Z".to_string(),
+                    value: CubeRotation::Z,
+                },
+                DropdownOption {
+                    label: "Z'".to_string(),
+                    value: CubeRotation::ZPrime,
+                },
+            ],
+            false,
             CubeRotationDropdownButton,
+            (
+                ImageNode {
+                    image: cube_rotation_image.clone(),
+                    color: COLOR_BLUE,
+                    ..default()
+                },
+                Node {
+                    width: Val::Px(24.0),
+                    height: Val::Px(24.0),
+                    ..default()
+                },
+            ),
             parent,
             asset_server,
         );
