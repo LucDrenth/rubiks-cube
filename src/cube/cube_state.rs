@@ -2,7 +2,7 @@ use bevy::{log, prelude::*};
 
 use crate::utils::console;
 
-use super::CubeRotationEvent;
+use super::{slice::slice_to_column_index, CubeRotationEvent};
 
 /// Holds an efficient and precise state of a cube.
 ///
@@ -538,18 +538,6 @@ fn has_edge_on_negative_side(slice: &i32, cube_size: usize) -> bool {
     }
 }
 
-fn slice_to_column_index(slice: i32, cube_size: usize) -> usize {
-    if cube_size % 2 == 0 {
-        if slice.is_positive() {
-            return (slice - 1 + cube_size as i32 / 2) as usize;
-        } else {
-            return (slice + cube_size as i32 / 2) as usize;
-        }
-    } else {
-        return (slice + (cube_size - 1) as i32 / 2) as usize;
-    }
-}
-
 fn invert_face_index_x(face_index: usize, cube_size: usize) -> usize {
     let base = face_index % cube_size;
     return cube_size - 1 + face_index - base * 2;
@@ -567,7 +555,7 @@ mod tests {
         algorithms, create_scramble_sequence_from_algorithm,
         cube_state::{
             has_edge_on_negative_side, has_edge_on_positive_side, invert_face_index_x,
-            invert_face_index_y, slice_to_column_index, Face,
+            invert_face_index_y, Face,
         },
         rotation::{CubeRotation, FaceRotation, Rotation},
         CubeRotationEvent,
@@ -796,20 +784,6 @@ mod tests {
         test_4_cube_rotations(4, CubeRotation::Y, false);
         test_4_cube_rotations(4, CubeRotation::Z, true);
         test_4_cube_rotations(4, CubeRotation::Z, false);
-    }
-
-    #[test]
-    fn test_slice_to_column_index() {
-        // 3x3
-        assert_eq!(0, slice_to_column_index(-1, 3));
-        assert_eq!(1, slice_to_column_index(0, 3));
-        assert_eq!(2, slice_to_column_index(1, 3));
-
-        // 4x4
-        assert_eq!(0, slice_to_column_index(-2, 4));
-        assert_eq!(1, slice_to_column_index(-1, 4));
-        assert_eq!(2, slice_to_column_index(1, 4));
-        assert_eq!(3, slice_to_column_index(2, 4));
     }
 
     #[test]

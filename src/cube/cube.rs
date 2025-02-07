@@ -1,11 +1,15 @@
 use std::f32::consts::TAU;
 
-use bevy::{ecs::system::SystemId, log, prelude::*};
+use bevy::{ecs::system::SystemId, prelude::*};
 
 use crate::schedules::CubeStartupSet;
 
 use super::{
-    axis::Axis, controller::ControllerPlugin, cube_state::CubeState, rotation::CubeRotationPlugin,
+    axis::Axis,
+    controller::ControllerPlugin,
+    cube_state::CubeState,
+    drag_to_rotate::{self, DragToRotatePlugin},
+    rotation::CubeRotationPlugin,
 };
 
 pub const DEFAULT_CUBE_SIZE: usize = 3;
@@ -31,6 +35,7 @@ impl Plugin for CubePlugin {
             .init_resource::<CubeCommandsResource>()
             .add_plugins(ControllerPlugin)
             .add_plugins(CubeRotationPlugin)
+            .add_plugins(DragToRotatePlugin)
             .add_systems(Startup, spawn.in_set(CubeStartupSet::SpawnCube));
     }
 }
@@ -130,7 +135,7 @@ fn despawn(mut commands: Commands, query: Query<Entity, With<Cube>>) {
     let cube_entity = match query.get_single() {
         Ok(entity) => entity,
         Err(err) => {
-            log::warn!("failed to despawn cube: {err}");
+            warn!("failed to despawn cube: {err}");
             return;
         }
     };
@@ -147,7 +152,7 @@ fn spawn(
     let cube_size = cube_size_resource.0;
 
     if cube_size <= 1 {
-        log::error!("can not spawn cube with invalid size: {cube_size}");
+        error!("can not spawn cube with invalid size: {cube_size}");
         return;
     }
 
@@ -175,6 +180,7 @@ fn spawn(
         Visibility::Visible,
     ));
 
+    // Spawn pieces
     for x in range.clone() {
         for y in range.clone() {
             for z in range.clone() {
@@ -245,11 +251,13 @@ fn spawn(
                             transform,
                             MeshMaterial3d(material),
                             PieceFace,
+                            PickingBehavior::IGNORE,
                         ));
 
                         // right face
                         let mut transform =
                             Transform::from_translation(Vec3::new(face_offset, 0.0, 0.0));
+                        transform.rotate_local_y(TAU / 4.0);
 
                         let material = if x == cube.size().highest_piece_index() {
                             materials.add(COLOR_RIGHT)
@@ -257,13 +265,12 @@ fn spawn(
                             cube.inner_material.clone()
                         };
 
-                        transform.rotate_local_y(TAU / 4.0);
-
                         parent.spawn((
                             Mesh3d(piece_face_mesh.clone()),
                             transform,
                             MeshMaterial3d(material),
                             PieceFace,
+                            PickingBehavior::IGNORE,
                         ));
 
                         // top face
@@ -282,6 +289,7 @@ fn spawn(
                             transform,
                             MeshMaterial3d(material),
                             PieceFace,
+                            PickingBehavior::IGNORE,
                         ));
 
                         // bottom face
@@ -300,6 +308,7 @@ fn spawn(
                             transform,
                             MeshMaterial3d(material),
                             PieceFace,
+                            PickingBehavior::IGNORE,
                         ));
 
                         // front face
@@ -317,6 +326,7 @@ fn spawn(
                             transform,
                             MeshMaterial3d(material),
                             PieceFace,
+                            PickingBehavior::IGNORE,
                         ));
 
                         // back face
@@ -335,10 +345,23 @@ fn spawn(
                             transform,
                             MeshMaterial3d(material),
                             PieceFace,
+                            PickingBehavior::IGNORE,
                         ));
                     });
                 });
             }
         }
     }
+
+    // Spawn collider squares
+    cube_entity.with_children(|parent| {
+        drag_to_rotate::spawn(
+            parent,
+            &mut materials,
+            &mut meshes,
+            cube_size,
+            cube.block_size,
+            cube.piece_spread,
+        );
+    });
 }

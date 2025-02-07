@@ -27,3 +27,7 @@ pub mod solver;
 
 #[allow(dead_code)]
 pub mod algorithms;
+
+mod drag_to_rotate;
+
+mod slice;

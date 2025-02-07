@@ -15,18 +15,21 @@ mod utils;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "Rubiks cube".into(),
+        .add_plugins((
+            DefaultPlugins.set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "Rubiks cube".into(),
+                    ..default()
+                }),
                 ..default()
             }),
-            ..default()
-        }))
-        .add_plugins(CameraPlugin)
-        .add_plugins(ControlsPlugin)
-        .add_plugins(CubePlugin)
-        .add_plugins(InterfacePlugin)
-        .add_plugins(SchedulesPlugin)
+            MeshPickingPlugin,
+            CameraPlugin,
+            ControlsPlugin,
+            CubePlugin,
+            InterfacePlugin,
+            SchedulesPlugin,
+        ))
         .insert_resource(ClearColor(Color::srgb_u8(91, 145, 222)))
         .add_systems(Startup, spawn_light)
         .run();
