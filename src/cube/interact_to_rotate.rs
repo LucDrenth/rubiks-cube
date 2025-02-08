@@ -260,9 +260,12 @@ fn handle_picking_hover(
             Face::Right => (Axis::Y, slice_y),
         };
 
-        // TODO not correct for even sided cubes
         let total_piece_spread = slice as f32 * cube.space_between_pieces();
-        let offset = slice as f32 * cube.piece_size() + total_piece_spread;
+        let mut offset = slice as f32 * cube.piece_size() + total_piece_spread;
+        if cube_size % 2 == 0 {
+            offset -= slice.clamp(-1, 1) as f32
+                * (cube.piece_size() / 2.0 + cube.space_between_pieces() / 2.0);
+        }
 
         match axis {
             Axis::X => {
