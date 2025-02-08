@@ -237,8 +237,10 @@ fn handle_picking_hover(
             Face::Front => face_hit_position_world_vec3.xy(),
             Face::Right => face_hit_position_world_vec3.zy() * Vec2::new(-1.0, 1.0),
         } / scale;
-        let range = original_mesh_size.0;
-        let face_hit_position_normalised = face_hit_position_world_vec2 + range / 2.0;
+
+        let mut face_hit_position_normalised =
+            face_hit_position_world_vec2 + original_mesh_size.0 / 2.0;
+        face_hit_position_normalised *= cube_size as f32 / original_mesh_size.0;
 
         // ranging from `0..cube_size`. Not what we can use to rotate cube slice slice yet
         let (relative_slice_index_x, relative_slice_index_y) = (

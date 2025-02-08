@@ -13,6 +13,8 @@ use super::{
 };
 
 pub const DEFAULT_CUBE_SIZE: usize = 3;
+const SPACE_BETWEEN_PIECES: f32 = 0.05;
+const PIECE_SIZE: f32 = 1.0;
 
 /// orange
 pub const COLOR_LEFT: Color = Color::srgb(0.99, 0.49, 0.05);
@@ -169,8 +171,8 @@ fn spawn(
 
     let cube = Cube {
         cube_size: CubeSize(cube_size as i32),
-        space_between_pieces: 0.05,
-        piece_size: 1.0,
+        space_between_pieces: SPACE_BETWEEN_PIECES,
+        piece_size: PIECE_SIZE,
         inner_material: materials.add(Color::srgb(0.1, 0.1, 0.1)),
         is_animating_rotation: false,
     };
