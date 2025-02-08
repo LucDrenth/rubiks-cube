@@ -144,7 +144,7 @@ pub fn spawn_indicator(
             z: (face_size + piece_spread) / 2.0,
         },
     });
-    let material = MeshMaterial3d(materials.add(Color::srgba(0.952, 0.784, 0.007, 0.5)));
+    let material = MeshMaterial3d(materials.add(Color::srgba(0.0, 0.0, 0.0, 0.7)));
     parent.spawn((
         Mesh3d(mesh),
         material,
