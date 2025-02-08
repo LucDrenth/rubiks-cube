@@ -17,4 +17,3 @@
 
 ### Bugs
 - Changing rotation speed during sequence makes the progress bar flicker when (nearly) done.
-- Changing PIECE_SIZE to something other than 1 causes incorrect cube picking colliders. After some initial investigatino, the collider sizes looked good. Could be a miscalculation with the piece spawning positions

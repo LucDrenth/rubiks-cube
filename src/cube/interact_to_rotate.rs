@@ -69,7 +69,7 @@ pub fn spawn_colliders(
     face_size: f32,
 ) {
     // let debug_material: MeshMaterial3d<StandardMaterial> =
-    //     MeshMaterial3d(materials.add(Color::srgb(0.5019608, 0.0, 0.5019608)));
+    //     MeshMaterial3d(materials.add(Color::srgb(0.5019608, 0.0, 0.5019608).with_alpha(0.5)));
     let debug_material = ();
 
     let distance_from_center = face_size / 2.0;

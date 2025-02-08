@@ -13,7 +13,7 @@ use super::{
 };
 
 pub const DEFAULT_CUBE_SIZE: usize = 3;
-const SPACE_BETWEEN_PIECES: f32 = 0.05;
+const SPACE_BETWEEN_PIECES: f32 = 0.04;
 const PIECE_SIZE: f32 = 1.0;
 
 /// orange
@@ -178,12 +178,11 @@ fn spawn(
     };
 
     let piece_face_mesh = meshes.add(Rectangle {
-        half_size: Vec2::ONE * cube.piece_size / 2.0,
+        half_size: (Vec2::ONE * cube.piece_size) / 2.0,
     });
 
     let range = cube.size().lowest_piece_index()..=cube.size().highest_piece_index();
 
-    let spread_factor = 1.0 + cube.space_between_pieces;
     let face_offset = cube.piece_size / 2.0;
 
     let mut cube_entity = commands.spawn((
@@ -202,40 +201,32 @@ fn spawn(
                 }
 
                 // The middle point of the cube piece
-                let mut middle_point = if cube.size().0 % 2 == 0 {
+                let middle_point = if cube.size().0 % 2 == 0 {
+                    // even sized cubes like 2x2 and 4x4
+
                     let mut result = Vec3::new(
-                        x as f32 * cube.piece_size,
-                        y as f32 * cube.piece_size,
-                        z as f32 * cube.piece_size,
+                        x as f32 * cube.piece_size + x as f32 * cube.space_between_pieces,
+                        y as f32 * cube.piece_size + y as f32 * cube.space_between_pieces,
+                        z as f32 * cube.piece_size + z as f32 * cube.space_between_pieces,
                     );
 
-                    if x < 0 {
-                        result.x += cube.piece_size / 2.0;
-                    } else {
-                        result.x -= cube.piece_size / 2.0;
-                    }
-
-                    if y < 0 {
-                        result.y += cube.piece_size / 2.0;
-                    } else {
-                        result.y -= cube.piece_size / 2.0;
-                    }
-
-                    if z < 0 {
-                        result.z += cube.piece_size / 2.0;
-                    } else {
-                        result.z -= cube.piece_size / 2.0;
-                    }
+                    let offset = cube.piece_size / 2.0 + cube.space_between_pieces / 2.0;
+                    result -= Vec3::new(
+                        x.clamp(-1, 1) as f32 * offset,
+                        y.clamp(-1, 1) as f32 * offset,
+                        z.clamp(-1, 1) as f32 * offset,
+                    );
 
                     result
                 } else {
+                    // even sized cubes like 3x3 and 5x5
+
                     Vec3::new(
-                        x as f32 * cube.piece_size,
-                        y as f32 * cube.piece_size,
-                        z as f32 * cube.piece_size,
+                        x as f32 * cube.piece_size + x as f32 * cube.space_between_pieces,
+                        y as f32 * cube.piece_size + y as f32 * cube.space_between_pieces,
+                        z as f32 * cube.piece_size + z as f32 * cube.space_between_pieces,
                     )
                 };
-                middle_point *= spread_factor;
 
                 cube_entity.with_children(|parent| {
                     let mut piece_entity = parent.spawn((
