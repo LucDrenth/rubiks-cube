@@ -36,5 +36,5 @@ fn scale_cube_with_keys(
         return;
     }
 
-    transform.scale = transform.scale.clamp(Vec3::ZERO, Vec3::ONE);
+    transform.scale = transform.scale.max(Vec3::ZERO);
 }
