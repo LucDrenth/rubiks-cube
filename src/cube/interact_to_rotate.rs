@@ -136,7 +136,6 @@ pub fn spawn_indicator(
     piece_spread: f32,
     face_size: f32,
 ) {
-    // TODO try outline instead of filled
     let mesh = meshes.add(Cuboid {
         half_size: Vec3 {
             x: (block_size + piece_spread) / 2.0,
@@ -151,6 +150,7 @@ pub fn spawn_indicator(
         Transform::default(),
         Indicator,
         PickingBehavior::IGNORE,
+        Visibility::Hidden,
     ));
 }
 
