@@ -196,13 +196,13 @@ fn spawn(
     for x in range.clone() {
         for y in range.clone() {
             for z in range.clone() {
-                if cube.size().0 % 2 == 0 && (x == 0 || y == 0 || z == 0) {
-                    continue;
-                }
-
-                // The middle point of the cube piece
-                let middle_point = if cube.size().0 % 2 == 0 {
+                let piece_middle_point = if cube.size().0 % 2 == 0 {
                     // even sized cubes like 2x2 and 4x4
+
+                    if x == 0 || y == 0 || z == 0 {
+                        // even sized cubes do not have a slice 0
+                        continue;
+                    }
 
                     let mut result = Vec3::new(
                         x as f32 * cube.piece_size + x as f32 * cube.space_between_pieces,
@@ -235,7 +235,7 @@ fn spawn(
                             current_y: y,
                             current_z: z,
                         },
-                        Transform::from_translation(middle_point),
+                        Transform::from_translation(piece_middle_point),
                     ));
 
                     piece_entity.with_children(|parent| {
