@@ -8,7 +8,7 @@ use super::{
     axis::Axis,
     controller::ControllerPlugin,
     cube_state::CubeState,
-    drag_to_rotate::{self, DragToRotatePlugin},
+    interact_to_rotate::{self, InteractToRotatePlugin},
     rotation::CubeRotationPlugin,
 };
 
@@ -35,7 +35,7 @@ impl Plugin for CubePlugin {
             .init_resource::<CubeCommandsResource>()
             .add_plugins(ControllerPlugin)
             .add_plugins(CubeRotationPlugin)
-            .add_plugins(DragToRotatePlugin)
+            .add_plugins(InteractToRotatePlugin)
             .add_systems(Startup, spawn.in_set(CubeStartupSet::SpawnCube));
     }
 }
@@ -63,9 +63,11 @@ pub struct CurrentCubeSizeResource(pub usize);
 /// A 3D representation of a cube
 #[derive(Component, Debug, Clone)]
 pub struct Cube {
-    cube_size: CubeSize,   // For example 3 for 3x3
-    pub piece_spread: f32, // The size of the gap between the pieces
-    block_size: f32,
+    /// For example, 3 for 3x3
+    cube_size: CubeSize,
+    /// The space between 2 pieces
+    space_between_pieces: f32,
+    piece_size: f32,
     inner_material: Handle<StandardMaterial>,
     pub is_animating_rotation: bool,
 }
@@ -73,6 +75,15 @@ pub struct Cube {
 impl Cube {
     pub fn size(&self) -> &CubeSize {
         &self.cube_size
+    }
+
+    pub fn piece_size(&self) -> f32 {
+        self.piece_size
+    }
+
+    /// The space between 2 pieces
+    pub fn space_between_pieces(&self) -> f32 {
+        self.space_between_pieces
     }
 }
 
@@ -158,20 +169,20 @@ fn spawn(
 
     let cube = Cube {
         cube_size: CubeSize(cube_size as i32),
-        piece_spread: 0.05,
-        block_size: 1.0,
+        space_between_pieces: 0.05,
+        piece_size: 1.0,
         inner_material: materials.add(Color::srgb(0.1, 0.1, 0.1)),
         is_animating_rotation: false,
     };
 
     let piece_face_mesh = meshes.add(Rectangle {
-        half_size: Vec2::ONE * cube.block_size / 2.0,
+        half_size: Vec2::ONE * cube.piece_size / 2.0,
     });
 
     let range = cube.size().lowest_piece_index()..=cube.size().highest_piece_index();
 
-    let spread_factor = 1.0 + cube.piece_spread;
-    let face_offset = cube.block_size / 2.0;
+    let spread_factor = 1.0 + cube.space_between_pieces;
+    let face_offset = cube.piece_size / 2.0;
 
     let mut cube_entity = commands.spawn((
         cube.clone(),
@@ -191,35 +202,35 @@ fn spawn(
                 // The middle point of the cube piece
                 let mut middle_point = if cube.size().0 % 2 == 0 {
                     let mut result = Vec3::new(
-                        x as f32 * cube.block_size,
-                        y as f32 * cube.block_size,
-                        z as f32 * cube.block_size,
+                        x as f32 * cube.piece_size,
+                        y as f32 * cube.piece_size,
+                        z as f32 * cube.piece_size,
                     );
 
                     if x < 0 {
-                        result.x += cube.block_size / 2.0;
+                        result.x += cube.piece_size / 2.0;
                     } else {
-                        result.x -= cube.block_size / 2.0;
+                        result.x -= cube.piece_size / 2.0;
                     }
 
                     if y < 0 {
-                        result.y += cube.block_size / 2.0;
+                        result.y += cube.piece_size / 2.0;
                     } else {
-                        result.y -= cube.block_size / 2.0;
+                        result.y -= cube.piece_size / 2.0;
                     }
 
                     if z < 0 {
-                        result.z += cube.block_size / 2.0;
+                        result.z += cube.piece_size / 2.0;
                     } else {
-                        result.z -= cube.block_size / 2.0;
+                        result.z -= cube.piece_size / 2.0;
                     }
 
                     result
                 } else {
                     Vec3::new(
-                        x as f32 * cube.block_size,
-                        y as f32 * cube.block_size,
-                        z as f32 * cube.block_size,
+                        x as f32 * cube.piece_size,
+                        y as f32 * cube.piece_size,
+                        z as f32 * cube.piece_size,
                     )
                 };
                 middle_point *= spread_factor;
@@ -355,13 +366,13 @@ fn spawn(
 
     // Spawn collider squares
     cube_entity.with_children(|parent| {
-        drag_to_rotate::spawn(
+        interact_to_rotate::spawn(
             parent,
             &mut materials,
             &mut meshes,
             cube_size,
-            cube.block_size,
-            cube.piece_spread,
+            cube.piece_size,
+            cube.space_between_pieces,
         );
     });
 }

@@ -9,9 +9,9 @@ use crate::{
 
 use super::{Cube, CubeRotationEvent, SequenceResource};
 
-pub struct DragToRotatePlugin;
+pub struct InteractToRotatePlugin;
 
-impl Plugin for DragToRotatePlugin {
+impl Plugin for InteractToRotatePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
@@ -35,25 +35,47 @@ pub struct FaceFront;
 pub struct FaceRight;
 
 #[derive(Component)]
-pub struct OriginalMeshSize(f32);
+pub struct OriginalColliderMeshSize(f32);
+
+#[derive(Component)]
+pub struct Indicator;
 
 pub fn spawn(
     parent: &mut ChildBuilder<'_>,
-    _materials: &mut ResMut<Assets<StandardMaterial>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
     meshes: &mut ResMut<Assets<Mesh>>,
     cube_size: usize,
     block_size: f32,
     piece_spread: f32,
 ) {
     let face_size = (cube_size as f32 * block_size) + ((cube_size - 1) as f32 * piece_spread);
+
+    spawn_colliders(parent, materials, meshes, face_size);
+
+    spawn_indicator(
+        parent,
+        materials,
+        meshes,
+        block_size,
+        piece_spread,
+        face_size,
+    );
+}
+
+pub fn spawn_colliders(
+    parent: &mut ChildBuilder<'_>,
+    _materials: &mut ResMut<Assets<StandardMaterial>>,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    face_size: f32,
+) {
+    // let debug_material: MeshMaterial3d<StandardMaterial> =
+    //     MeshMaterial3d(materials.add(Color::srgb(0.5019608, 0.0, 0.5019608)));
+    let debug_material = ();
+
     let distance_from_center = face_size / 2.0;
     let collider_mesh = meshes.add(Rectangle {
         half_size: Vec2::ONE * face_size / 2.0,
     });
-
-    // let debug_material: MeshMaterial3d<StandardMaterial> =
-    //     MeshMaterial3d(materials.add(Color::srgb(0.5019608, 0.0, 0.5019608)));
-    let debug_material = ();
 
     // top
     let mut transform = Transform::from_translation(Vec3 {
@@ -68,7 +90,7 @@ pub fn spawn(
         debug_material.clone(),
         transform,
         FaceTop,
-        OriginalMeshSize(face_size),
+        OriginalColliderMeshSize(face_size),
         Face::Top,
     ));
 
@@ -84,7 +106,7 @@ pub fn spawn(
         debug_material.clone(),
         transform,
         FaceFront,
-        OriginalMeshSize(face_size),
+        OriginalColliderMeshSize(face_size),
         Face::Front,
     ));
 
@@ -101,16 +123,52 @@ pub fn spawn(
         debug_material.clone(),
         transform,
         FaceRight,
-        OriginalMeshSize(face_size),
+        OriginalColliderMeshSize(face_size),
         Face::Right,
+    ));
+}
+
+pub fn spawn_indicator(
+    parent: &mut ChildBuilder<'_>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    block_size: f32,
+    piece_spread: f32,
+    face_size: f32,
+) {
+    // TODO try outline instead of filled
+    let mesh = meshes.add(Cuboid {
+        half_size: Vec3 {
+            x: (block_size + piece_spread) / 2.0,
+            y: (face_size + piece_spread) / 2.0,
+            z: (face_size + piece_spread) / 2.0,
+        },
+    });
+    let material = MeshMaterial3d(materials.add(Color::srgba(0.952, 0.784, 0.007, 0.5)));
+    parent.spawn((
+        Mesh3d(mesh),
+        material,
+        Transform::default(),
+        Indicator,
+        PickingBehavior::IGNORE,
     ));
 }
 
 fn handle_picking_hover(
     pointers: Query<&PointerInteraction>,
-    top_face_query: Query<(Entity, &GlobalTransform, &OriginalMeshSize, &Face), With<FaceTop>>,
-    front_face_query: Query<(Entity, &GlobalTransform, &OriginalMeshSize, &Face), With<FaceFront>>,
-    right_face_query: Query<(Entity, &GlobalTransform, &OriginalMeshSize, &Face), With<FaceRight>>,
+    top_face_query: Query<
+        (Entity, &GlobalTransform, &OriginalColliderMeshSize, &Face),
+        With<FaceTop>,
+    >,
+    front_face_query: Query<
+        (Entity, &GlobalTransform, &OriginalColliderMeshSize, &Face),
+        With<FaceFront>,
+    >,
+    right_face_query: Query<
+        (Entity, &GlobalTransform, &OriginalColliderMeshSize, &Face),
+        With<FaceRight>,
+    >,
+    mut indicator_query: Query<(&mut Transform, &mut Visibility), With<Indicator>>,
     cube_query: Query<&Cube>,
     current_sequence: Res<SequenceResource>,
     mut event_writer: EventWriter<CubeRotationEvent>,
@@ -121,7 +179,11 @@ fn handle_picking_hover(
         return;
     };
 
+    let (mut indicator_transform, mut indicator_visibility) =
+        indicator_query.get_single_mut().unwrap();
+
     if cube.is_animating_rotation || !current_sequence.is_done() {
+        *indicator_visibility = Visibility::Hidden;
         return;
     }
 
@@ -138,6 +200,8 @@ fn handle_picking_hover(
         return;
     };
 
+    let mut did_interact_with_face = false;
+
     for (entity, hit_data) in pointers
         .iter()
         .filter_map(|interaction| interaction.get_nearest_hit())
@@ -150,13 +214,17 @@ fn handle_picking_hover(
             right_face
         } else {
             // not a hit we are interested in
-            return;
+            *indicator_visibility = Visibility::Hidden;
+            break;
         };
 
         let Some(hit_position) = hit_data.position else {
             warn!("hit position is None, expected Some");
-            return;
+            break;
         };
+
+        did_interact_with_face = true;
+        *indicator_visibility = Visibility::Visible;
 
         let cube_size = cube.size().0;
 
@@ -185,8 +253,6 @@ fn handle_picking_hover(
         let slice_x = column_index_to_slice(column_index_x, cube_size as usize);
         let slice_y = column_index_to_slice(column_index_y, cube_size as usize);
 
-        info!("x: {}, y: {}", slice_x, slice_y);
-
         // TODO base this on where the mouse come from before entering the current face
         let (axis, slice) = match face {
             Face::Top => (Axis::Z, slice_y),
@@ -194,10 +260,41 @@ fn handle_picking_hover(
             Face::Right => (Axis::Y, slice_y),
         };
 
+        // TODO not correct for even sided cubes
+        let total_piece_spread = slice as f32 * cube.space_between_pieces();
+        let offset = slice as f32 * cube.piece_size() + total_piece_spread;
+
+        match axis {
+            Axis::X => {
+                indicator_transform.translation = Vec3 {
+                    x: offset,
+                    y: 0.0,
+                    z: 0.0,
+                };
+                indicator_transform.rotation = Quat::default();
+            }
+            Axis::Y => {
+                indicator_transform.translation = Vec3 {
+                    x: 0.0,
+                    y: offset,
+                    z: 0.0,
+                };
+                indicator_transform.rotation = Quat::from_rotation_z(TAU / 4.0);
+            }
+            Axis::Z => {
+                indicator_transform.translation = Vec3 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: offset,
+                };
+                indicator_transform.rotation = Quat::from_rotation_y(TAU / 4.0);
+            }
+        }
+
         if !mouse_input.just_pressed(MouseButton::Left)
             && !mouse_input.just_pressed(MouseButton::Right)
         {
-            return;
+            break;
         };
 
         event_writer.send(CubeRotationEvent {
@@ -205,9 +302,13 @@ fn handle_picking_hover(
             negative_direction: mouse_input.just_pressed(MouseButton::Right),
             twice: false,
             animation: Some(CubeRotationAnimation {
-                duration_in_seconds: 0.4,
-                ease_function: None,
+                duration_in_seconds: 0.3,
+                ease_function: Some(EaseFunction::CubicOut),
             }),
         });
+    }
+
+    if !did_interact_with_face {
+        *indicator_visibility = Visibility::Hidden;
     }
 }

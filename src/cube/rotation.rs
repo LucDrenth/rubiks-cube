@@ -363,7 +363,7 @@ fn rotation_events_handler(
         match &cube_rotation_event.rotation {
             Rotation::Face(face_rotation) => {
                 let cube_size: f32 = cube.size().0 as f32;
-                let cube_piece_spread = cube.piece_spread;
+                let cube_piece_spread = cube.space_between_pieces();
                 let pivot_coordinate = |slice: &i32| {
                     return *slice as f32 * (cube_size + cube_piece_spread);
                 };
