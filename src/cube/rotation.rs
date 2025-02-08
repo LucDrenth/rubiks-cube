@@ -200,6 +200,13 @@ impl Rotation {
     pub fn face_z(slice: i32) -> Self {
         Self::Face(FaceRotation::z(slice))
     }
+    pub fn face(axis: Axis, slice: i32) -> Self {
+        match axis {
+            Axis::X => Self::face_x(slice),
+            Axis::Y => Self::face_y(slice),
+            Axis::Z => Self::face_z(slice),
+        }
+    }
     pub fn cube_x() -> Self {
         Self::Cube(CubeRotation::X)
     }
@@ -208,6 +215,13 @@ impl Rotation {
     }
     pub fn cube_z() -> Self {
         Self::Cube(CubeRotation::Z)
+    }
+    pub fn cube(axis: Axis) -> Self {
+        match axis {
+            Axis::X => Self::cube_x(),
+            Axis::Y => Self::cube_y(),
+            Axis::Z => Self::cube_z(),
+        }
     }
 }
 

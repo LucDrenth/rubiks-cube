@@ -2,9 +2,12 @@ use std::f32::consts::TAU;
 
 use bevy::{picking::pointer::PointerInteraction, prelude::*};
 
-use crate::{cube::slice::column_index_to_slice, schedules::CubeScheduleSet};
+use crate::{
+    cube::{axis::Axis, slice::column_index_to_slice, CubeRotationAnimation, Rotation},
+    schedules::CubeScheduleSet,
+};
 
-use super::{Cube, SequenceResource};
+use super::{Cube, CubeRotationEvent, SequenceResource};
 
 pub struct DragToRotatePlugin;
 
@@ -110,6 +113,8 @@ fn handle_picking_hover(
     right_face_query: Query<(Entity, &GlobalTransform, &OriginalMeshSize, &Face), With<FaceRight>>,
     cube_query: Query<&Cube>,
     current_sequence: Res<SequenceResource>,
+    mut event_writer: EventWriter<CubeRotationEvent>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
 ) {
     let Ok(cube) = cube_query.get_single() else {
         warn!("couldn't find cube");
@@ -160,7 +165,7 @@ fn handle_picking_hover(
 
         let face_hit_position_world_vec3 = hit_position - global_transform.translation();
         let face_hit_position_world_vec2 = match face {
-            Face::Top => face_hit_position_world_vec3.xz() * Vec2::new(1.0, -1.0),
+            Face::Top => face_hit_position_world_vec3.xz(),
             Face::Front => face_hit_position_world_vec3.xy(),
             Face::Right => face_hit_position_world_vec3.zy() * Vec2::new(-1.0, 1.0),
         } / scale;
@@ -181,5 +186,28 @@ fn handle_picking_hover(
         let slice_y = column_index_to_slice(column_index_y, cube_size as usize);
 
         info!("x: {}, y: {}", slice_x, slice_y);
+
+        // TODO base this on where the mouse come from before entering the current face
+        let (axis, slice) = match face {
+            Face::Top => (Axis::Z, slice_y),
+            Face::Front => (Axis::X, slice_x),
+            Face::Right => (Axis::Y, slice_y),
+        };
+
+        if !mouse_input.just_pressed(MouseButton::Left)
+            && !mouse_input.just_pressed(MouseButton::Right)
+        {
+            return;
+        };
+
+        event_writer.send(CubeRotationEvent {
+            rotation: Rotation::face(axis, slice),
+            negative_direction: mouse_input.just_pressed(MouseButton::Right),
+            twice: false,
+            animation: Some(CubeRotationAnimation {
+                duration_in_seconds: 0.4,
+                ease_function: None,
+            }),
+        });
     }
 }
