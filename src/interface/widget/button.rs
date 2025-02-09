@@ -252,6 +252,11 @@ fn handle_disable_button_event(
 
         disabled_handler.disabled = true;
         if let Some(seconds) = event.enable_after {
+            if seconds <= 0.0 {
+                disabled_handler.disabled = false;
+                continue;
+            }
+
             disabled_handler_timer.enable_after(seconds);
         }
     }
@@ -274,6 +279,11 @@ fn handle_enable_button_event(
 
         disabled_handler.disabled = false;
         if let Some(seconds) = event.disable_after {
+            if seconds <= 0.0 {
+                disabled_handler.disabled = true;
+                continue;
+            }
+
             disabled_handler_timer.disable_after(seconds);
         }
     }
