@@ -17,14 +17,17 @@ impl Plugin for ButtonPlugin {
             )
             .add_systems(
                 Update,
-                (handle_disable_button_event, handle_enable_button_event)
+                (
+                    handle_disable_button_event,
+                    handle_enable_button_event,
+                    buttons_disable_handler,
+                )
+                    .chain()
                     .in_set(CubeScheduleSet::HandleEvents),
             )
             .add_systems(
                 Update,
-                (buttons_hover_effect, buttons_disable_handler)
-                    .chain()
-                    .in_set(CubeScheduleSet::HandleUserInput),
+                buttons_hover_effect.in_set(CubeScheduleSet::HandleUserInput),
             );
     }
 }
@@ -70,6 +73,7 @@ pub struct UiButton;
 /// Button can be enabled and disabled through `EnableButtonEvent` and `DisableButtonEvent`
 pub struct ButtonDisabledHandler {
     disabled: bool,
+    disabled_last_frame: bool,
 }
 
 impl ButtonDisabledHandler {
@@ -93,7 +97,10 @@ impl ButtonDisabledHandlerTimer {
 
 impl Default for ButtonDisabledHandler {
     fn default() -> Self {
-        Self { disabled: false }
+        Self {
+            disabled: false,
+            disabled_last_frame: false,
+        }
     }
 }
 
@@ -156,7 +163,7 @@ fn buttons_disable_handler(
             &mut BackgroundColor,
             &mut BorderColor,
             &Interaction,
-            &ButtonDisabledHandler,
+            &mut ButtonDisabledHandler,
             Option<&mut BoxShadow>,
         ),
         Changed<ButtonDisabledHandler>,
@@ -164,8 +171,14 @@ fn buttons_disable_handler(
     mut text_query: Query<(&Parent, &mut TextColor)>,
     mut icon_query: Query<(&Parent, &mut ImageNode)>,
 ) {
-    for (entity, mut background_color, mut border_color, interaction, is_disabled, box_shadow) in
-        button_query.iter_mut()
+    for (
+        entity,
+        mut background_color,
+        mut border_color,
+        interaction,
+        mut is_disabled,
+        box_shadow,
+    ) in button_query.iter_mut()
     {
         let maybe_text = text_query
             .iter_mut()
@@ -174,7 +187,9 @@ fn buttons_disable_handler(
             .iter_mut()
             .find(|(parent, _)| parent.get() == entity);
 
-        if is_disabled.disabled {
+        if is_disabled.disabled && !is_disabled.disabled_last_frame {
+            // set disabled state
+
             background_color.0 = Color::NONE;
 
             if let Some((_, mut text_color)) = maybe_text {
@@ -192,7 +207,9 @@ fn buttons_disable_handler(
             }
 
             handle_button_interaction_state(&Interaction::None, &mut border_color);
-        } else {
+        } else if !is_disabled.disabled && is_disabled.disabled_last_frame {
+            // set enabled state
+
             // TODO get this color from element
             background_color.0 = BUTTON_BACKGROUND_COLOR;
 
@@ -213,6 +230,8 @@ fn buttons_disable_handler(
 
             handle_button_interaction_state(interaction, &mut border_color);
         }
+
+        is_disabled.disabled_last_frame = is_disabled.disabled;
     }
 }
 

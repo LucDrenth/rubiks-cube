@@ -2,11 +2,13 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
+use crate::schedules::CubeScheduleSet;
+
 pub struct ProgressBarPlugin;
 
 impl Plugin for ProgressBarPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, handle_progress_bar);
+        app.add_systems(Update, handle_progress_bar.in_set(CubeScheduleSet::Timers));
     }
 }
 
@@ -47,8 +49,11 @@ impl Default for ProgressBar {
     }
 }
 
-fn handle_progress_bar(mut query: Query<(&mut ProgressBar, &mut Node)>, time: Res<Time>) {
-    for (mut progress_bar, mut node) in query.iter_mut() {
+fn handle_progress_bar(
+    mut query: Query<(&mut ProgressBar, &mut Node, &mut Visibility)>,
+    time: Res<Time>,
+) {
+    for (mut progress_bar, mut node, mut node_visibility) in query.iter_mut() {
         let timer = match &mut progress_bar.timer {
             Some(timer) => timer,
             None => continue,
@@ -58,10 +63,11 @@ fn handle_progress_bar(mut query: Query<(&mut ProgressBar, &mut Node)>, time: Re
 
         if timer.finished() {
             progress_bar.timer = None;
-            node.width = Val::ZERO;
+            *node_visibility = Visibility::Hidden;
             continue;
         }
 
-        node.width = Val::Percent(timer.fraction() * 100.);
+        *node_visibility = Visibility::Visible;
+        node.width = Val::Percent((timer.fraction() * 100.).min(100.));
     }
 }

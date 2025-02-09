@@ -427,6 +427,7 @@ fn handle_sequence_speed_dropdown(
     solve_button_entity_query: Query<Entity, With<SolveButton>>,
     sequence_type_resource: Res<CurrentSequenceTypeResource>,
     mut disable_button_event_writer: EventWriter<DisableButtonEvent>,
+    time: Res<Time>,
 ) {
     let Ok((new_sequence_speed, interaction)) = query.get_single() else {
         return;
@@ -486,13 +487,16 @@ fn handle_sequence_speed_dropdown(
 
         progress_bar.update_timer(progress_bar_duration);
 
+        // Subtract 1 tick to prevent the progress bar flickering when done. There is probably a deeper
+        // issue at play here with the scheduling, but this does the job for now.
+        let time_to_enable_button = progress_bar_duration - time.delta_secs();
         disable_button_event_writer.send(DisableButtonEvent {
             entity: scramble_button_entity_query.get_single().unwrap(),
-            enable_after: Some(progress_bar_duration),
+            enable_after: Some(time_to_enable_button),
         });
         disable_button_event_writer.send(DisableButtonEvent {
             entity: solve_button_entity_query.get_single().unwrap(),
-            enable_after: Some(progress_bar_duration),
+            enable_after: Some(time_to_enable_button),
         });
     }
 }
