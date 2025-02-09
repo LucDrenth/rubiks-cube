@@ -7,4 +7,3 @@
 ### Nice to have
 - Automatically move the camera so the cube takes up the same amount of space on the screen, no matter the cube size
 - Skybox
-- Support 1x1 cube size

@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 
 use crate::{
-    cube::{self, CubeCommandsResource, CurrentCubeSizeResource, SequenceResource},
+    cube::{
+        self, CubeCommandsResource, CurrentCubeSizeResource, SequenceResource,
+        MINIMUM_SUPPORTED_CUBE_SIZE,
+    },
     schedules::CubeScheduleSet,
 };
 
@@ -175,8 +178,8 @@ fn decrease_cube_size_button_action(
     let mut cube_size_label = cube_size_label_query.get_single_mut().unwrap();
     let current_cube_size = cube_size_resource.0;
 
-    if current_cube_size == 2 {
-        warn!("can not decrease cube size below 2");
+    if current_cube_size == MINIMUM_SUPPORTED_CUBE_SIZE {
+        warn!("can not decrease cube size below 1");
         return;
     }
 
@@ -186,7 +189,7 @@ fn decrease_cube_size_button_action(
     commands.run_system(cube_commands.despawn);
     commands.run_system(cube_commands.spawn);
 
-    if cube_size_resource.0 == 2 {
+    if cube_size_resource.0 == MINIMUM_SUPPORTED_CUBE_SIZE {
         disable_button_event_writer.send(DisableButtonEvent::new(button_entity));
     }
 

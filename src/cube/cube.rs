@@ -12,9 +12,10 @@ use super::{
     rotation::CubeRotationPlugin,
 };
 
-pub const DEFAULT_CUBE_SIZE: usize = 3;
 const SPACE_BETWEEN_PIECES: f32 = 0.04;
 const PIECE_SIZE: f32 = 1.0;
+pub const DEFAULT_CUBE_SIZE: usize = 3;
+pub const MINIMUM_SUPPORTED_CUBE_SIZE: usize = 1;
 
 /// orange
 pub const COLOR_LEFT: Color = Color::srgb(0.99, 0.49, 0.05);
@@ -164,7 +165,7 @@ fn spawn(
 ) {
     let cube_size = cube_size_resource.0;
 
-    if cube_size <= 1 {
+    if cube_size < MINIMUM_SUPPORTED_CUBE_SIZE {
         error!("can not spawn cube with invalid size: {cube_size}");
         return;
     }
